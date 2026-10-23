@@ -1,8 +1,9 @@
+import { isSignedIn } from './features/sync';
 import { fa, jOfKey, keyAdd, keyOfJ, todayKey, weekStart } from '@daroon/shared';
 import { $, $$ } from './core/util';
 import { Q2, ctxFor } from './domain/guide';
 import { lex } from './domain/lexicon';
-import { openLogin, refreshAvatar } from './features/account';
+import { deleteAccount, loginStep, openLogin, refreshAvatar, resendCode, signOut } from './features/account';
 import { draftFromEntry, exitFlow, itemFor, saveDraft, startGuide, swapGuide, toReflect } from './features/draft';
 import { closeStory, openStoryView, weekStory } from './features/stories';
 import { isDark, reduced } from './sculpture/engine';
@@ -86,7 +87,8 @@ export const ACT = {
   toggleDemo(){ DB.settings.showDemo = !DB.settings.showDemo; persist(); reindex(); refreshSettings(); renderView({ quiet: true }); },
   resetDemo(){ DB.entries = DB.entries.filter(e => !e.demo).concat(genDemo()); DB.settings.showDemo = true; persist(); reindex(); refreshSettings(); renderView({ quiet: true }); toast('ردپاهای نمونه از نو ساخته شدن.'); },
   wipeAsk(){ S.wipeArm = true; refreshSettings(); },
-  wipeYes(){ const n = DB.entries.filter(e => !e.demo).length; DB.entries = DB.entries.filter(e => e.demo); S.wipeArm = false; persist(); reindex(); refreshSettings(); renderView({ quiet: true }); toast(n ? `${fa(n)} ردپای خودت پاک شد.` : 'ردپایی از خودت نبود.'); },
+  wipeYes(){ const own = DB.entries.filter(e => !e.demo && !e.deletedAt), n = own.length, t = new Date().toISOString();
+    if (isSignedIn()) own.forEach(e => { e.deletedAt = t; e.updatedAt = t; e.note = ''; }); else DB.entries = DB.entries.filter(e => e.demo); S.wipeArm = false; persist(); reindex(); refreshSettings(); renderView({ quiet: true }); toast(n ? `${fa(n)} ردپای خودت پاک شد.` : 'ردپایی از خودت نبود.'); },
   mode(el){ S.arch.mode = el.dataset.m; S.arch.cursor = S.arch.sel; $$('.seg [data-act="mode"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === S.arch.mode)));
     $$('[data-act="shift"]').forEach(b => b.setAttribute('aria-label', S.arch.mode === 'month' ? (b.dataset.d < 0 ? 'ماه قبل' : 'ماه بعد') : (b.dataset.d < 0 ? 'هفته‌ی قبل' : 'هفته‌ی بعد'))); refreshArchive(); },
   shift(el){ const A = S.arch, d = +el.dataset.d;
@@ -100,8 +102,9 @@ export const ACT = {
   edit(el){ const e = DB.entries.find(x => x.id === el.dataset.id); if (!e) return; S.editing = e.id; S.draft = draftFromEntry(e); S.guide = null; closeSheet(true); S.prev = ['archive']; S.view = 'reflect'; renderView(); },
   askDel(el){ S.confirmDel = el.dataset.id; reRenderDetail(); $(`[data-act="delYes"]`)?.focus({ preventScroll: true }); },
   delNo(){ const id = S.confirmDel; S.confirmDel = null; reRenderDetail(); $(`[data-act="askDel"][data-id="${id}"]`)?.focus({ preventScroll: true }); },
-  delYes(el){ const i = DB.entries.findIndex(x => x.id === el.dataset.id); if (i < 0) return; const [e] = DB.entries.splice(i, 1); S.lastDel = { e, i }; S.confirmDel = null; persist(); reindex(); refreshArchive();
-    toast('ردپا حذف شد.', { label: 'برگردون', fn: () => { if (!S.lastDel) return; DB.entries.splice(S.lastDel.i, 0, S.lastDel.e); S.lastDel = null; persist(); reindex(); refreshArchive(); toast('برگشت.'); } }); },
+  /* deletions are kept as tombstones so they reach the person's other devices */
+  delYes(el){ const e = DB.entries.find(x => x.id === el.dataset.id && !x.deletedAt); if (!e) return; const t = new Date().toISOString(); e.deletedAt = t; e.updatedAt = t; S.lastDel = { e }; S.confirmDel = null; persist(); reindex(); refreshArchive();
+    toast('ردپا حذف شد.', { label: 'برگردون', fn: () => { if (!S.lastDel) return; const d = S.lastDel.e; d.deletedAt = null; d.updatedAt = new Date().toISOString(); S.lastDel = null; persist(); reindex(); refreshArchive(); toast('برگشت.'); } }); },
   newToday(){ closeSheet(true); S.draft = newDraft(); go('today', { push: false }); },
   range(el){ S.pat.range = +el.dataset.r; renderView({ quiet: true }); },
   pm(el){ S.pat.mOff += +el.dataset.d; const M = monthsPage(), box = $('#mcals'); if (!box) return;
@@ -112,9 +115,13 @@ export const ACT = {
   setPage(){ gotoSetPage('settings'); },
   aboutPage(){ gotoSetPage('about'); },
   accountPage(){ gotoSetPage('account'); },
-  loginGoogle(){ openLogin(); },
+  loginGoogle(){ if (S.sheet === 'login') loginStep('google'); else openLogin('google'); },
+  loginEmail(){ if (S.sheet === 'login') loginStep('email'); else openLogin('email'); },
+  loginResend(){ resendCode(); },
   loginSkip(){ DB.loginDone = true; persist(); S.prev = []; S.view = 'today'; renderView(); },
-  signOut(){ DB.account = null; DB.loginDone = false; persist(); refreshAvatar(); closeSheet(true); S.prev = []; S.view = 'login'; renderView(); },
+  signOut(){ signOut(); },
+  deleteAsk(){ S.deleteArm = true; refreshSettings(); },
+  deleteYes(){ S.deleteArm = false; deleteAccount(); },
   weekStory(el){ weekStory(el.dataset.w); },
   openStory(el){ const st = DB.stories.find(x => x.id === el.dataset.id); if (st) openStoryView(st, 0); },
   storyNext(){ const s0 = S.story; if (s0 && s0.st) openStoryView(s0.st, s0.i + 1, s0.el); },

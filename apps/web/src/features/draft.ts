@@ -32,7 +32,7 @@ export async function saveDraft(){
     S.view = 'archive'; renderView(); if (!isWide() && e && S.arch.mode === 'month') setTimeout(() => openDaySheet(day), 350); toast('تغییرات ذخیره شد.'); return;
   }
   const now = new Date();
-  const entry = { id: uid(), createdAt: now.toISOString(), day: keyOf(now), time: `${pad(now.getHours())}:${pad(now.getMinutes())}`, emotions,
+  const entry = { id: uid(), createdAt: now.toISOString(), updatedAt: now.toISOString(), day: keyOf(now), time: `${pad(now.getHours())}:${pad(now.getMinutes())}`, emotions,
     suggested: (d.suggested || []).filter(k => !emotions.some(x => x.key === k)), context: d.context || null, unnamed: !emotions.length, note: d.note.trim(), path: d.path || 'explore', demo: false };
   DB.entries.push(entry); persist(); reindex();
   const shot = snapshot(), from = Stage.rect ? { ...Stage.rect } : null;

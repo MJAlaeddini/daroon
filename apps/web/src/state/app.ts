@@ -34,6 +34,7 @@ export interface AppState {
   lastDel: any;
   discardArm: boolean;
   wipeArm?: boolean;
+  deleteArm?: boolean;
 }
 export const newDraft = (): Draft => ({ items: [], suggested: [], context: null, path: null, note: '', focus: -1, palette: -1 });
 export const S: AppState = { customOpen: false, story: null, done: null, view: 'today', prev: [], draft: newDraft(), guide: null, editing: null, arch: { mode: jOfKey(todayKey()).jd <= 7 ? 'week' : 'month', cursor: todayKey(), sel: todayKey(), jump: false, jy: null }, pat: { range: 90, mOff: 0 }, sheet: null, confirmDel: null, lastDel: null, discardArm: false };

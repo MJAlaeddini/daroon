@@ -1,7 +1,7 @@
 import { jOfKey, keyAdd, wdIndex, weekStart } from '@daroon/shared';
 import { ACT, reRenderReflect } from './actions';
 import { $ } from './core/util';
-import { signIn } from './features/account';
+import { submitCode, submitEmail } from './features/account';
 import { addCustom, swapGuide } from './features/draft';
 import { closeStory } from './features/stories';
 import { isDark, mqDark, mqReduce } from './sculpture/engine';
@@ -26,7 +26,8 @@ document.addEventListener('click', (e: any) => {
   const day = e.target.closest('[data-day]');
   if (day){ const k = day.dataset.day; if (S.view === 'today'){ S.arch.sel = k; S.arch.cursor = k; S.arch.mode = 'week'; go('archive', { push: false }); } else if (S.view === 'archive') selectDay(k, true); }
 });
-document.addEventListener('submit', (e: any) => { const lf = e.target.closest('[data-form="login"]'); if (lf){ e.preventDefault(); const v = $('#loginName').value.trim(); if (v) signIn(v); else $('#loginName').focus(); return; }
+document.addEventListener('submit', (e: any) => { const le = e.target.closest('[data-form="loginEmail"]'); if (le){ e.preventDefault(); submitEmail(le.email.value); return; }
+  const lc = e.target.closest('[data-form="loginCode"]'); if (lc){ e.preventDefault(); submitCode(lc.code.value, lc.elements.name.value); return; }
   const f = e.target.closest('[data-form="custom"]'); if (!f) return; e.preventDefault(); const inp = f.querySelector('input');
   if (addCustom(inp.value)){ inp.value = ''; S.customOpen = false; if (S.view === 'explore') refreshExplore(); else { syncEngine(); swapGuide(); } } });
 document.addEventListener('input', (e: any) => { if (e.target.id === 'noteInput'){ S.draft.note = e.target.value; if (S.discardArm){ S.discardArm = false; const b = $('[data-act="discard"]'); if (b) b.textContent = 'بیرون رفتن بدون ثبت'; } } });

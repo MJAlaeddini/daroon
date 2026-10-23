@@ -1,4 +1,6 @@
-import { fa, labelOf, localStory, normStory, storyPrompt, weekDays, weekRange } from '@daroon/shared';
+import { fa, labelOf, localStory, weekDays, weekRange } from '@daroon/shared';
+import { api } from '../net/api';
+import { isSignedIn } from './sync';
 import { hexToLab, labRot, labToHex } from '../core/color';
 import { clamp, esc, hashStr, uid } from '../core/util';
 import { NEUTRAL_PAL, P0, lex, palFor } from '../domain/lexicon';
@@ -14,10 +16,8 @@ import { renderView } from '../ui/render';
 import { toast } from '../ui/toast';
 
 /* ═════════════════════════ weekly stories ═════════════════════════
-   Written by Claude through the page's `sample` capability with one fixed prompt; when that is unavailable
-   (opened outside claude.ai, or declined) a plain local summary is used instead. Saved in DB.stories. */
-export let samplePromise = null;
-export function getSample(){ if (!samplePromise) samplePromise = ((window as any).claude && (window as any).claude.use) ? (window as any).claude.use('sample').catch(() => null) : Promise.resolve(null); return samplePromise; }
+   Written by Claude on the server for signed-in people (net/api.ts); otherwise a plain local summary.
+   Saved in DB.stories and, when signed in, on the server too. */
 export function renderArt(spec, dk = 0, size = 360){ const k = 'A' + dk + traceKey(spec); if (TR.has(k)) return TR.get(k);
   let url = BLANK; try { miniCanvas.width = miniCanvas.height = size; mini.draw(buildU(staticState(spec), .5, .9, dk)); url = miniCanvas.toDataURL('image/png'); } catch (e){}
   miniCanvas.width = miniCanvas.height = 144; TR.set(k, url); return url; }
@@ -36,24 +36,30 @@ export function openStoryShell(){ closeStory(true); const el = document.createEl
 export async function weekStory(ws, regen = false){
   const old = DB.stories.find(x => x.week === ws); if (old && !regen){ openStoryView(old, 0); return; }
   const list = weekDays(ws).flatMap(dayList); if (list.length < 2){ toast('برای داستان این هفته، دست‌کم دو ردپا لازمه.'); return; }
-  const keys = [...new Set(list.flatMap(e => e.emotions.map(x => x.key)))], allowed = keys.map(labelOf);
+  const keys = [...new Set(list.flatMap(e => e.emotions.map(x => x.key)))];
   const wk = aggregate(list, 'w' + ws).items.map(x => x.key);
   const el = openStoryShell();
   const lk0 = pageLook(null, wk);
   el.innerHTML = storyShell(lk0, `<div class="st-page loading">${patSVG(wk[0] || null, 0)}<img class="st-art breathe" alt="" src="${renderArt(aggregate(list, 'w' + ws), lk0.dk)}">
     <div class="st-txt"><p class="st-k">${weekRange(ws)}</p><p class="st-text">دارم هفته‌ات رو مرور می‌کنم…</p><p class="st-note">فقط ردپاها و یادداشت‌های همین هفته خونده می‌شه.</p></div></div>`);
   el.querySelector<HTMLElement>('.st-x').focus();
-  let res = null, source = 'local';
-  const sample = await getSample();
-  if (sample && S.story && S.story.el === el){
+  /* signed in: Claude writes it on the server (the week's notes go along for this one request only);
+     otherwise, or when that fails, a plain summary is written here */
+  let st = null;
+  if (isSignedIn() && S.story && S.story.el === el){
     const ctl = new AbortController(); S.story.ctl = ctl;
-    try { res = normStory(await sample.json(storyPrompt(ws, list, allowed), { signal: ctl.signal, modelTier: 'default' }), allowed); source = 'writer'; }
-    catch (e){ if (e && e.code === 'cancelled') return; res = null; }
+    try {
+      const entries = list.map(e => ({ day: e.day, time: e.time, emotions: e.emotions.map(x => ({ key: x.key, parent: x.parent ?? null, custom: !!x.custom, color: x.color ?? null })), context: e.context ?? null, note: (e.note || '').slice(0, 2000) }));
+      const { story } = await api.writeStory({ week: ws, entries, weekKeys: wk }, ctl.signal);
+      st = { ...story, weekKeys: wk, seen: false };
+    } catch (e){ if (e && e.name === 'AbortError') return; st = null; }
   }
   if (!S.story || S.story.el !== el) return;
-  if (!res) res = localStory(list);
-  const toKey = l => l ? (keys.find(k => labelOf(k) === l) || null) : null;
-  const st = { id: uid(), week: ws, createdAt: new Date().toISOString(), title: res.title, pages: res.pages.map(p => ({ key: toKey(p.label), text: p.text })), weekKeys: wk, source, seen: false };
+  if (!st){
+    const res = localStory(list);
+    const toKey = l => l ? (keys.find(k => labelOf(k) === l) || null) : null;
+    st = { id: uid(), week: ws, createdAt: new Date().toISOString(), title: res.title, pages: res.pages.map(p => ({ key: toKey(p.label), text: p.text })), weekKeys: wk, source: 'local', seen: false };
+  }
   DB.stories = DB.stories.filter(x => x.week !== ws).concat(st); persist();
   openStoryView(st, 0, el);
 }

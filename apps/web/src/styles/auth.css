@@ -1,0 +1,17 @@
+/* Sign-in sheet and account additions (same tokens and shapes as the rest of the app). */
+.auth .fine{max-width:none}
+.authform{display:grid;gap:8px;margin-top:14px}
+.authform label{font-size:13px;font-weight:600;color:var(--ink-2);margin-top:6px}
+.authform label small{font-weight:400;color:var(--ink-3)}
+.authform .inp{width:100%;box-sizing:border-box}
+.authform .inp.code{font-size:22px;letter-spacing:.35em;text-align:center;font-variant-numeric:tabular-nums}
+.authform .primary{margin-top:10px;width:100%}
+.auth-err{margin:4px 0 0;font-size:13px;color:var(--danger)}
+.auth .btnrow{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px}
+.auth > .link{margin-top:10px}
+.gsi{display:flex;justify-content:center;min-height:48px;margin:18px 0 6px}
+.auth-btns{grid-column:1/-1;display:grid;gap:8px}
+.auth-btns .gbtn{width:100%}
+.login-acts .gbtn + .gbtn{margin-top:2px}
+.danger-link{color:var(--danger);margin-top:14px}
+.danger-link:hover{color:var(--danger)}
