@@ -1,0 +1,69 @@
+import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { authCodes, users } from '../../db/schema';
+import { hmac, safeEqual, sixDigits } from '../../lib/crypto';
+import { AppError, tooMany } from '../../lib/errors';
+import type { Deps } from '../../app';
+import type { GoogleProfile } from './google';
+
+const CODE_TTL_MS = 10 * 60_000;
+const MAX_ATTEMPTS = 5;
+const MAX_CODES_PER_HOUR = 5;
+
+export function authService(deps: Deps) {
+  const { db } = deps.db;
+  const hashCode = (email: string, code: string) => hmac(deps.config.AUTH_SECRET, `${email}:${code}`);
+
+  return {
+    /** Creates and mails a 6-digit code. Silent about whether the address has an account. */
+    async requestCode(email: string): Promise<void> {
+      const hourAgo = new Date(Date.now() - 3_600_000);
+      const [{ n }] = await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(authCodes)
+        .where(and(eq(authCodes.email, email), gt(authCodes.createdAt, hourAgo)));
+      if (n >= MAX_CODES_PER_HOUR) throw tooMany('too_many_codes');
+      const code = sixDigits();
+      await db.insert(authCodes).values({ email, codeHash: hashCode(email, code), expiresAt: new Date(Date.now() + CODE_TTL_MS) });
+      await deps.mailer.sendLoginCode(email, code);
+    },
+
+    /** Checks the newest live code for the address and returns the (possibly new) user id. */
+    async verifyCode(email: string, code: string, name?: string): Promise<string> {
+      const [row] = await db
+        .select()
+        .from(authCodes)
+        .where(and(eq(authCodes.email, email), isNull(authCodes.consumedAt), gt(authCodes.expiresAt, new Date())))
+        .orderBy(desc(authCodes.createdAt))
+        .limit(1);
+      if (!row || row.attempts >= MAX_ATTEMPTS) throw new AppError(400, 'code_expired');
+      if (!safeEqual(row.codeHash, hashCode(email, code))) {
+        await db.update(authCodes).set({ attempts: row.attempts + 1 }).where(eq(authCodes.id, row.id));
+        throw new AppError(400, 'code_wrong');
+      }
+      await db.update(authCodes).set({ consumedAt: new Date() }).where(eq(authCodes.id, row.id));
+      const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existing) return existing.id;
+      const [u] = await db.insert(users).values({ email, name: (name ?? '').trim().slice(0, 24), provider: 'email' }).returning();
+      return u.id;
+    },
+
+    /** Finds the user for a Google account, linking by verified email when one already signed in with a code. */
+    async googleUser(p: GoogleProfile): Promise<string> {
+      const [bySub] = await db.select().from(users).where(eq(users.googleSub, p.sub)).limit(1);
+      if (bySub) return bySub.id;
+      if (p.email && p.emailVerified) {
+        const email = p.email.toLowerCase();
+        const [byEmail] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        if (byEmail) {
+          await db.update(users).set({ googleSub: p.sub, name: byEmail.name || p.name.slice(0, 24) }).where(eq(users.id, byEmail.id));
+          return byEmail.id;
+        }
+      }
+      const [u] = await db
+        .insert(users)
+        .values({ googleSub: p.sub, email: p.emailVerified && p.email ? p.email.toLowerCase() : null, name: p.name.slice(0, 24), provider: 'google' })
+        .returning();
+      return u.id;
+    },
+  };
+}
