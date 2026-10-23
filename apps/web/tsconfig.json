@@ -10,5 +10,5 @@
     "noImplicitAny": false,
     "noImplicitThis": false
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "test", "vite.config.ts", "vitest.config.ts"]
 }

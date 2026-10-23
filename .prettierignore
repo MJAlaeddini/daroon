@@ -6,3 +6,4 @@ apps/web/public
 apps/web/e2e/probes.js
 **/test-results
 **/playwright-report
+apps/web/index.html

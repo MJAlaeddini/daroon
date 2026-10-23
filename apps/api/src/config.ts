@@ -24,7 +24,11 @@ const Env = z.object({
   /** Sign-in attempts allowed per IP address every 15 minutes. */
   AUTH_RATE_LIMIT: z.coerce.number().int().min(1).default(8),
   STORIES_PER_DAY: z.coerce.number().int().min(0).default(12),
-  TRUST_PROXY: z.coerce.boolean().default(false),
+  /** Set to true behind a reverse proxy (Caddy) so client addresses come from X-Forwarded-For. */
+  TRUST_PROXY: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true' || v === '1'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 export type Config = z.infer<typeof Env> & { isProd: boolean };

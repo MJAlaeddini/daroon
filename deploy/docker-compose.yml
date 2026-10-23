@@ -1,0 +1,57 @@
+# Production stack for one server: PostgreSQL, the API, and Caddy serving the app with HTTPS.
+# Usage (from the repository root on the server): docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+name: daroon
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: daroon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: daroon
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U daroon -d daroon']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: { context: .., dockerfile: deploy/api.Dockerfile }
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://daroon:${POSTGRES_PASSWORD}@db:5432/daroon
+      APP_ORIGIN: https://${DOMAIN:?set DOMAIN in deploy/.env}
+      TRUST_PROXY: 'true'
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in deploy/.env}
+      SMTP_URL: ${SMTP_URL:?set SMTP_URL in deploy/.env}
+      MAIL_FROM: ${MAIL_FROM}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+      STORIES_PER_DAY: ${STORIES_PER_DAY:-12}
+
+  web:
+    build: { context: .., dockerfile: deploy/web.Dockerfile }
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in deploy/.env}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
