@@ -1,0 +1,67 @@
+import { fa, fmtDay } from '@daroon/shared';
+import { $, esc } from '../core/util';
+import { avatarHTML } from '../features/account';
+import { mqReduce, reduced } from '../sculpture/engine';
+import { pickAnchor, usingGL } from '../stage/stage';
+import { S, syncEngine } from '../state/app';
+import { DB, visible } from '../state/store';
+import { IC } from './icons';
+import { dayDetailHTML, monthHTML, weekHTML } from '../views/archive';
+
+/* sheets */
+export function openSheet(kind: string, html: string, label?: string){
+  S.sheet = kind; const L = $('#layer'); L.classList.remove('out');
+  L.innerHTML = `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${label}"><span class="grab" aria-hidden="true"></span>${html}</div>`;
+  S.sheetReturn = document.activeElement; syncEngine();
+  requestAnimationFrame(() => { pickAnchor(); const f = L.querySelector('[data-autofocus], h2[tabindex], .sheet button'); f && f.focus({ preventScroll: true }); });
+}
+export function fillDaySheet(){ const L = $('#layer .sheet'); if (!L) return; const { head, body } = dayDetailHTML(S.arch.sel, true);
+  L.innerHTML = `<span class="grab" aria-hidden="true"></span><div class="sheet-top"><span></span><button class="quiet" data-act="closeSheet">بستن</button></div>${head}<div class="sheet-scroll">${body}</div>`; requestAnimationFrame(pickAnchor); }
+export function openDaySheet(k){ S.arch.sel = k; const { head, body } = dayDetailHTML(k, true);
+  openSheet('day', `<div class="sheet-top"><span></span><button class="quiet" data-act="closeSheet">بستن</button></div>${head}<div class="sheet-scroll">${body}</div>`, fmtDay(k)); }
+export function closeSheet(instant = false){ if (!S.sheet) return; const L = $('#layer'); S.sheet = null; S.confirmDel = null;
+  const done = () => { L.innerHTML = ''; L.classList.remove('out'); };
+  if (instant || reduced()) done(); else { L.classList.add('out'); L.querySelector('.sheet')?.classList.add('out'); setTimeout(done, 280); }
+  syncEngine(); requestAnimationFrame(pickAnchor); if (S.view === 'archive' && !instant) refreshArchiveSelOnly(); S.sheetReturn && S.sheetReturn.focus && S.sheetReturn.focus({ preventScroll: true }); }
+export function refreshArchiveSelOnly(){ const cal = $('#archCal'); if (cal) cal.innerHTML = S.arch.mode === 'month' ? monthHTML() : weekHTML(); }
+export function settingsHTML(){
+  const s = DB.settings, dirs = [
+    ['auto','پیروی از دستگاه','روشن یا تیره، مثل دستگاهت','linear-gradient(110deg,#f8f6f4 50%,#110e18 50%)','#c9b8e8','#c9b8e8'],
+    ['night','هاله‌ی شب','جوهر و بنفش نیمه‌شب','radial-gradient(circle at 50% 40%,#2a2040,#110e18)','radial-gradient(circle at 35% 30%,#fff,#b9a6e3 50%,#5a4a8a)','#b9a6e3'],
+    ['light','روشنای ادبی','چینی سفید، مه یاسی و هلویی','radial-gradient(circle at 80% 0%,#ece7f4,#f8f6f4 60%)','radial-gradient(circle at 35% 30%,#fff,#e9b7a3 55%,#9f8fd0)','#e9b7a3'],
+    ['spectrum','طیف واکنشی','رنگ‌های پرتر؛ فضا با احساس همرنگ می‌شه','radial-gradient(circle at 40% 40%,#3a1d3c,#0e0b16 70%)','conic-gradient(from 30deg,#f2b083,#cf6a8b,#7e74b2,#5f9693,#f2b083)','#cf6a8b'],
+  ];
+  const sw = (act, on, title, sub) => `<button class="swrow" role="switch" data-act="${act}" aria-checked="${on}"><span><b>${title}</b><small>${sub}</small></span><span class="sw" aria-hidden="true"></span></button>`;
+  const all = visible(), days = new Set(all.map(e => e.day)).size, words = new Set(all.flatMap(e => e.emotions.map(x => x.key))).size;
+  const acc = DB.account, page = S.setPage || 'account';
+  const row = (act, title, sub) => `<button class="navrow" data-act="${act}"><span><b>${title}</b><small>${sub}</small></span>${IC.next}</button>`;
+  if (page === 'account') return `<div class="sheet-top"><span></span><button class="ib" data-act="closeSheet" aria-label="بستن">${IC.close}</button></div>
+  <div class="sheet-scroll set">
+    <section class="profile">${avatarHTML(72)}<div><h2 class="ed" style="font-size:24px" tabindex="-1" data-autofocus>${acc ? esc(acc.name) : 'بدون حساب'}</h2>
+      <p class="fine">${acc ? `با Google · از ${fmtDay(acc.since, { weekday: false })}` : 'ردپاها فقط روی همین دستگاه هستن.'}</p></div>
+      <div class="pstats"><div><b class="num">${fa(all.length)}</b><span>ردپا</span></div><div><b class="num">${fa(days)}</b><span>روز</span></div><div><b class="num">${fa(words)}</b><span>کلمه‌ی متفاوت</span></div></div>
+      ${acc ? '' : '<button class="gbtn" data-act="loginGoogle"><span class="g" aria-hidden="true">G</span>ادامه با Google</button>'}</section>
+    <section class="set-sec rows">${row('setPage', 'تنظیمات و ظاهر', 'حال‌وهوای بصری، کمک‌ها، داده‌ها')}${row('aboutPage', 'درباره‌ی کلمه‌ها و شکل‌ها', 'پژوهش‌ها و این‌که شکل چه چیزی نیست')}</section>
+    ${acc ? '<section class="set-sec"><button class="outline danger" data-act="signOut">خروج از حساب</button><p class="fine" style="margin-top:8px">ردپاها روی این دستگاه می‌مونن.</p></section>' : ''}
+  </div>`;
+  const head = t => `<div class="sheet-top"><button class="back" data-act="accountPage">${IC.back}حساب</button><button class="ib" data-act="closeSheet" aria-label="بستن">${IC.close}</button></div><h2 class="ed sub-h" tabindex="-1" data-autofocus>${t}</h2>`;
+  if (page === 'about') return `${head('درباره‌ی کلمه‌ها و شکل‌ها')}<div class="sheet-scroll set">
+    <section class="set-sec about">
+      <p>واژه‌های درون با الهام از پژوهش‌هایی درباره‌ی واژگان احساس در زبان فارسی انتخاب شده‌اند؛ از جمله کشکولی (${fa(2014)}) درباره‌ی ساختار واژگان احساس فارسی، محجوب‌نواز و همکاران (${fa(2024)}) درباره‌ی هنجارهای عاطفی واژه‌ها، و نعمتی و همکاران (${fa(2026)}). این منابع به انتخاب واژه‌ها جهت می‌دهند، اما شکل‌ها، رنگ‌ها و پیشنهادهای این برنامه را تأیید علمی نمی‌کنند.</p>
+      <p>شکل درون یک استعاره‌ی بصریه که با انتخاب‌های خودت ساخته می‌شه. چیزی رو اندازه نمی‌گیره و تشخیص نمی‌ده. پیشنهادهای مسیر راهنمایی از قبل نوشته شده‌اند. داستان‌های هفته رو Claude فقط از روی ردپاها و یادداشت‌های همون هفته می‌نویسه.</p>
+      ${usingGL ? '' : '<p>مرورگرت WebGL2 نداره؛ نسخه‌ی ساده‌تر شکل نمایش داده می‌شه.</p>'}</section>
+  </div>`;
+  return `${head('تنظیمات و ظاهر')}<div class="sheet-scroll set">
+    <section class="set-sec"><h3 class="sec">حال‌وهوای بصری</h3><div class="dirs" role="radiogroup" aria-label="حال‌وهوای بصری">${dirs.map(([id, t, sub, bg, sd, gl]) => `<button class="dir" role="radio" data-act="dir" data-d="${id}" aria-checked="${s.direction === id}"><span class="pv" style="background:${bg};--pvs:${sd};--pvg:${gl}"></span><span><b>${t}</b><small>${sub}</small></span></button>`).join('')}</div></section>
+    <section class="set-sec"><h3 class="sec">کمک‌ها</h3>
+      ${sw('toggleEmoji', s.emoji, 'ایموجی کمکی کنار کلمه‌ها', 'اگه نشانه‌های آشنا به تشخیص کلمه‌ها کمک می‌کنن. نشانه‌ی اصلی همیشه شکل خود احساسه.')}
+      ${sw('toggleMotion', reduced(), 'حرکت کمتر', mqReduce.matches && s.motion === 'system' ? 'دستگاهت حرکت کمتر رو خواسته.' : 'شکل آهسته‌تر نفس می‌کشه و جابه‌جایی‌ها فوری می‌شن.')}</section>
+    <section class="set-sec"><h3 class="sec">داده‌ها</h3>
+      ${sw('toggleDemo', s.showDemo, 'نمایش ردپاهای نمونه', 'ردپاهای ساختگی برای دیدن تقویم و الگوها. از ردپاهای خودت جدا نگه داشته می‌شن.')}
+      <div class="btnrow"><button class="outline" data-act="resetDemo">بازسازی نمونه‌ها</button><button class="outline danger" data-act="${S.wipeArm ? 'wipeYes' : 'wipeAsk'}">${S.wipeArm ? 'مطمئنی؟ همه‌ی ردپاهای خودت پاک می‌شه' : 'پاک کردن ردپاهای خودم'}</button></div>
+      <p class="fine">${IC.lock.replace('class="ic"', 'class="ic" style="width:14px;height:14px;vertical-align:-2px"')} همه‌چیز فقط در همین مرورگر ذخیره می‌شه و به هیچ سروری فرستاده نمی‌شه.</p></section>
+  </div>`;
+}
+export function openSettings(){ S.wipeArm = false; S.setPage = 'account'; openSheet('settings', settingsHTML(), 'حساب و تنظیمات'); }
+export function gotoSetPage(pg){ S.setPage = pg; refreshSettings(); const sh = $('#layer .sheet-scroll'); if (sh) sh.scrollTop = 0; requestAnimationFrame(() => $('#layer [data-autofocus]')?.focus({ preventScroll: true })); }
+export function refreshSettings(){ const sh = $('#layer .sheet'); if (sh && S.sheet === 'settings'){ const sc = sh.querySelector('.sheet-scroll')?.scrollTop || 0; sh.innerHTML = `<span class="grab" aria-hidden="true"></span>${settingsHTML()}`; const n = sh.querySelector('.sheet-scroll'); if (n) n.scrollTop = sc; } }

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>درون</title>
+<meta name="description" content="دفترچه‌ی شخصی احساس‌ها">
+<meta name="theme-color" content="#f8f6f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#110e18" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="درون">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preload" href="/src/assets/fonts/estedad-arabic.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+
+<div class="atmos" aria-hidden="true"></div>
+<header class="topbar">
+  <div class="topbar-in">
+    <button class="brand" data-go="today" aria-label="درون، رفتن به امروز"><span class="brand-seed" aria-hidden="true"></span>درون</button>
+    <nav class="topnav" aria-label="بخش‌ها">
+      <button data-go="today">امروز</button>
+      <button data-go="archive">ردپای من</button>
+      <button data-go="patterns">الگوها</button>
+    </nav>
+    <div class="top-actions">
+      <button class="ib" id="themeBtn" data-act="quickTheme" aria-label="روشن یا تیره"></button>
+      <button class="avatar-btn" id="avatarBtn" data-act="openSettings" aria-label="حساب و تنظیمات"></button>
+    </div>
+  </div>
+</header>
+<main id="views" aria-live="off"></main>
+<nav class="bottomnav" aria-label="بخش‌ها">
+  <div class="bn-in">
+    <button data-go="today"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg><span>امروز</span></button>
+    <button data-go="archive"><svg class="ic" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="2.6"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></g></svg><span>ردپای من</span></button>
+    <button data-go="patterns"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="12" r="5.5"/><circle cx="15" cy="12" r="5.5"/></svg><span>الگوها</span></button>
+  </div>
+</nav>
+<div class="navfade" aria-hidden="true"></div>
+<div id="stage" aria-hidden="true"><canvas id="sculpt"></canvas></div>
+<div id="layer" class="layer"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<svg id="sprite" width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="spriteDefs"></defs></svg>
+<noscript><p style="padding:24px">درون برای اجرا به جاوااسکریپت نیاز داره.</p></noscript>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

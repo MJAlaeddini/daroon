@@ -1,0 +1,53 @@
+import { jOfKey, keyAdd, wdIndex, weekStart } from '@daroon/shared';
+import { ACT, reRenderReflect } from './actions';
+import { $ } from './core/util';
+import { signIn } from './features/account';
+import { addCustom, swapGuide } from './features/draft';
+import { closeStory } from './features/stories';
+import { isDark, mqDark, mqReduce } from './sculpture/engine';
+import { pickAnchor } from './stage/stage';
+import { FLOW, S, isWide, newDraft, syncEngine } from './state/app';
+import { DB } from './state/store';
+import { selectDay } from './ui/day-select';
+import { IC } from './ui/icons';
+import { TAB, go, refreshArchive, refreshExplore, renderView } from './ui/render';
+import { closeSheet, refreshArchiveSelOnly } from './ui/sheets';
+import { applyTheme, themeChanged } from './ui/theme';
+
+/* ═════════════════════════ events ═════════════════════════ */
+document.addEventListener('click', (e: any) => {
+  const a = e.target.closest('[data-act]');
+  if (a && !a.disabled){ const f = ACT[a.dataset.act]; if (f){ e.preventDefault(); f(a, e); return; } }
+  const g = e.target.closest('[data-go]');
+  if (g){ e.preventDefault(); const v = g.dataset.go; if (v === S.view && !FLOW.has(v)){ window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (FLOW.has(S.view) && !S.editing && v !== 'today'){ /* leaving a flow keeps the draft for later */ }
+    const from = S.editing && S.view === 'reflect' ? 1 : TAB[S.view], to = TAB[v], slide = from === to ? 0 : (to > from ? -1 : 1);
+    if (S.editing && v !== 'archive'){ S.editing = null; S.draft = newDraft(); } closeSheet(true); go(v, { push: false, slide }); return; }
+  const day = e.target.closest('[data-day]');
+  if (day){ const k = day.dataset.day; if (S.view === 'today'){ S.arch.sel = k; S.arch.cursor = k; S.arch.mode = 'week'; go('archive', { push: false }); } else if (S.view === 'archive') selectDay(k, true); }
+});
+document.addEventListener('submit', (e: any) => { const lf = e.target.closest('[data-form="login"]'); if (lf){ e.preventDefault(); const v = $('#loginName').value.trim(); if (v) signIn(v); else $('#loginName').focus(); return; }
+  const f = e.target.closest('[data-form="custom"]'); if (!f) return; e.preventDefault(); const inp = f.querySelector('input');
+  if (addCustom(inp.value)){ inp.value = ''; S.customOpen = false; if (S.view === 'explore') refreshExplore(); else { syncEngine(); swapGuide(); } } });
+document.addEventListener('input', (e: any) => { if (e.target.id === 'noteInput'){ S.draft.note = e.target.value; if (S.discardArm){ S.discardArm = false; const b = $('[data-act="discard"]'); if (b) b.textContent = 'بیرون رفتن بدون ثبت'; } } });
+document.addEventListener('keydown', (e: any) => {
+  if (e.key === 'Escape'){ if (S.story){ closeStory(); return; } if (S.done){ ACT.doneClose(); return; } if (S.sheet){ closeSheet(); return; } if (S.arch.jump && S.view === 'archive'){ ACT.toggleJump(); return; } if (S.view === 'reflect' && S.draft.palette >= 0){ S.draft.palette = -1; reRenderReflect(); return; } }
+  if (S.story && S.story.st){ if (e.key === 'ArrowLeft'){ e.preventDefault(); ACT.storyNext(); return; } if (e.key === 'ArrowRight'){ e.preventDefault(); ACT.storyPrev(); return; } }
+  const cell = e.target.closest && e.target.closest('#calGrid [data-day]');
+  if (cell && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key)){
+    e.preventDefault(); const k = cell.dataset.day, wk = S.arch.mode === 'week';
+    const step = { ArrowLeft: 1, ArrowRight: -1, ArrowUp: -7, ArrowDown: 7, Home: -wdIndex(k), End: 6 - wdIndex(k) }[e.key];
+    const n = keyAdd(k, step); S.arch.sel = n; const j = jOfKey(n), c = jOfKey(S.arch.cursor);
+    if ((!wk && (j.jy !== c.jy || j.jm !== c.jm)) || (wk && weekStart(n) !== weekStart(S.arch.cursor))) S.arch.cursor = n;
+    if (isWide() || wk) refreshArchive(); else refreshArchiveSelOnly();
+    $(`#calGrid [data-day="${n}"]`)?.focus();
+  }
+});
+document.addEventListener('focusin', (e: any) => { if (e.target.matches('input, textarea') && !isWide()) document.body.dataset.kb = '1'; });
+document.addEventListener('focusout', (e: any) => { if (e.target.matches('input, textarea')) document.body.dataset.kb = '0'; });
+export let lastWide = isWide(), rT;
+addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { const w = isWide(); if (w !== lastWide){ lastWide = w; if (S.sheet === 'day' && w) closeSheet(true); renderView({ quiet: true }); } else requestAnimationFrame(pickAnchor); }, 120); });
+mqDark.addEventListener?.('change', () => { if (DB.settings.direction === 'auto') themeChanged(); });
+mqReduce.addEventListener?.('change', () => applyTheme(false));
+new MutationObserver(() => { const t = $('#themeBtn'); if (t) t.innerHTML = isDark() ? IC.sun : IC.moon; }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+document.addEventListener('load', (e: any) => { if (e.target.classList && e.target.classList.contains('tr')) e.target.style.opacity = ''; }, true);

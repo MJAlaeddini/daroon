@@ -1,0 +1,4 @@
+/* Document defaults the prototype relied on from its host page. */
+body{margin:0;font:14px system-ui}
+img{max-width:100%}
+[hidden]{display:none!important}
