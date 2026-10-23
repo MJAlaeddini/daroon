@@ -5,8 +5,16 @@ import type { Deps } from '../../app';
 
 type Row = typeof entries.$inferSelect;
 const toWire = (r: Row): SyncedEntry => ({
-  id: r.id, day: r.day, time: r.time, emotions: r.emotions, suggested: r.suggested, context: r.context, unnamed: r.unnamed,
-  path: r.path as SyncedEntry['path'], createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+  id: r.id,
+  day: r.day,
+  time: r.time,
+  emotions: r.emotions,
+  suggested: r.suggested,
+  context: r.context,
+  unnamed: r.unnamed,
+  path: r.path as SyncedEntry['path'],
+  createdAt: r.createdAt.toISOString(),
+  updatedAt: r.updatedAt.toISOString(),
   deletedAt: r.deletedAt ? r.deletedAt.toISOString() : null,
 });
 
@@ -23,9 +31,19 @@ export function entriesService(deps: Deps) {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
         for (const c of changes) {
           const values = {
-            userId, id: c.id, day: c.day, time: c.time, emotions: c.emotions, suggested: c.suggested, context: c.context,
-            unnamed: c.unnamed, path: c.path, createdAt: new Date(c.createdAt), updatedAt: new Date(c.updatedAt),
-            deletedAt: c.deletedAt ? new Date(c.deletedAt) : null, seq: sql`nextval('entry_seq')`,
+            userId,
+            id: c.id,
+            day: c.day,
+            time: c.time,
+            emotions: c.emotions,
+            suggested: c.suggested,
+            context: c.context,
+            unnamed: c.unnamed,
+            path: c.path,
+            createdAt: new Date(c.createdAt),
+            updatedAt: new Date(c.updatedAt),
+            deletedAt: c.deletedAt ? new Date(c.deletedAt) : null,
+            seq: sql`nextval('entry_seq')`,
           };
           const { userId: _u, id: _i, createdAt: _c, ...update } = values;
           await tx

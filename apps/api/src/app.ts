@@ -46,7 +46,8 @@ export async function buildApp(deps: Deps, opts: { logger?: boolean | object } =
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof AppError) return reply.code(err.status).send({ error: err.code, message: err.message });
     const e = err as { statusCode?: number; code?: string; message?: string };
-    if (e.statusCode && e.statusCode < 500) return reply.code(e.statusCode).send({ error: e.code ?? 'bad_request', message: e.message });
+    if (e.statusCode && e.statusCode < 500)
+      return reply.code(e.statusCode).send({ error: e.code ?? 'bad_request', message: e.message });
     req.log.error({ err }, 'unhandled error');
     return reply.code(500).send({ error: 'internal' });
   });

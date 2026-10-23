@@ -2,8 +2,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { client, entry, harness, signInWithEmail, type Harness } from './helpers';
 
 let h: Harness;
-beforeAll(async () => { h = await harness(); });
-afterAll(async () => { await h.close(); });
+beforeAll(async () => {
+  h = await harness();
+});
+afterAll(async () => {
+  await h.close();
+});
 
 describe('sync', () => {
   it('needs an account', async () => {
@@ -17,7 +21,8 @@ describe('sync', () => {
     await tablet.post('/api/auth/email/request', { email: 'two@example.com' });
     await tablet.post('/api/auth/email/verify', { email: 'two@example.com', code: h.codes.get('two@example.com') });
 
-    const a = entry(), b = entry({ emotions: [], unnamed: true });
+    const a = entry(),
+      b = entry({ emotions: [], unnamed: true });
     const r1 = (await phone.post('/api/sync', { since: 0, changes: [a, b] })).json();
     expect(r1.changes).toHaveLength(2);
 
@@ -26,8 +31,16 @@ describe('sync', () => {
     expect(r2.cursor).toBe(r1.cursor);
 
     // tablet edits a; phone sends an older edit of a, which must lose
-    const newer = { ...a, emotions: [{ key: 'آرامش', parent: 'آرامش' }], updatedAt: new Date(Date.parse(a.updatedAt) + 60_000).toISOString() };
-    const older = { ...a, emotions: [{ key: 'خشم', parent: 'خشم' }], updatedAt: new Date(Date.parse(a.updatedAt) + 1_000).toISOString() };
+    const newer = {
+      ...a,
+      emotions: [{ key: 'آرامش', parent: 'آرامش' }],
+      updatedAt: new Date(Date.parse(a.updatedAt) + 60_000).toISOString(),
+    };
+    const older = {
+      ...a,
+      emotions: [{ key: 'خشم', parent: 'خشم' }],
+      updatedAt: new Date(Date.parse(a.updatedAt) + 1_000).toISOString(),
+    };
     await tablet.post('/api/sync', { since: r2.cursor, changes: [newer] });
     const r3 = (await phone.post('/api/sync', { since: r1.cursor, changes: [older] })).json();
     const got = r3.changes.find((e: { id: string }) => e.id === a.id);
@@ -48,7 +61,10 @@ describe('sync', () => {
     const x = await signInWithEmail(h, 'x@example.com');
     const y = await signInWithEmail(h, 'y@example.com');
     await x.post('/api/sync', { since: 0, changes: [entry({ id: 'shared-id-1' })] });
-    await y.post('/api/sync', { since: 0, changes: [entry({ id: 'shared-id-1', emotions: [{ key: 'غم', parent: 'غم' }] })] });
+    await y.post('/api/sync', {
+      since: 0,
+      changes: [entry({ id: 'shared-id-1', emotions: [{ key: 'غم', parent: 'غم' }] })],
+    });
     const rx = (await x.post('/api/sync', { since: 0, changes: [] })).json();
     expect(rx.changes).toHaveLength(1);
     expect(rx.changes[0].emotions[0].key).toBe('امید');
@@ -59,7 +75,14 @@ describe('sync', () => {
     const r = await c.post('/api/sync', { since: 0, changes: [entry({ emotions: [{ key: 'نامعلوم' }] })] });
     expect(r.statusCode).toBe(400);
     expect((await c.post('/api/sync', { since: 0, changes: [entry({ day: '1405/08/01' })] })).statusCode).toBe(400);
-    expect((await c.post('/api/sync', { since: 0, changes: [entry({ emotions: [1, 2, 3, 4].map(() => ({ key: 'امید' })) })] })).statusCode).toBe(400);
+    expect(
+      (
+        await c.post('/api/sync', {
+          since: 0,
+          changes: [entry({ emotions: [1, 2, 3, 4].map(() => ({ key: 'امید' })) })],
+        })
+      ).statusCode,
+    ).toBe(400);
   });
 
   it('accepts custom words and personal colours', async () => {

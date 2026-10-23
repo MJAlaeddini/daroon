@@ -7,7 +7,13 @@ import type { Deps } from '../../app';
 
 type Row = typeof stories.$inferSelect;
 const toWire = (r: Row): Story => ({
-  id: r.id, week: r.week, title: r.title, pages: r.pages, weekKeys: r.weekKeys, source: r.source, createdAt: r.createdAt.toISOString(),
+  id: r.id,
+  week: r.week,
+  title: r.title,
+  pages: r.pages,
+  weekKeys: r.weekKeys,
+  source: r.source,
+  createdAt: r.createdAt.toISOString(),
 });
 
 export function storiesService(deps: Deps) {
@@ -28,7 +34,10 @@ export function storiesService(deps: Deps) {
       const [usage] = await db
         .insert(storyUsage)
         .values({ userId, day: today, count: 1 })
-        .onConflictDoUpdate({ target: [storyUsage.userId, storyUsage.day], set: { count: sql`${storyUsage.count} + 1` } })
+        .onConflictDoUpdate({
+          target: [storyUsage.userId, storyUsage.day],
+          set: { count: sql`${storyUsage.count} + 1` },
+        })
         .returning();
       if (usage.count > deps.config.STORIES_PER_DAY) throw tooMany('story_limit');
 
@@ -41,11 +50,16 @@ export function storiesService(deps: Deps) {
         deps.log.warn({ err: e }, 'story writer failed');
         throw unavailable('writer_failed');
       }
-      const toKey = (l: string | null) => (l ? keys.find((k) => labelOf(k) === l) ?? null : null);
+      const toKey = (l: string | null) => (l ? (keys.find((k) => labelOf(k) === l) ?? null) : null);
       const row = {
-        userId, week: req.week, id: randomToken(9), title: draft.title,
+        userId,
+        week: req.week,
+        id: randomToken(9),
+        title: draft.title,
         pages: draft.pages.map((p) => ({ key: toKey(p.label), text: p.text })),
-        weekKeys: req.weekKeys, source: 'writer' as const, createdAt: new Date(),
+        weekKeys: req.weekKeys,
+        source: 'writer' as const,
+        createdAt: new Date(),
       };
       const { userId: _u, week: _w, ...update } = row;
       const [saved] = await db

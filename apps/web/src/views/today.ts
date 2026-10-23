@@ -5,12 +5,20 @@ import { traceImg } from '../sculpture/traces';
 import { DB, dayList } from '../state/store';
 import { IC } from '../ui/icons';
 
-export function vToday(){
-  const tk = todayKey(), ws = weekStart(tk), cnt = dayList(tk).length;
-  const days = [...Array(7)].map((_, i) => { const k = keyAdd(ws, i), j = jOfKey(k), list = dayList(k);
-    return `<button class="wk-day ${k === tk ? 'is-today' : ''} ${k > tk ? 'is-future' : ''}" data-day="${k}" aria-label="${fmtDay(k)}، ${list.length ? fa(list.length) + ' ردپا' : 'بدون ردپا'}">
+export function vToday() {
+  const tk = todayKey(),
+    ws = weekStart(tk),
+    cnt = dayList(tk).length;
+  const days = [...Array(7)]
+    .map((_, i) => {
+      const k = keyAdd(ws, i),
+        j = jOfKey(k),
+        list = dayList(k);
+      return `<button class="wk-day ${k === tk ? 'is-today' : ''} ${k > tk ? 'is-future' : ''}" data-day="${k}" aria-label="${fmtDay(k)}، ${list.length ? fa(list.length) + ' ردپا' : 'بدون ردپا'}">
       <span class="wk-wd">${WD_S[i]}</span><span class="wk-dn num">${fa(j.jd)}</span>
-      <span class="wk-tr">${list.length ? traceImg(daySpec(k)) : '<span class="wk-empty"></span>'}</span></button>`; }).join('');
+      <span class="wk-tr">${list.length ? traceImg(daySpec(k)) : '<span class="wk-empty"></span>'}</span></button>`;
+    })
+    .join('');
   return `<div class="t-grid">
     <div class="t-copy">
       <p class="eyebrow r" style="--i:0">${fmtDay(tk)}${DB.account ? ` · سلام ${esc(DB.account.name)}` : ''}</p>

@@ -11,10 +11,14 @@ export default async function storyRoutes(app: FastifyInstance, { deps }: { deps
 
   app.get('/stories', async (req) => ({ stories: await svc.list(req.user!.id), writer: !!deps.writer }));
 
-  app.post('/stories', { config: { rateLimit: { max: 20, timeWindow: '1 hour' } }, bodyLimit: 512 * 1024 }, async (req) => {
-    const body = parse(StoryRequest, req.body);
-    return { story: await svc.write(req.user!.id, body) };
-  });
+  app.post(
+    '/stories',
+    { config: { rateLimit: { max: 20, timeWindow: '1 hour' } }, bodyLimit: 512 * 1024 },
+    async (req) => {
+      const body = parse(StoryRequest, req.body);
+      return { story: await svc.write(req.user!.id, body) };
+    },
+  );
 
   app.delete('/stories/:week', async (req, reply) => {
     const { week } = parse(z.object({ week: z.string().regex(DAY_KEY) }), req.params);

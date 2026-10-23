@@ -13,12 +13,19 @@ export interface StoryEntry {
   context: { name: string; value: string } | null;
   note?: string;
 }
-export interface StoryDraft { title: string; pages: { label: string | null; text: string }[] }
+export interface StoryDraft {
+  title: string;
+  pages: { label: string | null; text: string }[];
+}
 
 export function storyPrompt(ws: string, list: StoryEntry[], allowed: string[]): string {
   const rows = list.map((e) => ({
-    روز: WD[wdIndex(e.day)], ساعت: e.time, احساس‌ها: e.emotions.map((x) => labelOf(x.key)), بی‌نام: !e.emotions.length,
-    زمینه: e.context ? `${e.context.name}: ${e.context.value}` : null, یادداشت: e.note || null,
+    روز: WD[wdIndex(e.day)],
+    ساعت: e.time,
+    احساس‌ها: e.emotions.map((x) => labelOf(x.key)),
+    بی‌نام: !e.emotions.length,
+    زمینه: e.context ? `${e.context.name}: ${e.context.value}` : null,
+    یادداشت: e.note || null,
   }));
   return `تو برای یک دفترچه‌ی شخصیِ احساس به اسم «درون»، «داستان هفته» می‌نویسی: چند صفحه‌ی کوتاه که آدم بخونه و ببینه هفته‌اش چطور گذشته.
 داده‌ها ردپاهای هفته‌ی ${weekRange(ws)} هستن که خود کاربر ثبت کرده.
@@ -55,13 +62,19 @@ export function normStory(r: unknown, allowed: string[]): StoryDraft {
       text: (p.text as string).trim().slice(0, 300),
     }));
   if (pages.length < 2) throw new Error('short');
-  return { title: String(o.title || 'هفته‌ی تو').trim().slice(0, 48), pages };
+  return {
+    title: String(o.title || 'هفته‌ی تو')
+      .trim()
+      .slice(0, 48),
+    pages,
+  };
 }
 
 /** A plain summary written without the writer. */
 export function localStory(list: StoryEntry[]): StoryDraft {
-  const cnt = new Map<string, number>(), pairs = new Map<string, number>();
-  const tod: Record<string, number> = { 'صبح': 0, 'ظهر': 0, 'عصر': 0, 'شب': 0 };
+  const cnt = new Map<string, number>(),
+    pairs = new Map<string, number>();
+  const tod: Record<string, number> = { صبح: 0, ظهر: 0, عصر: 0, شب: 0 };
   let un = 0;
   list.forEach((e) => {
     if (!e.emotions.length) un++;
@@ -70,18 +83,43 @@ export function localStory(list: StoryEntry[]): StoryDraft {
     const ks = [...new Set(e.emotions.map((x) => x.key))];
     ks.forEach((k) => cnt.set(k, (cnt.get(k) || 0) + 1));
     for (let a = 0; a < ks.length; a++)
-      for (let b = a + 1; b < ks.length; b++) { const p = [ks[a], ks[b]].join('|'); pairs.set(p, (pairs.get(p) || 0) + 1); }
+      for (let b = a + 1; b < ks.length; b++) {
+        const p = [ks[a], ks[b]].join('|');
+        pairs.set(p, (pairs.get(p) || 0) + 1);
+      }
   });
   const top = [...cnt.entries()].sort((a, b) => b[1] - a[1]);
   const days = new Set(list.map((e) => e.day)).size;
   const when = Object.entries(tod).sort((a, b) => b[1] - a[1])[0][0];
-  const L = labelOf, pages: StoryDraft['pages'] = [];
-  pages.push({ label: top[0] ? L(top[0][0]) : null, text: `این هفته ${fa(days)} روز به خودت سر زدی و ${fa(list.length)} ردپا گذاشتی. ${top.length ? `بیشتر از همه «${L(top[0][0])}» اومد.` : 'بیشترش حال‌هایی بود که هنوز اسم نداشتن.'}` });
-  if (top[0]) pages.push({ label: L(top[0][0]), text: `«${L(top[0][0])}» ${fa(top[0][1])} بار سراغت اومد، بیشتر ${when}‌ها. شاید بد نباشه یادت بیاد اون لحظه‌ها چی کنارش بود.` });
-  if (top[1]) pages.push({ label: L(top[1][0]), text: `کنارش «${L(top[1][0])}» هم بود. یه هفته می‌تونه هم این باشه، هم اون.` });
+  const L = labelOf,
+    pages: StoryDraft['pages'] = [];
+  pages.push({
+    label: top[0] ? L(top[0][0]) : null,
+    text: `این هفته ${fa(days)} روز به خودت سر زدی و ${fa(list.length)} ردپا گذاشتی. ${top.length ? `بیشتر از همه «${L(top[0][0])}» اومد.` : 'بیشترش حال‌هایی بود که هنوز اسم نداشتن.'}`,
+  });
+  if (top[0])
+    pages.push({
+      label: L(top[0][0]),
+      text: `«${L(top[0][0])}» ${fa(top[0][1])} بار سراغت اومد، بیشتر ${when}‌ها. شاید بد نباشه یادت بیاد اون لحظه‌ها چی کنارش بود.`,
+    });
+  if (top[1])
+    pages.push({ label: L(top[1][0]), text: `کنارش «${L(top[1][0])}» هم بود. یه هفته می‌تونه هم این باشه، هم اون.` });
   const pr = [...pairs.entries()].sort((a, b) => b[1] - a[1])[0];
-  if (pr) { const [a, b] = pr[0].split('|'); pages.push({ label: L(a), text: `«${L(a)}» و «${L(b)}» با هم اومدن. گاهی دو حال کنار هم می‌شینن و هیچ‌کدوم اون یکی رو کنار نمی‌زنه.` }); }
-  if (un) pages.push({ label: null, text: `${fa(un)} بار هم حالی داشتی که اسمی براش انتخاب نکردی. اون هم بخشی از این هفته بود، همون‌طور که بود.` });
-  pages.push({ label: top[0] ? L(top[0][0]) : null, text: 'اگه بخوای این هفته رو فقط با یه کلمه‌ی دیگه بگی، اون کلمه چیه؟' });
+  if (pr) {
+    const [a, b] = pr[0].split('|');
+    pages.push({
+      label: L(a),
+      text: `«${L(a)}» و «${L(b)}» با هم اومدن. گاهی دو حال کنار هم می‌شینن و هیچ‌کدوم اون یکی رو کنار نمی‌زنه.`,
+    });
+  }
+  if (un)
+    pages.push({
+      label: null,
+      text: `${fa(un)} بار هم حالی داشتی که اسمی براش انتخاب نکردی. اون هم بخشی از این هفته بود، همون‌طور که بود.`,
+    });
+  pages.push({
+    label: top[0] ? L(top[0][0]) : null,
+    text: 'اگه بخوای این هفته رو فقط با یه کلمه‌ی دیگه بگی، اون کلمه چیه؟',
+  });
   return { title: top[0] ? `هفته‌ای به رنگ ${L(top[0][0])}` : 'هفته‌ای بی‌نام', pages: pages.slice(0, 6) };
 }

@@ -3,8 +3,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { entry, harness, signInWithEmail, type Harness } from './helpers';
 
 let h: Harness;
-beforeAll(async () => { h = await harness(); });
-afterAll(async () => { await h.close(); });
+beforeAll(async () => {
+  h = await harness();
+});
+afterAll(async () => {
+  await h.close();
+});
 
 describe('account', () => {
   it('renames, exports and deletes everything', async () => {
@@ -17,7 +21,9 @@ describe('account', () => {
 
     expect((await c.del('/api/me')).statusCode).toBe(204);
     expect((await c.get('/api/me')).statusCode).toBe(401);
-    const left = await h.db.db.execute(sql`select (select count(*) from users)::int u, (select count(*) from entries)::int e, (select count(*) from sessions)::int s`);
+    const left = await h.db.db.execute(
+      sql`select (select count(*) from users)::int u, (select count(*) from entries)::int e, (select count(*) from sessions)::int s`,
+    );
     expect(left.rows[0]).toEqual({ u: 0, e: 0, s: 0 });
   });
 

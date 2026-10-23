@@ -20,10 +20,22 @@ export const onSessionExpired = (fn: () => void) => expiredListeners.add(fn);
 
 function toWire(e): SyncedEntry {
   return {
-    id: e.id, day: e.day, time: e.time,
-    emotions: e.emotions.map((x) => ({ key: x.key, parent: x.parent ?? null, custom: !!x.custom, color: x.color ?? null })),
-    suggested: (e.suggested || []).slice(0, 8), context: e.context ?? null, unnamed: !!e.unnamed,
-    path: e.path === 'guide' ? 'guide' : 'explore', createdAt: e.createdAt, updatedAt: e.updatedAt || e.createdAt, deletedAt: e.deletedAt ?? null,
+    id: e.id,
+    day: e.day,
+    time: e.time,
+    emotions: e.emotions.map((x) => ({
+      key: x.key,
+      parent: x.parent ?? null,
+      custom: !!x.custom,
+      color: x.color ?? null,
+    })),
+    suggested: (e.suggested || []).slice(0, 8),
+    context: e.context ?? null,
+    unnamed: !!e.unnamed,
+    path: e.path === 'guide' ? 'guide' : 'explore',
+    createdAt: e.createdAt,
+    updatedAt: e.updatedAt || e.createdAt,
+    deletedAt: e.deletedAt ?? null,
   };
 }
 
@@ -55,7 +67,8 @@ async function run(): Promise<void> {
   const sent = new Map(batch.map((e) => [e.id, e.updatedAt || e.createdAt]));
   try {
     const res = await api.sync(DB.sync.cursor || 0, batch.map(toWire));
-    for (const e of DB.entries) if (sent.has(e.id) && (e.updatedAt || e.createdAt) === sent.get(e.id)) e.syncedAt = sent.get(e.id);
+    for (const e of DB.entries)
+      if (sent.has(e.id) && (e.updatedAt || e.createdAt) === sent.get(e.id)) e.syncedAt = sent.get(e.id);
     const changed = merge(res.changes);
     DB.sync.cursor = res.cursor;
     DB.sync.at = new Date().toISOString();
@@ -71,10 +84,16 @@ async function run(): Promise<void> {
 
 /** Runs a sync now, or right after the one in flight. */
 export function syncNow(): Promise<void> {
-  if (running) { again = true; return running; }
+  if (running) {
+    again = true;
+    return running;
+  }
   running = run().finally(() => {
     running = null;
-    if (again) { again = false; scheduleSync(300); }
+    if (again) {
+      again = false;
+      scheduleSync(300);
+    }
   });
   return running;
 }
@@ -91,9 +110,15 @@ export function resetSync() {
 }
 
 export function startSync() {
-  onPersist(() => { if (isSignedIn() && pending().length) scheduleSync(); });
+  onPersist(() => {
+    if (isSignedIn() && pending().length) scheduleSync();
+  });
   addEventListener('online', () => scheduleSync(200));
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') scheduleSync(200); });
-  setInterval(() => { if (document.visibilityState === 'visible') syncNow(); }, 60_000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') scheduleSync(200);
+  });
+  setInterval(() => {
+    if (document.visibilityState === 'visible') syncNow();
+  }, 60_000);
   if (isSignedIn()) scheduleSync(400);
 }

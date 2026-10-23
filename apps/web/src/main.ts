@@ -18,10 +18,13 @@ import { applyTheme } from './ui/theme';
 import { setupPwa } from './pwa';
 
 /* ═════════════════════════ boot ═════════════════════════ */
-document.documentElement.lang = 'fa'; document.documentElement.dir = 'rtl';
+document.documentElement.lang = 'fa';
+document.documentElement.dir = 'rtl';
 load();
 if (DB.account && !DB.account.id) DB.account = null; /* a sample account from the prototype */
-reindex(); applyTheme(false); refreshAvatar();
+reindex();
+applyTheme(false);
+refreshAvatar();
 if (!DB.account && !DB.loginDone) S.view = 'login';
 renderView();
 requestAnimationFrame(frame);
@@ -29,12 +32,15 @@ requestAnimationFrame(frame);
 /* account & sync: the app works fully offline; the server only adds sign-in, sync and written stories */
 loadAuthConfig();
 onSessionExpired(sessionExpired);
-onSynced(changed => {
+onSynced((changed) => {
   refreshAvatar();
-  if (changed && ['today', 'archive', 'patterns'].includes(S.view) && !S.sheet && !S.story && !S.done) renderView({ quiet: true });
+  if (changed && ['today', 'archive', 'patterns'].includes(S.view) && !S.sheet && !S.story && !S.done)
+    renderView({ quiet: true });
 });
 startSync();
 setupPwa();
 if (DB.account) pullStories();
 if (new URLSearchParams(location.search).has('e2e')) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
-try { mini.draw(buildU(staticState({ items: [], neutral: 1, seed: 0 }), .5, .7)); } catch (e){} /* compile the trace shader before the first calendar needs it */
+try {
+  mini.draw(buildU(staticState({ items: [], neutral: 1, seed: 0 }), 0.5, 0.7));
+} catch (e) {} /* compile the trace shader before the first calendar needs it */

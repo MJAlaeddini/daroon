@@ -21,30 +21,83 @@ export interface Harness {
 
 /** A fresh database and an app wired with fake mail, Google and writer. */
 export async function harness(overrides: Partial<Deps> = {}, env: Record<string, string> = {}): Promise<Harness> {
-  const config = loadConfig({ NODE_ENV: 'test', DATABASE_URL: DB_URL, APP_ORIGIN: ORIGIN, AUTH_SECRET: 'x'.repeat(40), STORIES_PER_DAY: '3', AUTH_RATE_LIMIT: '1000', ...env });
+  const config = loadConfig({
+    NODE_ENV: 'test',
+    DATABASE_URL: DB_URL,
+    APP_ORIGIN: ORIGIN,
+    AUTH_SECRET: 'x'.repeat(40),
+    STORIES_PER_DAY: '3',
+    AUTH_RATE_LIMIT: '1000',
+    ...env,
+  });
   const db = connect(DB_URL);
-  await db.db.execute(sql`drop schema if exists public cascade; drop schema if exists drizzle cascade; create schema public;`);
+  await db.db.execute(
+    sql`drop schema if exists public cascade; drop schema if exists drizzle cascade; create schema public;`,
+  );
   await runMigrations(db.db);
-  const codes = new Map<string, string>(), google = new Map<string, GoogleProfile>();
-  const writerReplies: unknown[] = [], writerPrompts: string[] = [];
+  const codes = new Map<string, string>(),
+    google = new Map<string, GoogleProfile>();
+  const writerReplies: unknown[] = [],
+    writerPrompts: string[] = [];
   const quiet = { info: () => {}, warn: () => {} };
   const app = await buildApp({
-    config, db, log: quiet,
-    mailer: { async sendLoginCode(to, code) { codes.set(to, code); } },
-    google: { async verify(c) { const p = google.get(c); if (!p) throw new Error('bad'); return p; } },
-    writer: { async write(prompt) { writerPrompts.push(prompt); const r = writerReplies.shift(); if (r instanceof Error) throw r; return r; } },
+    config,
+    db,
+    log: quiet,
+    mailer: {
+      async sendLoginCode(to, code) {
+        codes.set(to, code);
+      },
+    },
+    google: {
+      async verify(c) {
+        const p = google.get(c);
+        if (!p) throw new Error('bad');
+        return p;
+      },
+    },
+    writer: {
+      async write(prompt) {
+        writerPrompts.push(prompt);
+        const r = writerReplies.shift();
+        if (r instanceof Error) throw r;
+        return r;
+      },
+    },
     ...overrides,
   });
-  return { app, db, codes, google, writerReplies, writerPrompts, close: async () => { await app.close(); await db.close(); } };
+  return {
+    app,
+    db,
+    codes,
+    google,
+    writerReplies,
+    writerPrompts,
+    close: async () => {
+      await app.close();
+      await db.close();
+    },
+  };
 }
 
 /** A small client that keeps the session cookie between calls, like a browser would. */
 export function client(app: FastifyInstance) {
   let cookie = '';
-  const call = async (method: string, url: string, body?: unknown, headers: Record<string, string> = {}): Promise<LightMyRequestResponse> => {
+  const call = async (
+    method: string,
+    url: string,
+    body?: unknown,
+    headers: Record<string, string> = {},
+  ): Promise<LightMyRequestResponse> => {
     const res = await app.inject({
-      method: method as 'GET', url,
-      headers: { origin: ORIGIN, ...(body !== undefined ? { 'content-type': 'application/json' } : {}), ...(cookie ? { cookie } : {}), ...headers },
+      method: method as 'GET',
+      url,
+      headers: {
+        origin: ORIGIN,
+        ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+        ...(cookie ? { cookie } : {}),
+        ...headers,
+      },
       payload: body === undefined ? undefined : JSON.stringify(body),
     });
     const set = res.cookies.find((c) => c.name === 'daroon_sid');
@@ -56,7 +109,9 @@ export function client(app: FastifyInstance) {
     post: (u: string, b: unknown = {}, h?: Record<string, string>) => call('POST', u, b, h),
     patch: (u: string, b: unknown) => call('PATCH', u, b),
     del: (u: string) => call('DELETE', u),
-    get cookie() { return cookie; },
+    get cookie() {
+      return cookie;
+    },
   };
 }
 
@@ -71,6 +126,15 @@ export async function signInWithEmail(h: Harness, email = 'sara@example.com', na
 let n = 0;
 export function entry(over: Record<string, unknown> = {}) {
   const t = new Date(Date.UTC(2026, 9, 20, 8, 0, n++)).toISOString();
-  return { id: `e${String(n).padStart(6, '0')}`, day: '2026-10-20', time: '11:30', emotions: [{ key: 'امید', parent: 'امید' }], unnamed: false,
-    path: 'explore', createdAt: t, updatedAt: t, ...over };
+  return {
+    id: `e${String(n).padStart(6, '0')}`,
+    day: '2026-10-20',
+    time: '11:30',
+    emotions: [{ key: 'امید', parent: 'امید' }],
+    unnamed: false,
+    path: 'explore',
+    createdAt: t,
+    updatedAt: t,
+    ...over,
+  };
 }

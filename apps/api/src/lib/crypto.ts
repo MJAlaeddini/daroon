@@ -5,6 +5,7 @@ export const sha256 = (s: string): string => createHash('sha256').update(s).dige
 export const hmac = (secret: string, s: string): string => createHmac('sha256', secret).update(s).digest('hex');
 export const sixDigits = (): string => String(randomInt(0, 1_000_000)).padStart(6, '0');
 export function safeEqual(a: string, b: string): boolean {
-  const x = Buffer.from(a), y = Buffer.from(b);
+  const x = Buffer.from(a),
+    y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
 }

@@ -34,7 +34,11 @@ const iso = z.iso.datetime({ offset: true });
 
 /** One saved check-in ("ردپا"). Notes never leave the device, so they are not part of the synced shape. */
 export const SyncedEntry = z.object({
-  id: z.string().min(6).max(40).regex(/^[a-z0-9-]+$/),
+  id: z
+    .string()
+    .min(6)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/),
   day: z.string().regex(DAY_KEY),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   emotions: z.array(EmotionItem).max(MAX_EMOTIONS),
@@ -54,7 +58,10 @@ export const SyncRequest = z.object({
   changes: z.array(SyncedEntry).max(500),
 });
 export type SyncRequest = z.infer<typeof SyncRequest>;
-export interface SyncResponse { cursor: number; changes: SyncedEntry[] }
+export interface SyncResponse {
+  cursor: number;
+  changes: SyncedEntry[];
+}
 
 export const StoryPage = z.object({ key: z.string().nullable(), text: z.string().max(300) });
 export const Story = z.object({
@@ -81,7 +88,11 @@ export type StoryRequest = z.infer<typeof StoryRequest>;
 
 export const Email = z.string().trim().toLowerCase().email().max(254);
 export const RequestCodeBody = z.object({ email: Email });
-export const VerifyCodeBody = z.object({ email: Email, code: z.string().regex(/^\d{6}$/), name: z.string().trim().max(24).optional() });
+export const VerifyCodeBody = z.object({
+  email: Email,
+  code: z.string().regex(/^\d{6}$/),
+  name: z.string().trim().max(24).optional(),
+});
 export const GoogleBody = z.object({ credential: z.string().min(20).max(4096) });
 export const ProfileBody = z.object({ name: z.string().trim().min(1).max(24) });
 

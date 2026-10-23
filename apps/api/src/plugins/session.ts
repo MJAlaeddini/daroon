@@ -8,7 +8,13 @@ import type { Deps } from '../app';
 
 export const SESSION_COOKIE = 'daroon_sid';
 
-export interface SessionUser { id: string; name: string; email: string | null; provider: 'email' | 'google'; createdAt: Date }
+export interface SessionUser {
+  id: string;
+  name: string;
+  email: string | null;
+  provider: 'email' | 'google';
+  createdAt: Date;
+}
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -29,7 +35,13 @@ declare module 'fastify' {
 export default fp(async function session(app: FastifyInstance, { deps }: { deps: Deps }) {
   const { db } = deps.db;
   const days = deps.config.SESSION_DAYS;
-  const cookieOpts = { path: '/api', httpOnly: true, sameSite: 'lax' as const, secure: deps.config.isProd, maxAge: days * 86400 };
+  const cookieOpts = {
+    path: '/api',
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: deps.config.isProd,
+    maxAge: days * 86400,
+  };
 
   app.decorateRequest('user', null);
   app.decorateRequest('sessionId', null);
@@ -47,11 +59,20 @@ export default fp(async function session(app: FastifyInstance, { deps }: { deps:
       .limit(1);
     const row = rows[0];
     if (!row) return;
-    req.user = { id: row.u.id, name: row.u.name, email: row.u.email, provider: row.u.provider, createdAt: row.u.createdAt };
+    req.user = {
+      id: row.u.id,
+      name: row.u.name,
+      email: row.u.email,
+      provider: row.u.provider,
+      createdAt: row.u.createdAt,
+    };
     req.sessionId = id;
     // slide the expiry at most once a day
     if (now.getTime() - row.s.lastSeenAt.getTime() > 86_400_000) {
-      await db.update(sessions).set({ lastSeenAt: now, expiresAt: new Date(now.getTime() + days * 86_400_000) }).where(eq(sessions.id, id));
+      await db
+        .update(sessions)
+        .set({ lastSeenAt: now, expiresAt: new Date(now.getTime() + days * 86_400_000) })
+        .where(eq(sessions.id, id));
     }
   });
 
@@ -62,7 +83,9 @@ export default fp(async function session(app: FastifyInstance, { deps }: { deps:
   app.decorate('startSession', async (reply: FastifyReply, req: FastifyRequest, userId: string) => {
     const token = randomToken();
     await db.insert(sessions).values({
-      id: sha256(token), userId, expiresAt: new Date(Date.now() + days * 86_400_000),
+      id: sha256(token),
+      userId,
+      expiresAt: new Date(Date.now() + days * 86_400_000),
       userAgent: String(req.headers['user-agent'] ?? '').slice(0, 200),
     });
     reply.setCookie(SESSION_COOKIE, token, cookieOpts);

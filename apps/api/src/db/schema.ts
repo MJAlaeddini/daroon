@@ -1,5 +1,17 @@
 import { sql } from 'drizzle-orm';
-import { bigint, boolean, index, integer, jsonb, pgSequence, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgSequence,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import type { EmotionItem, EntryContext } from '@daroon/shared';
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
@@ -33,7 +45,9 @@ export const sessions = pgTable(
   'sessions',
   {
     id: text('id').primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     createdAt: ts('created_at').notNull().defaultNow(),
     lastSeenAt: ts('last_seen_at').notNull().defaultNow(),
     expiresAt: ts('expires_at').notNull(),
@@ -48,12 +62,17 @@ export const entrySeq = pgSequence('entry_seq');
 export const entries = pgTable(
   'entries',
   {
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     id: text('id').notNull(),
     day: text('day').notNull(),
     time: text('time').notNull(),
     emotions: jsonb('emotions').$type<EmotionItem[]>().notNull(),
-    suggested: jsonb('suggested').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    suggested: jsonb('suggested')
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     context: jsonb('context').$type<EntryContext | null>(),
     unnamed: boolean('unnamed').notNull(),
     path: text('path').notNull(),
@@ -62,13 +81,19 @@ export const entries = pgTable(
     deletedAt: ts('deleted_at'),
     seq: bigint('seq', { mode: 'number' }).notNull(),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.id] }), index('entries_user_seq_idx').on(t.userId, t.seq), index('entries_user_day_idx').on(t.userId, t.day)],
+  (t) => [
+    primaryKey({ columns: [t.userId, t.id] }),
+    index('entries_user_seq_idx').on(t.userId, t.seq),
+    index('entries_user_day_idx').on(t.userId, t.day),
+  ],
 );
 
 export const stories = pgTable(
   'stories',
   {
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     week: text('week').notNull(),
     id: text('id').notNull(),
     title: text('title').notNull(),
@@ -84,7 +109,9 @@ export const stories = pgTable(
 export const storyUsage = pgTable(
   'story_usage',
   {
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     day: text('day').notNull(),
     count: integer('count').notNull().default(0),
   },

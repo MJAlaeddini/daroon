@@ -6,20 +6,36 @@
  */
 import { fa, pad } from './digits';
 
-export interface JDate { jy: number; jm: number; jd: number }
-export interface GDate { gy: number; gm: number; gd: number }
+export interface JDate {
+  jy: number;
+  jm: number;
+  jd: number;
+}
+export interface GDate {
+  gy: number;
+  gm: number;
+  gd: number;
+}
 
 export const jdiv = (a: number, b: number): number => ~~(a / b);
 export const jmod = (a: number, b: number): number => a - ~~(a / b) * b;
-const BREAKS = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
+const BREAKS = [
+  -61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178,
+];
 
 function jalCal(jy: number, withoutLeap: boolean): { gy: number; march: number; leap: number } {
   const gy = jy + 621;
-  let leapJ = -14, jp = BREAKS[0], jm = 0, jump = 0, i: number;
+  let leapJ = -14,
+    jp = BREAKS[0],
+    jm: number,
+    jump = 0,
+    i: number;
   for (i = 1; i < BREAKS.length; i++) {
-    jm = BREAKS[i]; jump = jm - jp;
+    jm = BREAKS[i];
+    jump = jm - jp;
     if (jy < jm) break;
-    leapJ += jdiv(jump, 33) * 8 + jdiv(jmod(jump, 33), 4); jp = jm;
+    leapJ += jdiv(jump, 33) * 8 + jdiv(jmod(jump, 33), 4);
+    jp = jm;
   }
   let n = jy - jp;
   leapJ += jdiv(n, 33) * 8 + jdiv(jmod(n, 33) + 3, 4);
@@ -40,7 +56,9 @@ export function d2g(jdn: number): GDate {
   let j = 4 * jdn + 139361631;
   j = j + jdiv(jdiv(4 * jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
   const i = jdiv(jmod(j, 1461), 4) * 5 + 308;
-  const gd = jdiv(jmod(i, 153), 5) + 1, gm = jmod(jdiv(i, 153), 12) + 1, gy = jdiv(j, 1461) - 100100 + jdiv(8 - gm, 6);
+  const gd = jdiv(jmod(i, 153), 5) + 1,
+    gm = jmod(jdiv(i, 153), 12) + 1,
+    gy = jdiv(j, 1461) - 100100 + jdiv(8 - gm, 6);
   return { gy, gm, gd };
 }
 export function j2d(jy: number, jm: number, jd: number): number {
@@ -57,7 +75,8 @@ export function d2j(jdn: number): JDate {
     if (k <= 185) return { jy, jm: 1 + jdiv(k, 31), jd: jmod(k, 31) + 1 };
     k -= 186;
   } else {
-    jy -= 1; k += 179;
+    jy -= 1;
+    k += 179;
     if (r.leap === 1) k += 1;
   }
   return { jy, jm: 7 + jdiv(k, 30), jd: jmod(k, 30) + 1 };
@@ -65,17 +84,43 @@ export function d2j(jdn: number): JDate {
 export const isLeapJ = (jy: number): boolean => jalCal(jy, false).leap === 0;
 export const jMonthLen = (jy: number, jm: number): number => (jm <= 6 ? 31 : jm <= 11 ? 30 : isLeapJ(jy) ? 30 : 29);
 
-export const J_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+export const J_MONTHS = [
+  'فروردین',
+  'اردیبهشت',
+  'خرداد',
+  'تیر',
+  'مرداد',
+  'شهریور',
+  'مهر',
+  'آبان',
+  'آذر',
+  'دی',
+  'بهمن',
+  'اسفند',
+];
 export const WD = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
 export const WD_S = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
 
 /* day keys */
 export const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 export const keyOf = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export const dateOfKey = (k: string): Date => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d, 12); };
-export const keyAdd = (k: string, n: number): string => { const d = dateOfKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
-export const jOfKey = (k: string): JDate => { const [y, m, d] = k.split('-').map(Number); return d2j(g2d(y, m, d)); };
-export const keyOfJ = (jy: number, jm: number, jd: number): string => { const g = d2g(j2d(jy, jm, jd)); return `${g.gy}-${pad(g.gm)}-${pad(g.gd)}`; };
+export const dateOfKey = (k: string): Date => {
+  const [y, m, d] = k.split('-').map(Number);
+  return new Date(y, m - 1, d, 12);
+};
+export const keyAdd = (k: string, n: number): string => {
+  const d = dateOfKey(k);
+  d.setDate(d.getDate() + n);
+  return keyOf(d);
+};
+export const jOfKey = (k: string): JDate => {
+  const [y, m, d] = k.split('-').map(Number);
+  return d2j(g2d(y, m, d));
+};
+export const keyOfJ = (jy: number, jm: number, jd: number): string => {
+  const g = d2g(j2d(jy, jm, jd));
+  return `${g.gy}-${pad(g.gm)}-${pad(g.gd)}`;
+};
 /** Weekday index with Saturday = 0. */
 export const wdIndex = (k: string): number => (dateOfKey(k).getDay() + 1) % 7;
 export const todayKey = (): string => keyOf(new Date());

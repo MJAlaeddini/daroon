@@ -3,14 +3,27 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { harness, signInWithEmail, type Harness } from './helpers';
 
 let h: Harness;
-beforeAll(async () => { h = await harness(); });
-afterAll(async () => { await h.close(); });
+beforeAll(async () => {
+  h = await harness();
+});
+afterAll(async () => {
+  await h.close();
+});
 
 const week = {
   week: '2026-10-17',
   weekKeys: ['امید', 'دلشوره'],
   entries: [
-    { day: '2026-10-17', time: '09:10', emotions: [{ key: 'امید', parent: 'امید' }, { key: 'دلشوره', parent: 'نگرانی' }], context: null, note: 'یادداشت خصوصی ۱۲۳' },
+    {
+      day: '2026-10-17',
+      time: '09:10',
+      emotions: [
+        { key: 'امید', parent: 'امید' },
+        { key: 'دلشوره', parent: 'نگرانی' },
+      ],
+      context: null,
+      note: 'یادداشت خصوصی ۱۲۳',
+    },
     { day: '2026-10-19', time: '22:00', emotions: [{ key: 'امید', parent: 'امید' }], context: null },
   ],
 };
@@ -18,12 +31,26 @@ const week = {
 describe('weekly stories', () => {
   it('writes, maps page words back to keys, and keeps notes out of storage', async () => {
     const c = await signInWithEmail(h, 'story@example.com');
-    h.writerReplies.push({ title: 'هفته‌ی امید', pages: [{ emotion: 'امید', text: 'صفحه‌ی اول' }, { emotion: 'ناشناس', text: 'صفحه‌ی دوم' }] });
+    h.writerReplies.push({
+      title: 'هفته‌ی امید',
+      pages: [
+        { emotion: 'امید', text: 'صفحه‌ی اول' },
+        { emotion: 'ناشناس', text: 'صفحه‌ی دوم' },
+      ],
+    });
     const r = await c.post('/api/stories', week);
     expect(r.statusCode).toBe(200);
     const st = r.json().story;
-    expect(st).toMatchObject({ week: '2026-10-17', title: 'هفته‌ی امید', source: 'writer', weekKeys: ['امید', 'دلشوره'] });
-    expect(st.pages).toEqual([{ key: 'امید', text: 'صفحه‌ی اول' }, { key: null, text: 'صفحه‌ی دوم' }]);
+    expect(st).toMatchObject({
+      week: '2026-10-17',
+      title: 'هفته‌ی امید',
+      source: 'writer',
+      weekKeys: ['امید', 'دلشوره'],
+    });
+    expect(st.pages).toEqual([
+      { key: 'امید', text: 'صفحه‌ی اول' },
+      { key: null, text: 'صفحه‌ی دوم' },
+    ]);
     expect(h.writerPrompts[0]).toContain('یادداشت خصوصی ۱۲۳');
     const dump = await h.db.db.execute(sql`select * from stories`);
     expect(JSON.stringify(dump.rows)).not.toContain('یادداشت خصوصی');

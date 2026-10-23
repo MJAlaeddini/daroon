@@ -14,6 +14,8 @@ const Env = z.object({
   /** SMTP connection string, e.g. smtps://user:pass@smtp.example.com:465. Without it, codes are only logged (development). */
   SMTP_URL: z.string().optional(),
   MAIL_FROM: z.string().default('درون <no-reply@localhost>'),
+  /** Development and tests only: write login mails as JSON files into this folder instead of sending them. */
+  MAIL_OUTBOX: z.string().optional(),
   /** OAuth client id for Google sign-in. Without it the Google button is hidden. */
   GOOGLE_CLIENT_ID: z.string().optional(),
   /** Claude API key for weekly stories. Without it the app writes a plain local summary instead. */
@@ -35,5 +37,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   const c = parsed.data;
   if (c.NODE_ENV === 'production' && !c.SMTP_URL) throw new Error('SMTP_URL is required in production');
+  if (c.NODE_ENV === 'production' && c.MAIL_OUTBOX) throw new Error('MAIL_OUTBOX must not be set in production');
   return { ...c, isProd: c.NODE_ENV === 'production' };
 }

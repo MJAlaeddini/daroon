@@ -12,7 +12,10 @@ await runMigrations(db.db);
 
 const logger = { level: config.LOG_LEVEL, redact: ['req.headers.cookie', 'req.headers.authorization'] };
 // a small logger for services until the app's own logger exists
-const bootLog = { info: (o: object, m: string) => console.log(m, o), warn: (o: object, m: string) => console.warn(m, o) };
+const bootLog = {
+  info: (o: object, m: string) => console.log(m, o),
+  warn: (o: object, m: string) => console.warn(m, o),
+};
 
 const app = await buildApp(
   {

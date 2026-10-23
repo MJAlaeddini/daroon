@@ -1,5 +1,8 @@
 pnpm-lock.yaml
-dist
-apps/web/src/legacy
-apps/web/public
+**/dist
+docs/prototype
 apps/api/drizzle
+apps/web/public
+apps/web/e2e/probes.js
+**/test-results
+**/playwright-report

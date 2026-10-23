@@ -1,8 +1,12 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import nodemailer from 'nodemailer';
 import { fa } from '@daroon/shared';
 import type { Config } from '../../config';
 
-export interface Mailer { sendLoginCode(to: string, code: string): Promise<void> }
+export interface Mailer {
+  sendLoginCode(to: string, code: string): Promise<void>;
+}
 
 /** The login-code mail, in the app's own voice. */
 export function loginCodeMail(code: string) {
@@ -18,6 +22,15 @@ export function loginCodeMail(code: string) {
 }
 
 export function createMailer(config: Config, log: { info: (o: object, m: string) => void }): Mailer {
+  if (config.MAIL_OUTBOX && !config.isProd) {
+    const dir = config.MAIL_OUTBOX;
+    mkdirSync(dir, { recursive: true });
+    return {
+      async sendLoginCode(to, code) {
+        writeFileSync(path.join(dir, `${Date.now()}-${to}.json`), JSON.stringify({ to, code }));
+      },
+    };
+  }
   if (!config.SMTP_URL) {
     return {
       async sendLoginCode(to, code) {

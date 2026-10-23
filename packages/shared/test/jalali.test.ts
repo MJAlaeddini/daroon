@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { jOfKey, keyOfJ, keyAdd, jMonthLen, wdIndex, weekStart, fmtDay } from '../src/jalali';
 
-const intl = new Intl.DateTimeFormat('en-u-ca-persian-nu-latn', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
+const intl = new Intl.DateTimeFormat('en-u-ca-persian-nu-latn', {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
 function viaIntl(k: string) {
   const [y, m, d] = k.split('-').map(Number);
   const parts = Object.fromEntries(intl.formatToParts(new Date(Date.UTC(y, m - 1, d))).map((p) => [p.type, p.value]));
@@ -13,7 +18,10 @@ describe('jalali', () => {
     for (let k = '1990-01-01'; k < '2060-12-31'; k = keyAdd(k, 3)) expect(jOfKey(k), k).toEqual(viaIntl(k));
   });
   it('round-trips', () => {
-    for (let k = '2020-01-01'; k < '2030-01-01'; k = keyAdd(k, 5)) { const j = jOfKey(k); expect(keyOfJ(j.jy, j.jm, j.jd)).toBe(k); }
+    for (let k = '2020-01-01'; k < '2030-01-01'; k = keyAdd(k, 5)) {
+      const j = jOfKey(k);
+      expect(keyOfJ(j.jy, j.jm, j.jd)).toBe(k);
+    }
   });
   it('knows month lengths and leap Esfand', () => {
     expect(jMonthLen(1403, 12)).toBe(30);

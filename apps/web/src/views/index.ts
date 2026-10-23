@@ -6,4 +6,12 @@ import { vPatterns } from './patterns';
 import { vReflect } from './reflect';
 import { vToday } from './today';
 
-export const VIEWS = { login: vLogin, today: vToday, explore: vExplore, guide: vGuide, reflect: vReflect, archive: vArchive, patterns: vPatterns };
+export const VIEWS = {
+  login: vLogin,
+  today: vToday,
+  explore: vExplore,
+  guide: vGuide,
+  reflect: vReflect,
+  archive: vArchive,
+  patterns: vPatterns,
+};

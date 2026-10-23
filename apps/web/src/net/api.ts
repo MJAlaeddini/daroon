@@ -7,8 +7,15 @@ import type { Account, Story, StoryRequest, SyncedEntry, SyncResponse } from '@d
 const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? '';
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string) { super(code); }
-  get offline(): boolean { return this.status === 0; }
+  constructor(
+    public status: number,
+    public code: string,
+  ) {
+    super(code);
+  }
+  get offline(): boolean {
+    return this.status === 0;
+  }
 }
 
 async function call<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
@@ -34,7 +41,8 @@ async function call<T>(method: string, path: string, body?: unknown, signal?: Ab
 export const api = {
   authConfig: () => call<{ google: string | null; email: boolean }>('GET', '/auth/config'),
   requestCode: (email: string) => call<void>('POST', '/auth/email/request', { email }),
-  verifyCode: (email: string, code: string, name?: string) => call<{ account: Account }>('POST', '/auth/email/verify', { email, code, name }),
+  verifyCode: (email: string, code: string, name?: string) =>
+    call<{ account: Account }>('POST', '/auth/email/verify', { email, code, name }),
   google: (credential: string) => call<{ account: Account }>('POST', '/auth/google', { credential }),
   logout: () => call<void>('POST', '/auth/logout'),
   me: () => call<{ account: Account }>('GET', '/me'),
