@@ -15,6 +15,7 @@ import { ACT } from './actions';
 import { engine } from './stage/stage';
 import { todayKey } from '@daroon/shared';
 import { applyTheme } from './ui/theme';
+import { setupPwa } from './pwa';
 
 /* ═════════════════════════ boot ═════════════════════════ */
 document.documentElement.lang = 'fa'; document.documentElement.dir = 'rtl';
@@ -33,6 +34,7 @@ onSynced(changed => {
   if (changed && ['today', 'archive', 'patterns'].includes(S.view) && !S.sheet && !S.story && !S.done) renderView({ quiet: true });
 });
 startSync();
+setupPwa();
 if (DB.account) pullStories();
 if (new URLSearchParams(location.search).has('e2e')) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
 try { mini.draw(buildU(staticState({ items: [], neutral: 1, seed: 0 }), .5, .7)); } catch (e){} /* compile the trace shader before the first calendar needs it */

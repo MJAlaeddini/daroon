@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx=".5" cy=".42" r=".75"><stop offset="0" stop-color="#2a2040"/><stop offset="1" stop-color="#110e18"/></radialGradient>
+    <radialGradient id="halo" cx=".5" cy=".5" r=".5"><stop offset=".45" stop-color="#c9b8e8" stop-opacity=".35"/><stop offset="1" stop-color="#c9b8e8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="core" cx=".38" cy=".33" r=".75"><stop offset="0" stop-color="#fff6e8"/><stop offset=".5" stop-color="#e3b8b0"/><stop offset=".78" stop-color="#b9a6e3"/><stop offset="1" stop-color="#5a4a8a"/></radialGradient>
+    <radialGradient id="inner" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fff6e8" stop-opacity=".85"/><stop offset="1" stop-color="#c9b8e8" stop-opacity=".1"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="200" fill="url(#halo)"/>
+  <path d="M256 128c62 0 120 38 124 108 4 68-48 140-122 144-76 4-128-56-126-126 2-70 58-126 124-126z" fill="url(#core)"/>
+  <path d="M262 168c44 0 84 28 86 76 2 46-34 96-86 98-52 2-88-38-86-86 2-48 40-88 86-88z" fill="url(#inner)" stroke="#fff6e8" stroke-opacity=".35" stroke-width="2"/>
+  <path d="M256 128c62 0 120 38 124 108 4 68-48 140-122 144-76 4-128-56-126-126 2-70 58-126 124-126z" fill="none" stroke="#fff6e8" stroke-opacity=".3" stroke-width="2.5"/>
+</svg>

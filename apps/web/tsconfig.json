@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["vite/client", "vite-plugin-pwa/client"],
     "noEmit": true,
     /* The interface layer was ported from the prototype as-is; it is typed loosely for now
        and tightened module by module (see docs/architecture.md). */

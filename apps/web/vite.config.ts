@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const api = { '/api': { target: process.env.API_URL ?? 'http://localhost:8787', changeOrigin: false } };
 
@@ -6,4 +7,38 @@ export default defineConfig({
   server: { port: 5173, proxy: api },
   preview: { port: 4173, proxy: api },
   build: { target: 'es2022', sourcemap: true },
+  plugins: [
+    VitePWA({
+      // the app asks before reloading, so an update never interrupts someone mid-entry
+      registerType: 'prompt',
+      injectRegister: false,
+      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
+      manifest: {
+        id: '/',
+        name: 'درون',
+        short_name: 'درون',
+        description: 'دفترچه‌ی شخصی احساس‌ها',
+        lang: 'fa',
+        dir: 'rtl',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        orientation: 'any',
+        background_color: '#110e18',
+        theme_color: '#f8f6f4',
+        categories: ['health', 'lifestyle'],
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        cleanupOutdatedCaches: true,
+      },
+    }),
+  ],
 });
