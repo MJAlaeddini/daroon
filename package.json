@@ -1,0 +1,26 @@
+{
+  "name": "daroon",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter @daroon/web --filter @daroon/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @daroon/web test:e2e",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d",
+    "db:migrate": "pnpm --filter @daroon/api db:migrate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.13.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.9.10",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.0"
+  }
+}
