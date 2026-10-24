@@ -26,8 +26,8 @@ psql -h localhost -p 5433 -U daroon -d postgres -c "create database daroon_test"
 - **The look and motion are the product.** The UI was ported 1:1 from `docs/prototype/daroon.html`; `e2e/parity` and
   `e2e/acceptance` guard it (no text over the sculpture, no jumps, the old page leaves before the new one arrives).
   Run them after any change under `apps/web/src`. The owner is very sensitive to choreography, clutter and typography.
-- **User-facing text is colloquial Persian** («می‌شه»، «نمی‌دونم»). Never mention "AI" in the UI; stories are written by Claude
-  but presented simply as the week's story. Code, comments, commits and docs are in English.
+- **User-facing text is colloquial Persian** («می‌شه»، «نمی‌دونم»). Never mention "AI" in the UI; stories are written by a language model
+  (any OpenAI-compatible API, `STORY_API_URL`) but presented simply as the week's story. Code, comments, commits and docs are in English.
 - **Notes never reach the server.** Sync sends entries without `note`; a story request carries the week's notes for that one
   call only. Keep it that way.
 - **Shared rules live in `packages/shared`** (Jalali calendar, vocabulary, zod schemas, story prompt). Validate every API body

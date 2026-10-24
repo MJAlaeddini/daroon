@@ -68,7 +68,12 @@ else
   ask SERVER_IP "This server's public IP or hostname" "$DETECTED_IP"
   ask SMTP_URL "SMTP for login codes (empty: codes appear in the log)" ""
   ask MAIL_FROM "Sender of the login mail" "درون <no-reply@${SERVER_IP}>"
-  ask ANTHROPIC_API_KEY "Claude API key for weekly stories (optional)" ""
+  ask STORY_API_URL "OpenAI-compatible API URL for weekly stories (optional, e.g. https://api.openai.com/v1)" ""
+  STORY_API_KEY=${STORY_API_KEY:-} STORY_MODEL=${STORY_MODEL:-}
+  if [[ -n $STORY_API_URL ]]; then
+    ask STORY_MODEL "Model name for stories" ""
+    ask STORY_API_KEY "API key for it (empty for a local server)" ""
+  fi
   [[ $PORT =~ ^[0-9]+$ ]] || die "Port must be a number."
   [[ -n $SERVER_IP ]] || die "The server address is needed."
 
@@ -89,8 +94,9 @@ SMTP_URL=$SMTP_URL
 MAIL_FROM="$MAIL_FROM"
 
 GOOGLE_CLIENT_ID=
-ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
-ANTHROPIC_MODEL=claude-sonnet-5-5
+STORY_API_URL=$STORY_API_URL
+STORY_API_KEY=$STORY_API_KEY
+STORY_MODEL=$STORY_MODEL
 STORIES_PER_DAY=12
 EOF
   echo "Wrote $ENV_FILE"

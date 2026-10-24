@@ -16,4 +16,8 @@ describe('config', () => {
   it('starts in production without mail (codes go to the log)', () => {
     expect(loadConfig({ ...base, NODE_ENV: 'production', SMTP_URL: '' }).SMTP_URL).toBe('');
   });
+  it('needs a model name when a story API is set', () => {
+    expect(() => loadConfig({ ...base, STORY_API_URL: 'https://api.example/v1' })).toThrow('STORY_MODEL');
+    expect(loadConfig({ ...base, STORY_API_URL: '', STORY_MODEL: '' }).STORY_API_URL).toBeUndefined();
+  });
 });

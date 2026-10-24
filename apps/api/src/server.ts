@@ -4,7 +4,7 @@ import { runMigrations } from './db/migrate';
 import { buildApp } from './app';
 import { createMailer } from './modules/auth/mailer';
 import { createGoogleVerifier } from './modules/auth/google';
-import { createClaudeWriter } from './modules/stories/writer';
+import { createChatWriter } from './modules/stories/writer';
 
 const config = loadConfig();
 const db = connect(config.DATABASE_URL);
@@ -23,7 +23,9 @@ const app = await buildApp(
     db,
     mailer: createMailer(config, bootLog),
     google: config.GOOGLE_CLIENT_ID ? createGoogleVerifier(config.GOOGLE_CLIENT_ID) : null,
-    writer: config.ANTHROPIC_API_KEY ? createClaudeWriter(config.ANTHROPIC_API_KEY, config.ANTHROPIC_MODEL) : null,
+    writer: config.STORY_API_URL
+      ? createChatWriter({ url: config.STORY_API_URL, apiKey: config.STORY_API_KEY, model: config.STORY_MODEL })
+      : null,
     log: bootLog,
   },
   { logger },

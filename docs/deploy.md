@@ -4,12 +4,12 @@ This guide runs Daroon on a Linux server with Docker: PostgreSQL, the API, and C
 
 ## Before you start
 
-- **Server location.** The Claude API is not available in Iran, and Docker Hub blocks Iranian IP addresses, so the server must be outside Iran (for example Germany, the Netherlands or Finland). Users in Iran can reach the app without trouble.
+- **Server location.** Docker Hub blocks Iranian IP addresses (and many model APIs do too), so the server is simplest outside Iran (for example Germany, the Netherlands or Finland). Users in Iran can reach the app without trouble.
 - **Size.** 2 GB of RAM and 1 vCPU are enough (Ubuntu 24.04 recommended).
 - **Domain.** An A record pointing at the server's IP, e.g. `daroon.example.com`. Not needed for the temporary port mode below.
 - **Mail.** An SMTP service for login codes, such as Mailgun, Postmark, Amazon SES, or your mail host's SMTP.
 - **Google (optional).** In Google Cloud Console create an OAuth client of type "Web application" and add `https://DOMAIN` to Authorized JavaScript origins. Google sign-in may not work for users in Iran without a VPN; email sign-in always does.
-- **Claude (optional).** An API key from console.anthropic.com for weekly stories.
+- **Weekly stories (optional).** Any OpenAI-compatible chat API: OpenAI, OpenRouter, Groq, a gateway, or a model you run yourself with Ollama or vLLM. Set `STORY_API_URL`, `STORY_MODEL` and, if the service needs one, `STORY_API_KEY` in `deploy/.env` (examples in `deploy/.env.example`), then run `./deploy/update.sh`. Without them the week's story is a plain summary written on the device.
 
 ## Quick install (next to an existing site)
 
@@ -19,7 +19,7 @@ After the repository is cloned (see the deploy key below), one script does the r
 cd /opt/daroon && ./deploy/install.sh
 ```
 
-It asks for the port (default 8080), the server address (detected), an optional SMTP URL and an optional Claude API key. Without SMTP, login codes are written to the log (`docker compose ... logs api | grep 'LOGIN CODE'`). If Docker Hub is unreachable (as from servers in Iran) it offers to configure a registry mirror. Running it again keeps the existing settings and secrets. Later updates: `./deploy/update.sh`.
+It asks for the port (default 8080), the server address (detected), an optional SMTP URL and an optional story API (URL, model, key). Without SMTP, login codes are written to the log (`docker compose ... logs api | grep 'LOGIN CODE'`). If Docker Hub is unreachable (as from servers in Iran) it offers to configure a registry mirror. Running it again keeps the existing settings and secrets. Later updates: `./deploy/update.sh`.
 
 ## Getting the code onto the server (private repository)
 
