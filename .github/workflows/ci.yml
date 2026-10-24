@@ -5,9 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# A newer push cancels older runs, except on main: there a run that is already deploying must not be cut off
+# mid-update. Main runs queue instead, and only the newest queued one is kept.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   check:
@@ -36,9 +38,16 @@ jobs:
       - run: pnpm build
 
   e2e:
-    name: Browser tests
+    # the browser tests take ~18 minutes on one machine; seven machines get two tests each, so the slow layout
+    # and parity tests land on different machines
+    name: Browser tests (${{ matrix.shard }}/7)
     runs-on: ubuntu-latest
     needs: check
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7]
     services:
       postgres:
         image: postgres:16-alpine
@@ -56,11 +65,11 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @daroon/web exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/7
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             apps/web/playwright-report
             apps/web/test-results
@@ -70,7 +79,15 @@ jobs:
     name: Docker images build
     runs-on: ubuntu-latest
     needs: check
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f deploy/api.Dockerfile -t daroon-api .
       - run: docker build -f deploy/web.Dockerfile -t daroon-web .
+
+  deploy:
+    name: Deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check, e2e, images]
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

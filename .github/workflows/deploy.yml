@@ -1,6 +1,7 @@
 name: Deploy
 
-# After CI passes on main, log in to the server over SSH and run deploy/update.sh.
+# Logs in to the server over SSH and runs deploy/update.sh. CI calls this as its last job once every check
+# passes on main; it can also be started by hand from the Actions tab.
 # Needs repository secrets (Settings → Secrets and variables → Actions):
 #   DEPLOY_HOST  server address
 #   DEPLOY_USER  SSH user (e.g. root)
@@ -8,21 +9,17 @@ name: Deploy
 #   DEPLOY_PORT  optional, SSH port (default 22)
 # On the server the key can be limited to this one job; see docs/deploy.md.
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  workflow_call:
   workflow_dispatch:
-
-concurrency:
-  group: deploy
-  cancel-in-progress: false
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    name: Update the server
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
     steps:
       - name: Check that the server is configured
         id: cfg
@@ -44,6 +41,10 @@ jobs:
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
-          ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -i ~/.ssh/deploy -p "${PORT:-22}" -o BatchMode=yes -o ConnectTimeout=20 "$USER@$HOST" \
+          if ! ssh-keyscan -T 20 -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "::error::Cannot reach SSH on the server at port ${PORT:-22}. Check DEPLOY_HOST and DEPLOY_PORT, and that the server's firewall (and the provider's) lets GitHub's machines in on that port."
+            exit 1
+          fi
+          ssh -i ~/.ssh/deploy -p "${PORT:-22}" -o BatchMode=yes -o ConnectTimeout=20 \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=6 "$USER@$HOST" \
             'cd /opt/daroon && ./deploy/update.sh'
