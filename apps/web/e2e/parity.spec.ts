@@ -7,7 +7,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * The web app must look like the prototype it came from. Both are driven through the same screens and
- * compared pixel by pixel, with the (always moving) sculpture hidden.
+ * compared pixel by pixel, with the (always moving) sculpture hidden. Screens redesigned since the port
+ * (archive, patterns) are left out.
  */
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 function prototypeUrl(): string {
@@ -26,7 +27,7 @@ function prototypeUrl(): string {
   return 'file://' + path.join(dir, 'prototype.html');
 }
 
-async function screens(page: Page, url: string, wide: boolean) {
+async function screens(page: Page, url: string) {
   await page.goto(url);
   await page.waitForTimeout(1500);
   const shots: Record<string, Buffer> = {};
@@ -41,7 +42,6 @@ async function screens(page: Page, url: string, wide: boolean) {
       (document.getElementById('stage') as HTMLElement).style.visibility = '';
     });
   };
-  const nav = wide ? '.topnav' : '.bottomnav';
   await page.click('[data-act=loginSkip]');
   await snap('today');
   await page.click('[data-act=startA]');
@@ -57,14 +57,8 @@ async function screens(page: Page, url: string, wide: boolean) {
   await page.waitForTimeout(1200);
   await page.click('.stone[data-id=future]');
   await snap('suggestions');
-  await page.evaluate("__daroon.go('today', { push: false })");
-  await page.waitForTimeout(1500);
-  await page.click(`${nav} [data-go=archive]`);
-  await snap('archive');
-  await page.click('[data-act=mode][data-m=month]');
-  await snap('month');
-  await page.click(`${nav} [data-go=patterns]`);
-  await snap('patterns');
+  // the archive and patterns screens have been redesigned past the prototype (day tiles, glass cards); the
+  // acceptance suite guards their layout and motion instead
   return shots;
 }
 
@@ -80,8 +74,8 @@ for (const v of [
         colorScheme: v.scheme,
         deviceScaleFactor: 1,
       });
-    const a = await screens(await (await ctx()).newPage(), prototypeUrl(), v.width >= 700);
-    const b = await screens(await (await ctx()).newPage(), '/?e2e', v.width >= 700);
+    const a = await screens(await (await ctx()).newPage(), prototypeUrl());
+    const b = await screens(await (await ctx()).newPage(), '/?e2e');
     const diffs: Record<string, number> = {};
     for (const k of Object.keys(a)) {
       const ia = PNG.sync.read(a[k]),
