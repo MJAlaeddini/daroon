@@ -3,7 +3,7 @@
 FROM node:22-alpine AS build
 WORKDIR /repo
 RUN corepack enable
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
