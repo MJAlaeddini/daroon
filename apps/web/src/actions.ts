@@ -294,12 +294,6 @@ export const ACT = {
     persist();
     themeChanged();
   },
-  toggleEmoji() {
-    DB.settings.emoji = !DB.settings.emoji;
-    persist();
-    refreshSettings();
-    renderView({ quiet: true });
-  },
   toggleMotion() {
     DB.settings.motion = reduced() ? 'full' : 'calm';
     persist();
@@ -369,6 +363,13 @@ export const ACT = {
     refreshArchive();
     if (A.jump) reRenderJump();
   },
+  dayShift(el) {
+    const k = keyAdd(S.arch.sel, +el.dataset.d);
+    if (k > todayKey()) return;
+    selectDay(k, false);
+    // keep the finger (and focus) on the arrow, not on the day in the strip
+    requestAnimationFrame(() => $(`[data-act="dayShift"][data-d="${el.dataset.d}"]`)?.focus({ preventScroll: true }));
+  },
   goToday() {
     const k = todayKey();
     S.arch.cursor = k;
@@ -408,42 +409,25 @@ export const ACT = {
     renderView();
   },
   askDel(el) {
-    S.confirmDel = el.dataset.id;
-    reRenderDetail();
-    $(`[data-act="delYes"]`)?.focus({ preventScroll: true });
-  },
-  delNo() {
-    const id = S.confirmDel;
-    S.confirmDel = null;
-    reRenderDetail();
-    $(`[data-act="askDel"][data-id="${id}"]`)?.focus({ preventScroll: true });
+    armDelete(el);
   },
   /* deletions are kept as tombstones so they reach the person's other devices */
   delYes(el) {
     const e = DB.entries.find((x) => x.id === el.dataset.id && !x.deletedAt);
     if (!e) return;
-    const t = new Date().toISOString();
-    e.deletedAt = t;
-    e.updatedAt = t;
-    S.lastDel = { e };
-    S.confirmDel = null;
-    persist();
-    reindex();
-    refreshArchive();
-    toast('ردپا حذف شد.', {
-      label: 'برگردون',
-      fn: () => {
-        if (!S.lastDel) return;
-        const d = S.lastDel.e;
-        d.deletedAt = null;
-        d.updatedAt = new Date().toISOString();
-        S.lastDel = null;
-        persist();
-        reindex();
-        refreshArchive();
-        toast('برگشت.');
-      },
-    });
+    disarmDelete(el);
+    const row = el.closest('.ent');
+    if (row && !reduced()) {
+      // the row folds away before the list is redrawn without it
+      row.style.overflow = 'hidden';
+      row.animate(
+        [
+          { height: row.offsetHeight + 'px', opacity: 1 },
+          { height: '0px', opacity: 0, paddingBlock: '0px', marginBlock: '0px' },
+        ],
+        { duration: 340, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' },
+      ).onfinish = () => deleteEntry(e);
+    } else deleteEntry(e);
   },
   newToday() {
     closeSheet(true);
@@ -579,4 +563,53 @@ export function reRenderDetail() {
 export function reRenderJump() {
   const j = $('.jump');
   if (j) j.outerHTML = jumpHTML();
+}
+
+/* delete in place: the trash icon opens into a «حذف؟» pill; a second tap deletes, anything else closes it */
+let disarmTimer: ReturnType<typeof setTimeout> | undefined;
+function disarmDelete(b) {
+  clearTimeout(disarmTimer);
+  if (!b.classList.contains('arm')) return;
+  b.classList.remove('arm');
+  b.dataset.act = 'askDel';
+  b.setAttribute('aria-label', b.dataset.label);
+  b.closest('.ent-tools')?.classList.remove('arming');
+  document.removeEventListener('pointerdown', b._away, true);
+}
+function armDelete(b) {
+  $$('.tool.del.arm').forEach(disarmDelete);
+  b.dataset.label = b.getAttribute('aria-label');
+  b.classList.add('arm');
+  b.dataset.act = 'delYes';
+  b.setAttribute('aria-label', 'برای حذف، دوباره بزن');
+  b.closest('.ent-tools')?.classList.add('arming');
+  b._away = (ev) => {
+    if (!b.contains(ev.target)) disarmDelete(b);
+  };
+  document.addEventListener('pointerdown', b._away, true);
+  disarmTimer = setTimeout(() => disarmDelete(b), 4000);
+}
+function deleteEntry(e) {
+  const t = new Date().toISOString();
+  e.deletedAt = t;
+  e.updatedAt = t;
+  S.lastDel = { e };
+  S.confirmDel = null;
+  persist();
+  reindex();
+  refreshArchive();
+  toast('ردپا حذف شد.', {
+    label: 'برگردون',
+    fn: () => {
+      if (!S.lastDel) return;
+      const d = S.lastDel.e;
+      d.deletedAt = null;
+      d.updatedAt = new Date().toISOString();
+      S.lastDel = null;
+      persist();
+      reindex();
+      refreshArchive();
+      toast('برگشت.');
+    },
+  });
 }

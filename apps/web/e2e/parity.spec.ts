@@ -8,7 +8,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * The web app must look like the prototype it came from. Both are driven through the same screens and
  * compared pixel by pixel, with the (always moving) sculpture hidden. Screens redesigned since the port
- * (archive, patterns) are left out.
+ * (today, archive, patterns) are left out.
  */
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 function prototypeUrl(): string {
@@ -43,7 +43,7 @@ async function screens(page: Page, url: string) {
     });
   };
   await page.click('[data-act=loginSkip]');
-  await snap('today');
+  await page.waitForTimeout(2600);
   await page.click('[data-act=startA]');
   await page.waitForTimeout(1500);
   await page.click('.word[data-key="امید"]');
@@ -57,8 +57,8 @@ async function screens(page: Page, url: string) {
   await page.waitForTimeout(1200);
   await page.click('.stone[data-id=future]');
   await snap('suggestions');
-  // the archive and patterns screens have been redesigned past the prototype (day tiles, glass cards); the
-  // acceptance suite guards their layout and motion instead
+  // today, the archive and patterns have been redesigned past the prototype (glass cards, day tiles, the day
+  // page); the acceptance suite guards their layout and motion instead
   return shots;
 }
 

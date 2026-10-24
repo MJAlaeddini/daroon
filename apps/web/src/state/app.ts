@@ -1,5 +1,6 @@
 import { jMonthLen, jOfKey, keyOfJ, todayKey } from '@daroon/shared';
 import { guideMods } from '../domain/guide';
+import { HOME_LABS, NEU_LABS } from '../domain/lexicon';
 import { aggregate, daySpec } from '../domain/specs';
 import { engine } from '../stage/stage';
 import { dayList } from './store';
@@ -85,6 +86,7 @@ export function syncEngine() {
   } else if (v === 'patterns') spec = patternData().spec;
   else spec = { items: S.draft.items.map((i) => ({ key: i.key, color: i.color })), neutral: 0 };
   engine.setSpec(spec);
+  engine.neuT = v === 'today' || v === 'login' ? HOME_LABS : NEU_LABS;
   engine.mod =
     v === 'guide'
       ? guideMods()

@@ -116,7 +116,7 @@ export function settingsHTML() {
       <p class="fine">${acc ? `${acc.provider === 'google' ? 'با Google' : 'با ایمیل'} · از ${fmtDay(acc.since, { weekday: false })}` : 'ردپاها فقط روی همین دستگاه هستن.'}</p></div>
       <div class="pstats"><div><b class="num">${fa(all.length)}</b><span>ردپا</span></div><div><b class="num">${fa(days)}</b><span>روز</span></div><div><b class="num">${fa(words)}</b><span>کلمه‌ی متفاوت</span></div></div>
       ${acc ? '' : `<div class="auth-btns"><button class="gbtn" data-act="loginGoogle"${authCfg.google ? '' : ' hidden'}><span class="g" aria-hidden="true">G</span>ادامه با Google</button><button class="gbtn" data-act="loginEmail"><span class="g" aria-hidden="true">@</span>ادامه با ایمیل</button></div>`}</section>
-    <section class="set-sec rows">${canInstall() ? row('installApp', 'نصب روی گوشی', 'از صفحه‌ی اصلی، مثل یه برنامه باز می‌شه') : ''}${row('setPage', 'تنظیمات و ظاهر', 'حال‌وهوای بصری، کمک‌ها، داده‌ها')}${row('aboutPage', 'درباره‌ی کلمه‌ها و شکل‌ها', 'پژوهش‌ها و این‌که شکل چه چیزی نیست')}</section>
+    <section class="set-sec rows">${canInstall() ? row('installApp', 'نصب روی گوشی', 'از صفحه‌ی اصلی، مثل یه برنامه باز می‌شه') : ''}${row('setPage', 'تنظیمات و ظاهر', 'حال‌وهوای بصری، حرکت، داده‌ها')}${row('aboutPage', 'درباره‌ی کلمه‌ها و شکل‌ها', 'پژوهش‌ها و این‌که شکل چه چیزی نیست')}</section>
     ${
       acc
         ? `<section class="set-sec"><button class="outline danger" data-act="signOut">خروج از حساب</button><p class="fine" style="margin-top:8px">ردپاها روی این دستگاه می‌مونن.</p>
@@ -135,8 +135,7 @@ export function settingsHTML() {
   </div>`;
   return `${head('تنظیمات و ظاهر')}<div class="sheet-scroll set">
     <section class="set-sec"><h3 class="sec">حال‌وهوای بصری</h3><div class="dirs" role="radiogroup" aria-label="حال‌وهوای بصری">${dirs.map(([id, t, sub, bg, sd, gl]) => `<button class="dir" role="radio" data-act="dir" data-d="${id}" aria-checked="${s.direction === id}"><span class="pv" style="background:${bg};--pvs:${sd};--pvg:${gl}"></span><span><b>${t}</b><small>${sub}</small></span></button>`).join('')}</div></section>
-    <section class="set-sec"><h3 class="sec">کمک‌ها</h3>
-      ${sw('toggleEmoji', s.emoji, 'ایموجی کمکی کنار کلمه‌ها', 'اگه نشانه‌های آشنا به تشخیص کلمه‌ها کمک می‌کنن. نشانه‌ی اصلی همیشه شکل خود احساسه.')}
+    <section class="set-sec"><h3 class="sec">حرکت</h3>
       ${sw('toggleMotion', reduced(), 'حرکت کمتر', mqReduce.matches && s.motion === 'system' ? 'دستگاهت حرکت کمتر رو خواسته.' : 'شکل آهسته‌تر نفس می‌کشه و جابه‌جایی‌ها فوری می‌شن.')}</section>
     <section class="set-sec"><h3 class="sec">داده‌ها</h3>
       <div class="btnrow"><button class="outline danger" data-act="${S.wipeArm ? 'wipeYes' : 'wipeAsk'}">${S.wipeArm ? (acc ? 'مطمئنی؟ از همه‌ی دستگاه‌هات پاک می‌شه' : 'مطمئنی؟ همه‌ی ردپاهای خودت پاک می‌شه') : 'پاک کردن ردپاهای خودم'}</button></div>

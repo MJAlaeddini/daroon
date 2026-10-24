@@ -5,7 +5,6 @@ import { cvars } from '../domain/lexicon';
 import { S } from '../state/app';
 import { glyph } from '../ui/glyph';
 import { IC } from '../ui/icons';
-import { emoji } from './common';
 import { customHTML } from './explore';
 
 export function vGuide() {
@@ -39,7 +38,7 @@ export function guideBody() {
     const sugs = o.sug
       .map((k, i) => {
         const on = picks.includes(k);
-        return `<button class="sug" data-act="pickSug" data-key="${k}" aria-pressed="${on}" style="--i:${i};${cvars(k)}">${glyph(k)}<span>${k}</span>${emoji(k)}<span class="st">${on ? 'انتخاب شد' : 'پیشنهاد'}</span></button>`;
+        return `<button class="sug" data-act="pickSug" data-key="${k}" aria-pressed="${on}" style="--i:${i};${cvars(k)}">${glyph(k)}<span>${k}</span><span class="st">${on ? 'انتخاب شد' : 'پیشنهاد'}</span></button>`;
       })
       .join('');
     const n = S.draft.items.length;

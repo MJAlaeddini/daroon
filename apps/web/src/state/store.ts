@@ -7,7 +7,7 @@ export let DB: any = {
   stories: [],
   account: null,
   loginDone: false,
-  settings: { direction: 'auto', emoji: false, motion: 'system' },
+  settings: { direction: 'auto', motion: 'system' },
   visits: 0,
   sync: { cursor: 0, at: null },
 };
@@ -35,6 +35,7 @@ export function load(sample?: () => any[]) {
     DB.seeded = true;
   }
   delete DB.settings.showDemo;
+  delete DB.settings.emoji;
   DB.sync = DB.sync || { cursor: 0, at: null };
   DB.entries.forEach((e) => {
     if (!e.updatedAt) e.updatedAt = e.createdAt;

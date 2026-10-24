@@ -6,7 +6,7 @@ import { FLOW, S, isWide, newDraft, syncEngine } from '../state/app';
 import { IC } from './icons';
 import { closeSheet, fillDaySheet } from './sheets';
 import { toast } from './toast';
-import { archTitle, dayDetailHTML, monthHTML, weekHTML } from '../views/archive';
+import { archTitle, dayDetailHTML, monthHTML, warmArchive, weekHTML } from '../views/archive';
 import { trayHTML, xbarHTML } from '../views/explore';
 import { VIEWS } from '../views/index';
 
@@ -198,6 +198,7 @@ export function refreshArchive() {
   if (!cal) return renderView({ quiet: true });
   const A = S.arch;
   cal.innerHTML = A.mode === 'month' ? monthHTML() : weekHTML();
+  warmArchive();
   const t = archTitle();
   $('#archTitle').innerHTML = `${t.main} <span class="yr num">${t.yr}</span>${IC.down}`;
   const d = $('#archDetail');
