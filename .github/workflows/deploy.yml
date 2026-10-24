@@ -41,7 +41,10 @@ jobs:
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
-          ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          if ! ssh-keyscan -T 20 -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "::error::Cannot reach SSH on the server at port ${PORT:-22}. Check DEPLOY_HOST and DEPLOY_PORT, and that the server's firewall (and the provider's) lets GitHub's machines in on that port."
+            exit 1
+          fi
           ssh -i ~/.ssh/deploy -p "${PORT:-22}" -o BatchMode=yes -o ConnectTimeout=20 \
             -o ServerAliveInterval=30 -o ServerAliveCountMax=6 "$USER@$HOST" \
             'cd /opt/daroon && ./deploy/update.sh'
