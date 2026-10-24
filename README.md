@@ -1,48 +1,48 @@
-# درون
+# Daroon
 
-دفترچه‌ی شخصی احساس‌ها: کلمه‌ها رو لمس می‌کنی، شکل درونت رو می‌بینی و ردپاش رو نگه می‌داری.
-این مخزن نسخه‌ی واقعیِ همون پروتوتایپه: یک وب‌اپ نصب‌شدنی (PWA) برای گوشی، تبلت و دسکتاپ، با یک بکند برای ورود، همگام‌سازی و داستان‌های هفته.
+A private journal for feelings: touch the words, see the shape of what's inside, and keep a trace of it.
+This repository is the production version of the prototype: an installable web app (PWA) for phones, tablets and desktops, plus a backend for sign-in, sync and weekly stories. The interface is in Persian (RTL).
 
-## ساختار
+## Layout
 
 ```
 apps/
-  web/        وب‌اپ (Vite + TypeScript، بدون فریم‌ورک) — شکل WebGL، صفحه‌ها، همگام‌سازی آفلاین‌اول، PWA
-  api/        بکند (Fastify + Drizzle + PostgreSQL) — ورود با کد ایمیل و Google، همگام‌سازی، داستان‌ها، حساب
+  web/        Web app (Vite + TypeScript, no framework): WebGL sculpture, views, offline-first sync, PWA
+  api/        Backend (Fastify + Drizzle + PostgreSQL): email-code and Google sign-in, sync, stories, account
 packages/
-  shared/     کد مشترک: تقویم جلالی، واژگان احساس، اسکیماهای zod، پرامپت داستان هفته
-deploy/       Dockerfileها، docker-compose و Caddy برای سرور مجازی
-docs/         معماری، استقرار، تست؛ و پروتوتایپ اصلی به‌عنوان مرجع ظاهری
+  shared/     Shared code: Jalali calendar, emotion vocabulary, zod schemas, the weekly-story prompt
+deploy/       Dockerfiles, docker-compose and Caddy for a VPS
+docs/         Architecture, deployment, testing; the original prototype as the visual reference
 ```
 
-جزئیات بیشتر: [معماری](docs/architecture.md) · [استقرار روی سرور](docs/deploy.md) · [تست‌ها](docs/testing.md)
+More detail: [architecture](docs/architecture.md) · [deploying to a server](docs/deploy.md) · [tests](docs/testing.md)
 
-## راه‌اندازی برای توسعه
+## Local development
 
-پیش‌نیازها: Node 22 به بالا، pnpm 10 (`corepack enable`)، و Docker برای دیتابیس.
+Requirements: Node 22+, pnpm 10 (`corepack enable`), and Docker for the database.
 
 ```bash
 pnpm install
-pnpm db:up                         # PostgreSQL روی پورت 5432
+pnpm db:up                         # PostgreSQL on port 5432
 cp apps/api/.env.example apps/api/.env
-pnpm dev                           # وب روی http://localhost:5173 و API روی 8787
+pnpm dev                           # web on http://localhost:5173, API on 8787
 ```
 
-بدون `SMTP_URL`، کد ورود به‌جای ایمیل در کنسول API چاپ می‌شه. بدون `GOOGLE_CLIENT_ID` دکمه‌ی Google پنهانه و بدون `ANTHROPIC_API_KEY` داستان هفته به‌شکل خلاصه‌ی ساده روی خود دستگاه نوشته می‌شه. اپ بدون سرور هم کامل کار می‌کنه؛ فقط ورود و همگام‌سازی نیست.
+Without `SMTP_URL`, login codes are printed to the API console instead of being emailed. Without `GOOGLE_CLIENT_ID` the Google button is hidden, and without `ANTHROPIC_API_KEY` the weekly story is a plain summary written on the device. The app works fully without the server; only sign-in and sync are unavailable.
 
-## دستورها
+## Commands
 
-| دستور                                   | کار                                                  |
-| --------------------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                              | اجرای وب و API در حالت توسعه                         |
-| `pnpm build`                            | ساخت نسخه‌ی تولید هر دو                              |
-| `pnpm lint` / `pnpm typecheck`          | بررسی کد و تایپ‌ها                                   |
-| `pnpm test`                             | تست‌های واحد و تست‌های API (به PostgreSQL نیاز داره) |
-| `pnpm test:e2e`                         | تست‌های مرورگر: پذیرش، شباهت با پروتوتایپ، جریان‌ها  |
-| `pnpm --filter @daroon/api db:generate` | ساختن مایگریشن بعد از تغییر `schema.ts`              |
+| Command                                 | What it does                                                |
+| --------------------------------------- | ----------------------------------------------------------- |
+| `pnpm dev`                              | Run web and API in development mode                         |
+| `pnpm build`                            | Production build of both                                    |
+| `pnpm lint` / `pnpm typecheck`          | Lint and type-check                                         |
+| `pnpm test`                             | Unit and API tests (needs PostgreSQL)                       |
+| `pnpm test:e2e`                         | Browser tests: acceptance, parity with the prototype, flows |
+| `pnpm --filter @daroon/api db:generate` | Generate a migration after changing `schema.ts`             |
 
-## حریم خصوصی، به زبان ساده
+## Privacy, plainly
 
-- یادداشت‌ها هیچ‌وقت در سرور ذخیره نمی‌شن. فقط وقتی داستان هفته ساخته می‌شه، یادداشت‌های همون هفته برای همون یک درخواست فرستاده می‌شن.
-- کد ورود فقط به‌شکل هش ذخیره می‌شه و نشست‌ها در کوکی httpOnly هستن.
-- حذف حساب همه‌ی داده‌های سرور رو پاک می‌کنه و خروجی گرفتن از داده‌ها همیشه ممکنه.
+- Notes are never stored on the server. When a weekly story is written, that week's notes are sent for that one request only.
+- Login codes are stored only as hashes, and sessions live in an httpOnly cookie.
+- Deleting the account removes everything on the server, and a full export is always available.

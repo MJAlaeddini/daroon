@@ -1,67 +1,67 @@
-# معماری
+# Architecture
 
-## اصل‌ها
+## Principles
 
-1. **آفلاین‌اول.** اپ همه‌چیز رو اول روی دستگاه نگه می‌داره و بدون سرور کامل کار می‌کنه. سرور فقط سه چیز اضافه می‌کنه: ورود، همگام‌سازی بین دستگاه‌ها، و داستان هفته‌ای که Claude می‌نویسه.
-2. **یک منبع حقیقت برای قواعد مشترک.** تقویم، واژه‌های مجاز، شکل داده‌ها و پرامپت داستان در `packages/shared` هستن و هم وب و هم API از همون استفاده می‌کنن؛ اسکیمای zod هم در مرورگر و هم در سرور همون یکیه.
-3. **ماژول به‌ازای هر قابلیت.** هر قابلیت تازه یک پوشه‌ی جدا می‌گیره و به بقیه فقط از راه رابط کوچکش وصل می‌شه.
+1. **Offline-first.** The app keeps everything on the device first and works fully without the server. The server adds three things: sign-in, sync between devices, and weekly stories written by Claude.
+2. **One source of truth for shared rules.** The calendar, the allowed words, the data shapes and the story prompt live in `packages/shared`, used by both the web app and the API; the same zod schema validates in the browser and on the server.
+3. **One module per feature.** Each new feature gets its own folder and talks to the rest only through its small interface.
 
-## وب (`apps/web`)
+## Web (`apps/web`)
 
-پروتوتایپ تک‌فایلی بدون تغییر رفتار به ماژول‌ها شکسته شده. تست `e2e/parity` تضمین می‌کنه که ظاهرش با `docs/prototype/daroon.html` یکی بمونه.
+The single-file prototype was split into modules without changing its behaviour. The `e2e/parity` test keeps its look identical to `docs/prototype/daroon.html`.
 
-| پوشه                      | مسئولیت                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| `core/`                   | ابزارهای کوچک و رنگ (OKLab)                                                    |
-| `domain/`                 | واژگان و پارامترهای فرم هر احساس، سؤال‌های مسیر راهنما، ترکیب احساس‌های یک روز |
-| `sculpture/`              | شیدر WebGL2، رندرر جایگزین Canvas2D، موتور فنری شکل، تصویرهای کوچک تقویم       |
-| `stage/`                  | تنها شکلی که بین صفحه‌ها جابه‌جا می‌شه و ترتیب حرکت‌ها                         |
-| `state/`                  | وضعیت اپ (`S`) و ذخیره‌ی محلی (`DB` در localStorage)                           |
-| `views/`                  | صفحه‌ها؛ هر کدوم HTML خودش رو می‌سازه                                          |
-| `ui/`                     | رندر و ناوبری، برگه‌ها، پیام‌ها، تم، صحنه‌ی ثبت                                |
-| `features/`               | ثبت، حساب و ورود، همگام‌سازی، داستان‌ها                                        |
-| `net/api.ts`              | تنها جایی که با سرور حرف می‌زنه                                                |
-| `actions.ts`، `events.ts` | همه‌ی کلیک‌ها از راه `data-act` به `ACT` می‌رسن                                |
+| Folder                    | Responsibility                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------- |
+| `core/`                   | Small utilities and colour (OKLab)                                                                  |
+| `domain/`                 | Vocabulary and each emotion's form parameters, guided-path questions, a day's emotional composition |
+| `sculpture/`              | WebGL2 shader, Canvas2D fallback renderer, spring-driven sculpture engine, calendar thumbnails      |
+| `stage/`                  | The single sculpture that travels between views, and the motion choreography                        |
+| `state/`                  | App state (`S`) and local storage (`DB` in localStorage)                                            |
+| `views/`                  | Screens; each builds its own HTML                                                                   |
+| `ui/`                     | Rendering and navigation, sheets, toasts, theme, the save scene                                     |
+| `features/`               | Saving, account and sign-in, sync, stories                                                          |
+| `net/api.ts`              | The only place that talks to the server                                                             |
+| `actions.ts`, `events.ts` | Every click reaches `ACT` through `data-act`                                                        |
 
-لایه‌ی رابط کاربری فعلاً با تایپ‌های آزادتر (`strict: false`) نوشته شده چون مستقیم از پروتوتایپ آمده؛ کدهای تازه (`net/`، `features/sync.ts`، `packages/shared`، کل API) با `strict` کامل هستن. پیشنهاد: هر بار که سراغ یکی از ماژول‌های رابط رفتی، تایپ‌هاش رو سفت کن.
+The interface layer is typed loosely for now (`strict: false`) because it came straight from the prototype; new code (`net/`, `features/sync.ts`, `packages/shared`, the whole API) is fully `strict`. Suggestion: whenever you work on one of the interface modules, tighten its types.
 
-### همگام‌سازی
+### Sync
 
-- هر ردپا `updatedAt` داره؛ `syncedAt` نسخه‌ای رو نشون می‌ده که آخرین بار به سرور رسیده. هر ردپایی که این دو در اون فرق دارن هنوز باید فرستاده بشه.
-- حذف به‌شکل «سنگ‌قبر» (`deletedAt`) نگه داشته می‌شه تا به دستگاه‌های دیگه هم برسه.
-- سرور هر نوشتن رو با یک شماره‌ی افزایشی (`seq`) علامت می‌زنه. دستگاه می‌پرسه «هر چی بعد از N نوشته شده» و جدیدترین ویرایش برنده می‌شه.
-- همگام‌سازی بعد از هر ذخیره (با کمی تأخیر)، موقع وصل شدن دوباره به اینترنت، موقع برگشتن به اپ و هر یک دقیقه اجرا می‌شه.
-- یادداشت‌ها و ردپاهای نمونه هیچ‌وقت فرستاده نمی‌شن.
+- Every entry has `updatedAt`; `syncedAt` records the version last delivered to the server. Any entry where the two differ still has to travel.
+- Deletions are kept as tombstones (`deletedAt`) so they reach other devices too.
+- The server stamps every write with an increasing number (`seq`). A device asks for "everything written after N", and the newest edit wins.
+- Sync runs shortly after each save, on reconnect, on returning to the app, and every minute.
+- Notes and sample entries are never sent.
 
 ## API (`apps/api`)
 
 ```
 src/
-  config.ts          همه‌ی تنظیمات از env، با اعتبارسنجی zod
-  app.ts             ساختن اپ با وابستگی‌های تزریق‌شده (برای تست جعلی‌ها جاشون می‌شینن)
-  db/                اسکیمای Drizzle، اتصال، مایگریشن
-  plugins/           نشست (کوکی + هش در دیتابیس)، CSRF
-  lib/               خطاها، رمزنگاری، اعتبارسنجی
+  config.ts          All settings from env, validated with zod
+  app.ts             Builds the app from injected dependencies (tests swap in fakes)
+  db/                Drizzle schema, connection, migrations
+  plugins/           Session (cookie + hash in the database), CSRF
+  lib/               Errors, crypto, validation
   modules/
-    auth/            کد ایمیلی، Google، فرستادن ایمیل
-    account/         پروفایل، خروجی، حذف حساب
-    entries/         همگام‌سازی
-    stories/         داستان هفته با Claude
+    auth/            Email codes, Google, mail delivery
+    account/         Profile, export, account deletion
+    entries/         Sync
+    stories/         Weekly stories with Claude
 ```
 
-هر ماژول یک `routes.ts` (ورودی HTTP و اعتبارسنجی) و یک `service.ts` (منطق و دیتابیس) داره.
+Each module has a `routes.ts` (HTTP input and validation) and a `service.ts` (logic and database).
 
-### اضافه کردن یک قابلیت تازه
+### Adding a feature
 
-1. اگه شکل داده‌ی تازه‌ای داره، اسکیماش رو در `packages/shared/src/schemas.ts` بنویس.
-2. جدولش رو در `apps/api/src/db/schema.ts` اضافه کن و `pnpm --filter @daroon/api db:generate` رو بزن.
-3. پوشه‌ی `apps/api/src/modules/<name>/` با `routes.ts` و `service.ts` بساز و در `app.ts` ثبتش کن.
-4. تابعش رو در `apps/web/src/net/api.ts` اضافه کن و از یک ماژول در `features/` صداش بزن.
-5. تست API در `apps/api/test` و اگه رابط داره، تست مرورگر در `apps/web/e2e`.
+1. If it has a new data shape, write its schema in `packages/shared/src/schemas.ts`.
+2. Add its table to `apps/api/src/db/schema.ts` and run `pnpm --filter @daroon/api db:generate`.
+3. Create `apps/api/src/modules/<name>/` with `routes.ts` and `service.ts` and register it in `app.ts`.
+4. Add its function to `apps/web/src/net/api.ts` and call it from a module in `features/`.
+5. Add API tests in `apps/api/test` and, if it has UI, browser tests in `apps/web/e2e`.
 
-## امنیت
+## Security
 
-- کد ورود شش‌رقمی، ده دقیقه عمر، پنج بار امتحان، حداکثر پنج کد در ساعت برای هر نشانی، و محدودیت درخواست برای هر IP.
-- در دیتابیس فقط HMAC کد و SHA-256 توکن نشست ذخیره می‌شه.
-- کوکی `httpOnly`، `SameSite=Lax`، `Secure` در تولید و محدود به `/api`؛ درخواست‌های تغییر‌دهنده باید از همون origin و با JSON بیان.
-- Caddy: HTTPS خودکار، HSTS و CSP سخت‌گیرانه (فقط Google Identity Services به‌عنوان منبع بیرونی).
+- Six-digit login code, ten-minute lifetime, five attempts, at most five codes per hour per address, and per-IP rate limits.
+- The database stores only an HMAC of each code and the SHA-256 of each session token.
+- Cookie is `httpOnly`, `SameSite=Lax`, `Secure` in production and scoped to `/api`; state-changing requests must come from the app's own origin and carry JSON.
+- Caddy: automatic HTTPS, HSTS, and a strict CSP (Google Identity Services is the only external source).
