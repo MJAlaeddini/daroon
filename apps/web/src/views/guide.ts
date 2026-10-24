@@ -30,7 +30,7 @@ export function guideBody() {
   if (g.step === 'q1') return `<h1 class="q" tabindex="-1" data-autofocus>${Q1.q}</h1>${stones(Q1.opts, 'answer')}`;
   if (g.step === 'q2') {
     const b = Q2[g.q1];
-    return `<h1 class="q" tabindex="-1" data-autofocus>${b.q}</h1>${g.q1 === 'body' ? '<p class="q-sub">فقط توصیف بدن؛ قرار نیست از روی اون چیزی درباره‌ی حالت نتیجه بگیریم.</p>' : ''}${stones(b.opts, 'answer')}`;
+    return `<h1 class="q" tabindex="-1" data-autofocus>${b.q}</h1>${g.q1 === 'body' ? '<p class="q-sub">فقط چیزیه که تنت حس می‌کنه؛ قرار نیست ازش نتیجه‌ای بگیریم.</p>' : ''}${stones(b.opts, 'answer')}`;
   }
   if (g.step === 'sug') {
     const o = Q2[g.q1].opts.find((x) => x.id === g.q2),
@@ -43,8 +43,8 @@ export function guideBody() {
       })
       .join('');
     const n = S.draft.items.length;
-    return `<h1 class="q" tabindex="-1" data-autofocus>${body ? 'این توصیف جسمی، خودش کافیه.' : 'شاید یکی از این کلمه‌ها نزدیک باشه'}</h1>
-      <p class="q-sub">${body ? 'اگه خواستی، چند کلمه هم هست که شاید کنارش بشینه؛ هیچ‌کدوم لازم نیست.' : 'این‌ها فقط پیشنهادن، نه نتیجه. هر کدوم درست به نظر می‌رسه انتخاب کن؛ یا هیچ‌کدوم.'}</p>
+    return `<h1 class="q" tabindex="-1" data-autofocus>${body ? 'همین که تنت چی حس می‌کنه، کافیه.' : 'شاید یکی از این کلمه‌ها نزدیک باشه'}</h1>
+      <p class="q-sub">${body ? 'اگه خواستی، چند کلمه هم هست که شاید کنارش بشینه؛ هیچ‌کدوم لازم نیست.' : 'این‌ها فقط پیشنهادن، نه جواب. هر کدوم به دلت نشست انتخاب کن؛ یا هیچ‌کدوم.'}</p>
       <div class="sugs" role="group" aria-label="کلمه‌های پیشنهادی">${sugs}</div>
       ${S.customOpen && n < 3 ? customHTML() : ''}
       ${
@@ -61,7 +61,7 @@ export function guideBody() {
   return `<h1 class="q" tabindex="-1" data-autofocus>اشکالی نداره که هنوز اسمی نداره.</h1>
     <p class="q-sub">یه حال بی‌نام هم ارزش ثبت شدن داره. هر وقت خواستی، می‌شه دوباره سراغش اومد.</p>
     <ol class="stones"><li style="--i:0"><button class="stone em" data-act="saveUnnamed"><span class="dot"></span><span>همین حال بی‌نام رو ثبت کنم</span></button></li>
-      <li style="--i:1"><button class="stone" data-act="writeUnnamed"><span class="dot"></span><span>یه جمله درباره‌اش بنویسم</span></button></li>
+      <li style="--i:1"><button class="stone" data-act="writeUnnamed"><span class="dot"></span><span>یه جمله درباره‌ش بنویسم</span></button></li>
       <li style="--i:2"><button class="stone" data-act="toExplore"><span class="dot"></span><span>بین همه‌ی کلمه‌ها بگردم</span></button></li></ol>
     <div class="acts"><button class="quiet" data-act="exitFlow">الان نه؛ بیرون برو</button></div>`;
 }

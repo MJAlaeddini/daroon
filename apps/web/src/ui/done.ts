@@ -7,7 +7,10 @@ import { grow, stageEl } from '../stage/stage';
 import { S } from '../state/app';
 import { dayList } from '../state/store';
 
-/* completion scene: the sculpture settles in the middle, then a small seed of it drops into today */
+/* completion scene: the sculpture settles in the middle, then a small seed of it flies into today's empty place
+   in the week and becomes its mark there */
+/** How much larger the snapshot is than the mark it becomes (the snapshot has more air around the shape). */
+const FILL = 1.25;
 export function showDone(entry, shot: string | null, from?) {
   const tk = todayKey(),
     ws = weekStart(tk),
@@ -25,7 +28,7 @@ export function showDone(entry, shot: string | null, from?) {
         list = dayList(k),
         isT = k === tk;
       return `<div class="dn-day ${isT ? 'is-today' : ''} ${k > tk ? 'is-future' : ''}"><span class="wk-wd">${WD_S[i]}</span><span class="wk-dn num">${fa(j.jd)}</span>
-      <span class="wk-tr" ${isT ? 'id="doneSlot"' : ''}>${list.length ? (isT ? `<img class="tr" alt="" src="${TR.get(key) || BLANK}" style="opacity:0">` : traceImg(daySpec(k))) : '<span class="wk-empty"></span>'}</span></div>`;
+      <span class="wk-tr" ${isT ? 'id="doneSlot"' : ''}>${isT ? `<span class="wk-empty"></span><img class="tr" alt="" data-hold src="${TR.get(key) || BLANK}" style="opacity:0">` : list.length ? traceImg(daySpec(k)) : '<span class="wk-empty"></span>'}</span></div>`;
     })
     .join('');
   const words = entry.emotions.length ? entry.emotions.map((x) => esc(labelOf(x.key))).join('، ') : 'حالی بی‌نام';
@@ -44,7 +47,12 @@ export function showDone(entry, shot: string | null, from?) {
   requestAnimationFrame(() => el.querySelector<HTMLElement>('.done-t').focus({ preventScroll: true }));
   const art = $('#doneArt', el),
     slot = $('#doneSlot', el),
-    slotImg = slot && slot.querySelector('img');
+    slotImg = slot && slot.querySelector('img'),
+    slotDot = slot && slot.querySelector('.wk-empty');
+  const fill = () => {
+    slotDot?.remove();
+    if (slotImg) slotImg.style.opacity = '';
+  };
   const ar = grow(art.getBoundingClientRect());
   const big = new Image();
   big.className = 'flyer';
@@ -56,7 +64,7 @@ export function showDone(entry, shot: string | null, from?) {
   const place = (img, r, w) => `translate(${r.left}px,${r.top}px) scale(${r.width / w})`;
   if (reduced() || !from || !shot) {
     big.style.transform = place(big, ar, ar.width);
-    if (slotImg) slotImg.style.opacity = '';
+    fill();
     return;
   }
   const k = habit() ? 1 - 0.2 * habit() : 1;
@@ -69,8 +77,9 @@ export function showDone(entry, shot: string | null, from?) {
   );
   setTimeout(() => {
     if (!slot || !el.isConnected) return;
-    const sr = slot.getBoundingClientRect(),
-      sz = sr.width * 2.4,
+    // land exactly where today's mark will show, at its size, so the hand-over is invisible
+    const sr = (slotImg || slot).getBoundingClientRect(),
+      sz = sr.width * FILL,
       tr = { left: sr.left + sr.width / 2 - sz / 2, top: sr.top + sr.height / 2 - sz / 2, width: sz };
     const seed = new Image();
     seed.className = 'flyer';
@@ -87,6 +96,8 @@ export function showDone(entry, shot: string | null, from?) {
       ],
       { duration: 900, easing: 'ease-in-out' },
     );
+    // the empty-day dot gives way just before the seed covers it
+    slotDot?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, delay: 500 * k, fill: 'forwards' });
     const mid = { left: lerp(ar.left, tr.left, 0.5), top: lerp(ar.top, tr.top, 0.45), width: lerp(ar.width, sz, 0.55) };
     seed.animate(
       [
@@ -97,12 +108,9 @@ export function showDone(entry, shot: string | null, from?) {
       ],
       { duration: 900 * k, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' },
     ).onfinish = () => {
-      if (slotImg) {
-        slotImg.style.transition = 'opacity .35s';
-        slotImg.style.opacity = '';
-      }
-      slot.classList.add('arrived');
-      seed.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: 'forwards' }).onfinish = () =>
+      if (slotImg) slotImg.style.transition = 'opacity .22s';
+      fill();
+      seed.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).onfinish = () =>
         seed.remove();
     };
   }, 1250 * k);

@@ -877,6 +877,10 @@ body[data-flow='1'] #views {
 .done .flyer {
   z-index: 2;
 }
+#doneSlot .tr {
+  position: absolute;
+  inset: -4px;
+}
 .is-today > .wk-dn {
   font-weight: 700;
   background: var(--ink);
