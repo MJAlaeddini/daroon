@@ -69,3 +69,33 @@
 .danger-link:hover {
   color: var(--danger);
 }
+
+/* install sheet */
+.install .primary {
+  width: 100%;
+  margin-top: 18px;
+}
+.install .quiet {
+  width: 100%;
+  justify-content: center;
+  margin-top: 6px;
+}
+.install-steps {
+  margin: 16px 0 8px;
+  padding: 0 1.6em 0 0;
+  list-style: persian;
+  display: grid;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+.install-steps b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.install .ic {
+  width: 18px;
+  height: 18px;
+  vertical-align: -4px;
+}
