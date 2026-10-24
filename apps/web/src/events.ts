@@ -180,7 +180,7 @@ new MutationObserver(() => {
 document.addEventListener(
   'load',
   (e: any) => {
-    if (e.target.classList && e.target.classList.contains('tr')) e.target.style.opacity = '';
+    if (e.target.classList?.contains('tr') && !e.target.hasAttribute('data-hold')) e.target.style.opacity = '';
   },
   true,
 );

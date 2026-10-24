@@ -926,47 +926,47 @@ function glyph(key, color){
 }
 
 /* ═════════════════════════ guided discovery (deterministic, no AI) ═════════════════════════ */
-const Q1 = { q: 'از یه جای ساده شروع کنیم. الان بیشتر کدوم به تجربه‌ات نزدیکه؟', opts: [
-  { id:'event', t:'یه اتفاق توی ذهنم مونده', mod:{sep:.05} },
-  { id:'thoughts', t:'فکرهام خیلی شلوغن', mod:{tens:.2,freq:.2,turb:.1} },
-  { id:'body', t:'بیشتر یه چیزی توی بدنم حس می‌کنم', mod:{coh:.1,exp:-.05} },
-  { id:'vague', t:'یه حال مبهم دارم که نمی‌تونم توصیفش کنم', mod:{diff:.15,sep:.1} },
-  { id:'none', t:'هیچ‌کدوم؛ واقعاً نمی‌دونم', mod:{} },
+const Q1 = { q: 'از یه جای ساده شروع کنیم: الان کدوم بیشتر شبیه حالته؟', opts: [
+  { id:'event', t:'یه اتفاق از ذهنم بیرون نمی‌ره', mod:{sep:.05} },
+  { id:'thoughts', t:'ذهنم شلوغه', mod:{tens:.2,freq:.2,turb:.1} },
+  { id:'body', t:'بیشتر توی تنم حسش می‌کنم', mod:{coh:.1,exp:-.05} },
+  { id:'vague', t:'یه حالیه که نمی‌دونم چیه', mod:{diff:.15,sep:.1} },
+  { id:'none', t:'هیچ‌کدوم؛ نمی‌دونم', mod:{} },
 ]};
 const Q2 = {
-  event:{ q:'وقتی به اون اتفاق فکر می‌کنی، کدوم بخشش بیشتر باهات مونده؟', opts:[
+  event:{ q:'از اون اتفاق، چی بیشتر توی ذهنت مونده؟', opts:[
     { id:'person', t:'حرف یا رفتار یه نفر', sug:['دلخوری','رنجش','خشم','قدردانی'], mod:{tens:.1} },
-    { id:'expect', t:'چیزی که انتظار داشتم اتفاق نیفتاد', sug:['ناامیدی','دلخوری','غم','حسرت'], mod:{lum:-.1} },
-    { id:'self', t:'کاری که خودم کردم یا نکردم', sug:['پشیمانی','رضایت','دلشوره','کلافگی'], mod:{coh:.1} },
-    { id:'change', t:'تغییری که پیش اومد', sug:['بلاتکلیفی','امید','دلتنگی','هیجان'], mod:{energy:.1,dx:.2} },
+    { id:'expect', t:'اون‌طور که انتظار داشتم نشد', sug:['ناامیدی','دلخوری','غم','حسرت'], mod:{lum:-.1} },
+    { id:'self', t:'کاری که کردم، یا نکردم', sug:['پشیمانی','رضایت','دلشوره','کلافگی'], mod:{coh:.1} },
+    { id:'change', t:'یه چیزی عوض شد', sug:['بلاتکلیفی','امید','دلتنگی','هیجان'], mod:{energy:.1,dx:.2} },
     { id:'unsure', t:'دقیق نمی‌دونم', sug:[], mod:{sep:.1}, vague:true },
   ]},
-  thoughts:{ q:'فکرهات بیشتر دور چی می‌چرخن؟', opts:[
-    { id:'past', t:'اتفاقی که گذشته', sug:['حسرت','پشیمانی','دلتنگی','قدردانی'], mod:{dx:-.2} },
+  thoughts:{ q:'فکرت بیشتر پیش چیه؟', opts:[
+    { id:'past', t:'چیزی که گذشته', sug:['حسرت','پشیمانی','دلتنگی','قدردانی'], mod:{dx:-.2} },
     { id:'future', t:'چیزی که ممکنه پیش بیاد', sug:['نگرانی','امید','اشتیاق','بلاتکلیفی'], mod:{dy:.1,tens:.1} },
-    { id:'tasks', t:'کارها و مسئولیت‌هام', sug:['کلافگی','نگرانی','انگیزه','رضایت'], mod:{tens:.2,turb:.1} },
-    { id:'many', t:'چند چیز مختلف', sug:['سردرگمی','کلافگی','دلشوره','کنجکاوی'], mod:{sep:.2,turb:.15} },
+    { id:'tasks', t:'کارهایی که روی دوشمه', sug:['کلافگی','نگرانی','انگیزه','رضایت'], mod:{tens:.2,turb:.1} },
+    { id:'many', t:'همه‌چی با هم', sug:['سردرگمی','کلافگی','دلشوره','کنجکاوی'], mod:{sep:.2,turb:.15} },
     { id:'unsure', t:'نمی‌دونم', sug:[], mod:{}, vague:true },
   ]},
-  body:{ q:'اگر فقط بخوای حس جسمی رو توصیف کنی، بیشتر شبیه چیه؟', opts:[
-    { id:'heavy', t:'سنگینی یا گرفتگی', sug:['غم','دلگیری','دلتنگی','بی‌حوصلگی'], mod:{dy:-.3,exp:-.08,lum:-.1} },
-    { id:'tense', t:'تنش یا بی‌قراری', sug:['نگرانی','خشم','اشتیاق','کلافگی'], mod:{tens:.25,freq:.2} },
-    { id:'light', t:'سبکی یا رهایی', sug:['آرامش','شادی','رهایی','سبکی'], mod:{exp:.1,lum:.15,dy:.2} },
-    { id:'tired', t:'خستگی یا کم‌انرژی بودن', sug:['بی‌حوصلگی','دلگیری','آرامش','کلافگی'], mod:{energy:-.25,lum:-.1} },
+  body:{ q:'توی تنت، بیشتر شبیه کدومه؟', opts:[
+    { id:'heavy', t:'سنگینی، یه جور گرفتگی', sug:['غم','دلگیری','دلتنگی','بی‌حوصلگی'], mod:{dy:-.3,exp:-.08,lum:-.1} },
+    { id:'tense', t:'تنش، بی‌قراری', sug:['نگرانی','خشم','اشتیاق','کلافگی'], mod:{tens:.25,freq:.2} },
+    { id:'light', t:'سبکی، انگار باری برداشته شده', sug:['آرامش','شادی','رهایی','سبکی'], mod:{exp:.1,lum:.15,dy:.2} },
+    { id:'tired', t:'خستگی، بی‌جونی', sug:['بی‌حوصلگی','دلگیری','آرامش','کلافگی'], mod:{energy:-.25,lum:-.1} },
     { id:'unsure', t:'نمی‌دونم', sug:[], mod:{}, vague:true },
   ]},
-  vague:{ q:'اگه بدون اسم گذاشتن بخوای توصیفش کنی، به کدوم نزدیک‌تره؟', opts:[
-    { id:'pressure', t:'انگار یه فشاری درونمه', sug:['کلافگی','نگرانی','دلخوری','بلاتکلیفی'], mod:{coh:.15,exp:-.1,tens:.2} },
+  vague:{ q:'بی‌آنکه اسمش رو بذاری، به کدوم نزدیک‌تره؟', opts:[
+    { id:'pressure', t:'انگار یه چیزی فشارم می‌ده', sug:['کلافگی','نگرانی','دلخوری','بلاتکلیفی'], mod:{coh:.15,exp:-.1,tens:.2} },
     { id:'missing', t:'انگار یه چیزی کمه', sug:['دلتنگی','تنهایی','حسرت','انتظار'], mod:{asym:.2,sep:.1} },
-    { id:'changing', t:'حس می‌کنم یه چیزی داره تغییر می‌کنه', sug:['امید','بلاتکلیفی','کنجکاوی','دلشوره'], mod:{dy:.2,energy:.1} },
-    { id:'between', t:'انگار بین دو حالت مختلفم', sug:['دوگانگی','سردرگمی','امید','دلتنگی'], mod:{sep:.3} },
-    { id:'neither', t:'حتی این‌ها هم نیست', sug:[], mod:{}, vague:true },
+    { id:'changing', t:'انگار یه چیزی داره عوض می‌شه', sug:['امید','بلاتکلیفی','کنجکاوی','دلشوره'], mod:{dy:.2,energy:.1} },
+    { id:'between', t:'انگار بین دو تا حالم', sug:['دوگانگی','سردرگمی','امید','دلتنگی'], mod:{sep:.3} },
+    { id:'neither', t:'هیچ‌کدوم از این‌ها نیست', sug:[], mod:{}, vague:true },
   ]},
-  none:{ q:'دوست داری چطور ادامه بدیم؟', opts:[
-    { id:'words', t:'چند کلمه ببینم', go:'explore' },
-    { id:'write', t:'یه جمله درباره‌اش بنویسم', go:'write' },
-    { id:'keep', t:'فعلاً همین نامشخص بودن رو ثبت کنم', go:'unnamed' },
-    { id:'stop', t:'الان نمی‌خوام ادامه بدم', go:'exit' },
+  none:{ q:'چطور ادامه بدیم؟', opts:[
+    { id:'words', t:'چند تا کلمه ببینم', go:'explore' },
+    { id:'write', t:'یه جمله درباره‌ش بنویسم', go:'write' },
+    { id:'keep', t:'فعلاً همین «نمی‌دونم» رو ثبت کنم', go:'unnamed' },
+    { id:'stop', t:'الان نه؛ بعداً', go:'exit' },
   ]},
 };
 const CTX_NAME = { event:'موقعیت', thoughts:'فکرها', body:'حس جسمی', vague:'حال' };
@@ -1544,13 +1544,13 @@ function stones(opts, act){ return `<ol class="stones">${opts.map((o, i) => `<li
 function guideBody(){
   const g = S.guide;
   if (g.step === 'q1') return `<h1 class="q" tabindex="-1" data-autofocus>${Q1.q}</h1>${stones(Q1.opts, 'answer')}`;
-  if (g.step === 'q2'){ const b = Q2[g.q1]; return `<h1 class="q" tabindex="-1" data-autofocus>${b.q}</h1>${g.q1 === 'body' ? '<p class="q-sub">فقط توصیف بدن؛ قرار نیست از روی اون چیزی درباره‌ی حالت نتیجه بگیریم.</p>' : ''}${stones(b.opts, 'answer')}`; }
+  if (g.step === 'q2'){ const b = Q2[g.q1]; return `<h1 class="q" tabindex="-1" data-autofocus>${b.q}</h1>${g.q1 === 'body' ? '<p class="q-sub">فقط چیزیه که تنت حس می‌کنه؛ قرار نیست ازش نتیجه‌ای بگیریم.</p>' : ''}${stones(b.opts, 'answer')}`; }
   if (g.step === 'sug'){
     const o = Q2[g.q1].opts.find(x => x.id === g.q2), body = g.q1 === 'body', picks = S.draft.items.map(i => i.key);
     const sugs = o.sug.map((k, i) => { const on = picks.includes(k); return `<button class="sug" data-act="pickSug" data-key="${k}" aria-pressed="${on}" style="--i:${i};${cvars(k)}">${glyph(k)}<span>${k}</span>${emoji(k)}<span class="st">${on ? 'انتخاب شد' : 'پیشنهاد'}</span></button>`; }).join('');
     const n = S.draft.items.length;
-    return `<h1 class="q" tabindex="-1" data-autofocus>${body ? 'این توصیف جسمی، خودش کافیه.' : 'شاید یکی از این کلمه‌ها نزدیک باشه'}</h1>
-      <p class="q-sub">${body ? 'اگه خواستی، چند کلمه هم هست که شاید کنارش بشینه؛ هیچ‌کدوم لازم نیست.' : 'این‌ها فقط پیشنهادن، نه نتیجه. هر کدوم درست به نظر می‌رسه انتخاب کن؛ یا هیچ‌کدوم.'}</p>
+    return `<h1 class="q" tabindex="-1" data-autofocus>${body ? 'همین که تنت چی حس می‌کنه، کافیه.' : 'شاید یکی از این کلمه‌ها نزدیک باشه'}</h1>
+      <p class="q-sub">${body ? 'اگه خواستی، چند کلمه هم هست که شاید کنارش بشینه؛ هیچ‌کدوم لازم نیست.' : 'این‌ها فقط پیشنهادن، نه جواب. هر کدوم به دلت نشست انتخاب کن؛ یا هیچ‌کدوم.'}</p>
       <div class="sugs" role="group" aria-label="کلمه‌های پیشنهادی">${sugs}</div>
       ${S.customOpen && n < 3 ? customHTML() : ''}
       ${S.draft.items.filter(i => !o.sug.includes(i.key)).length ? `<p class="fine">کلمه‌های دیگه‌ات: ${S.draft.items.filter(i => !o.sug.includes(i.key)).map(i => esc(labelOf(i.key))).join('، ')}</p>` : ''}
@@ -1560,7 +1560,7 @@ function guideBody(){
   return `<h1 class="q" tabindex="-1" data-autofocus>اشکالی نداره که هنوز اسمی نداره.</h1>
     <p class="q-sub">یه حال بی‌نام هم ارزش ثبت شدن داره. هر وقت خواستی، می‌شه دوباره سراغش اومد.</p>
     <ol class="stones"><li style="--i:0"><button class="stone em" data-act="saveUnnamed"><span class="dot"></span><span>همین حال بی‌نام رو ثبت کنم</span></button></li>
-      <li style="--i:1"><button class="stone" data-act="writeUnnamed"><span class="dot"></span><span>یه جمله درباره‌اش بنویسم</span></button></li>
+      <li style="--i:1"><button class="stone" data-act="writeUnnamed"><span class="dot"></span><span>یه جمله درباره‌ش بنویسم</span></button></li>
       <li style="--i:2"><button class="stone" data-act="toExplore"><span class="dot"></span><span>بین همه‌ی کلمه‌ها بگردم</span></button></li></ol>
     <div class="acts"><button class="quiet" data-act="exitFlow">الان نه؛ بیرون برو</button></div>`;
 }
