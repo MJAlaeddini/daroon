@@ -404,6 +404,9 @@ export function labsFor(key: string, color?: string | null) {
   return LABC.get(k);
 }
 export const NEU_LABS = NEUTRAL_PAL.map(hexToLab);
+/* the waiting sculpture on the home and sign-in screens: the neutral form, a little warmer and brighter */
+export const HOME_PAL = ['#fff1e0', '#f2b7c4', '#9fc6ec'];
+export const HOME_LABS = HOME_PAL.map(hexToLab);
 export const cvars = (key: string, color?: string | null) => {
   const p = palFor(key, color);
   return `--c0:${p[0]};--c1:${p[1]};--c2:${p[2]}`;

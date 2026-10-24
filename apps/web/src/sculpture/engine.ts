@@ -60,6 +60,9 @@ export class Engine {
   ptT: number[];
   seed: number;
   _pt: ReturnType<typeof setTimeout> | undefined;
+  /** colours of the neutral (unnamed) part of the form, easing toward neuT */
+  neu: number[][];
+  neuT: number[][];
   constructor() {
     this.P = { ...P0 };
     this.V = {};
@@ -88,6 +91,8 @@ export class Engine {
     this.pt = [0, 0];
     this.ptT = [0, 0];
     this.seed = Math.random();
+    this.neu = NEU_LABS.map((a) => a.slice());
+    this.neuT = NEU_LABS;
   }
   setSpec(spec) {
     const items = (spec.items || []).slice(0, 3),
@@ -152,6 +157,10 @@ export class Engine {
       }
     }
     {
+      const a = 1 - Math.exp(-dt * 2.5);
+      for (let i = 0; i < 3; i++) for (let c = 0; c < 3; c++) this.neu[i][c] = lerp(this.neu[i][c], this.neuT[i][c], a);
+    }
+    {
       const k = 4 * kmul;
       this.nv += (k * k * (this.neutralT - this.neutral) - 2 * k * this.nv) * dt;
       this.neutral = clamp(this.neutral + this.nv * dt);
@@ -209,7 +218,7 @@ export function buildU(st, scale: number, halo: number, dk?: number) {
     S[i * 4 + 3] = s.ltens;
     for (let j = 0; j < 3; j++) for (let c = 0; c < 3; c++) K[i * 9 + j * 3 + c] = s.lab[j][c];
   });
-  NEU_LABS.forEach((l, j) => {
+  (st.neu || NEU_LABS).forEach((l, j) => {
     N[j * 3] = l[0];
     N[j * 3 + 1] = l[1];
     N[j * 3 + 2] = l[2];

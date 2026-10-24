@@ -22,8 +22,8 @@ export function vToday() {
   return `<div class="t-grid">
     <div class="t-copy">
       <p class="eyebrow r" style="--i:0">${fmtDay(tk)}${DB.account ? ` · سلام ${esc(DB.account.name)}` : ''}</p>
-      <h1 class="hero r" style="--i:1" tabindex="-1" data-autofocus>امروز درونت چه می‌گذره؟</h1>
-      <p class="lede r" style="--i:2">لازم نیست اسم احساست رو بدونی.</p>
+      <h1 class="hero r" style="--i:1" tabindex="-1" data-autofocus>امروز حالت چطوره؟</h1>
+      <p class="lede r" style="--i:2">لازم نیست بدونی اسمش چیه.</p>
     </div>
     <div class="t-stage r" style="--i:2">
       <div class="anchor-home" data-anchor data-scale=".6"></div>

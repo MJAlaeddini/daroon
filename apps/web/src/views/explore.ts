@@ -4,14 +4,13 @@ import { LEX, cvars } from '../domain/lexicon';
 import { S } from '../state/app';
 import { glyph } from '../ui/glyph';
 import { IC } from '../ui/icons';
-import { emoji } from './common';
 
 export function vExplore() {
   const d = S.draft;
   const words = CORE_KEYS.map((k, i) => {
     const it = d.items.find((x) => x.key === k || x.parent === k),
       on = !!it;
-    return `<button class="word" type="button" data-act="word" data-key="${k}" data-angle="${LEX[k].angle}" aria-pressed="${on}" style="--i:${i};${cvars(k, it?.color)}">${glyph(k, it?.color)}<span>${k}</span>${emoji(k)}${it && it.key !== k ? `<span class="rfn">${esc(labelOf(it.key))}</span>` : ''}</button>`;
+    return `<button class="word" type="button" data-act="word" data-key="${k}" data-angle="${LEX[k].angle}" aria-pressed="${on}" style="--i:${i};${cvars(k, it?.color)}">${glyph(k, it?.color)}<span>${k}</span>${it && it.key !== k ? `<span class="rfn">${esc(labelOf(it.key))}</span>` : ''}</button>`;
   }).join('');
   return `<div class="flow-head"><button class="back" data-act="back">${IC.back}بازگشت</button><span class="step">${S.editing ? 'ویرایش ردپا' : 'راه اول: کلمه‌ها'}</span></div>
   <div class="x-grid">
@@ -31,7 +30,7 @@ export function trayHTML() {
       const par = it.parent && REFINE[it.parent] ? it.parent : null,
         focus = d.focus === i;
       return `<li class="sel">
-      <button class="sel-chip" data-act="focusSel" data-i="${i}" aria-expanded="${par ? focus : 'false'}" style="${cvars(it.key, it.color)}">${glyph(it.key, it.color)}<span>${esc(labelOf(it.key))}</span>${emoji(it.key)}${par && it.key !== par ? `<small>از «${par}»</small>` : ''}</button>
+      <button class="sel-chip" data-act="focusSel" data-i="${i}" aria-expanded="${par ? focus : 'false'}" style="${cvars(it.key, it.color)}">${glyph(it.key, it.color)}<span>${esc(labelOf(it.key))}</span>${par && it.key !== par ? `<small>از «${par}»</small>` : ''}</button>
       <button class="x" data-act="removeSel" data-i="${i}" aria-label="برداشتن ${esc(labelOf(it.key))}">${IC.close}</button>
       ${
         par && focus
