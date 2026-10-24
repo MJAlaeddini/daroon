@@ -24,6 +24,14 @@ const Env = z.object({
   /** Sign-in attempts allowed per IP address every 15 minutes. */
   AUTH_RATE_LIMIT: z.coerce.number().int().min(1).default(8),
   STORIES_PER_DAY: z.coerce.number().int().min(0).default(12),
+  /**
+   * Whether the session cookie is marked Secure (HTTPS only). Defaults to true in production; set to false
+   * only for a temporary plain-HTTP setup, e.g. http://SERVER_IP:8080.
+   */
+  COOKIE_SECURE: z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined || v === '' ? undefined : v === 'true' || v === '1')),
   /** Set to true behind a reverse proxy (Caddy) so client addresses come from X-Forwarded-For. */
   TRUST_PROXY: z
     .string()
@@ -31,7 +39,7 @@ const Env = z.object({
     .transform((v) => v === 'true' || v === '1'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
-export type Config = z.infer<typeof Env> & { isProd: boolean };
+export type Config = Omit<z.infer<typeof Env>, 'COOKIE_SECURE'> & { isProd: boolean; COOKIE_SECURE: boolean };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = Env.safeParse(env);
@@ -42,5 +50,5 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const c = parsed.data;
   if (c.NODE_ENV === 'production' && !c.SMTP_URL) throw new Error('SMTP_URL is required in production');
   if (c.NODE_ENV === 'production' && c.MAIL_OUTBOX) throw new Error('MAIL_OUTBOX must not be set in production');
-  return { ...c, isProd: c.NODE_ENV === 'production' };
+  return { ...c, isProd: c.NODE_ENV === 'production', COOKIE_SECURE: c.COOKIE_SECURE ?? c.NODE_ENV === 'production' };
 }

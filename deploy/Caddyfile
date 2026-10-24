@@ -1,9 +1,10 @@
-# Serves the app on DOMAIN with automatic HTTPS (Let's Encrypt), and sends /api to the API container.
+# Serves the app and sends /api to the API container.
+# SITE_ADDRESS is a domain (automatic HTTPS from Let's Encrypt) or ":80" for plain HTTP (port mode).
 {
 	email {$ACME_EMAIL}
 }
 
-{$DOMAIN} {
+{$SITE_ADDRESS} {
 	encode zstd gzip
 
 	handle /api/* {

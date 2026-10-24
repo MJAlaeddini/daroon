@@ -26,7 +26,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://daroon:${POSTGRES_PASSWORD}@db:5432/daroon
-      APP_ORIGIN: https://${DOMAIN:?set DOMAIN in deploy/.env}
+      APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN in deploy/.env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       TRUST_PROXY: 'true'
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in deploy/.env}
       SMTP_URL: ${SMTP_URL:?set SMTP_URL in deploy/.env}
@@ -40,13 +41,13 @@ services:
     build: { context: .., dockerfile: deploy/web.Dockerfile }
     restart: unless-stopped
     depends_on: [api]
+    # HTTP_BIND / HTTPS_BIND choose the host ports. Defaults take 80 and 443; port mode moves them aside.
     ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
+      - '${HTTP_BIND:-80}:80'
+      - '${HTTPS_BIND:-443}:443'
     environment:
-      DOMAIN: ${DOMAIN}
-      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in deploy/.env}
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in deploy/.env}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
     volumes:
       - caddy_data:/data
       - caddy_config:/config

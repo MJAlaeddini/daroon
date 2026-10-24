@@ -39,7 +39,7 @@ export default fp(async function session(app: FastifyInstance, { deps }: { deps:
     path: '/api',
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: deps.config.isProd,
+    secure: deps.config.COOKIE_SECURE,
     maxAge: days * 86400,
   };
 
