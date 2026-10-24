@@ -1,0 +1,49 @@
+name: Deploy
+
+# After CI passes on main, log in to the server over SSH and run deploy/update.sh.
+# Needs repository secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST  server address
+#   DEPLOY_USER  SSH user (e.g. root)
+#   DEPLOY_KEY   private key whose public half is in that user's ~/.ssh/authorized_keys
+#   DEPLOY_PORT  optional, SSH port (default 22)
+# On the server the key can be limited to this one job; see docs/deploy.md.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check that the server is configured
+        id: cfg
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -z "$HOST" ]; then
+            echo "::notice::DEPLOY_HOST is not set; skipping deploy."
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run update on the server
+        if: steps.cfg.outputs.skip != '1'
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          KEY: ${{ secrets.DEPLOY_KEY }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/deploy -p "${PORT:-22}" -o BatchMode=yes -o ConnectTimeout=20 "$USER@$HOST" \
+            'cd /opt/daroon && ./deploy/update.sh'

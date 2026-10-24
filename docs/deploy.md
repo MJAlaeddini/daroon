@@ -87,6 +87,19 @@ Then open the port (`sudo ufw allow 8080/tcp`, and in your provider's firewall i
 
 Limits of this mode, since there is no HTTPS: login codes and the session cookie travel unencrypted, the app cannot be installed or work offline (browsers allow service workers only over HTTPS), and Google sign-in is unavailable. Use it for trying things out; for real use move to a subdomain with HTTPS — either Mode A, or keep this port and add a block for the subdomain to the existing web server that proxies to `http://127.0.0.1:8080` (then set `APP_ORIGIN=https://SUBDOMAIN`, `COOKIE_SECURE=true`, and `HTTP_BIND=127.0.0.1:8080`). Caddy obtains the HTTPS certificate from Let's Encrypt itself; ports 80 and 443 must be open.
 
+## Automatic deploys from GitHub
+
+The `Deploy` workflow runs `deploy/update.sh` on the server over SSH every time CI passes on `main` (or when started by hand from the Actions tab). On the server, create a key that can do only that:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/gha_deploy -N ""
+echo "command=\"cd /opt/daroon && ./deploy/update.sh\",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty $(cat ~/.ssh/gha_deploy.pub)" >> ~/.ssh/authorized_keys
+cat ~/.ssh/gha_deploy        # the private key, for the DEPLOY_KEY secret
+rm ~/.ssh/gha_deploy ~/.ssh/gha_deploy.pub
+```
+
+The `command=` prefix means this key can run the update and nothing else, even if it leaks. Then in GitHub: repository → **Settings → Secrets and variables → Actions → New repository secret**, add `DEPLOY_HOST` (server address), `DEPLOY_USER` (e.g. `root`), `DEPLOY_KEY` (the whole private key, including the BEGIN/END lines) and, if SSH is not on port 22, `DEPLOY_PORT`.
+
 ## Updating
 
 ```bash
