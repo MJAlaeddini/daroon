@@ -11,6 +11,16 @@ This guide runs Daroon on a Linux server with Docker: PostgreSQL, the API, and C
 - **Google (optional).** In Google Cloud Console create an OAuth client of type "Web application" and add `https://DOMAIN` to Authorized JavaScript origins. Google sign-in may not work for users in Iran without a VPN; email sign-in always does.
 - **Claude (optional).** An API key from console.anthropic.com for weekly stories.
 
+## Quick install (next to an existing site)
+
+After the repository is cloned (see the deploy key below), one script does the rest: installs Docker if needed, writes `deploy/.env` with fresh secrets, builds and starts everything on a port of your choice, opens the firewall and checks that the app answers.
+
+```bash
+cd /opt/daroon && ./deploy/install.sh
+```
+
+It asks for the port (default 8080), the server address (detected), an optional SMTP URL and an optional Claude API key. Without SMTP, login codes are written to the log (`docker compose ... logs api | grep 'LOGIN CODE'`). If Docker Hub is unreachable (as from servers in Iran) it offers to configure a registry mirror. Running it again keeps the existing settings and secrets. Later updates: `./deploy/update.sh`.
+
 ## Getting the code onto the server (private repository)
 
 The server needs read access to the repository. A **deploy key** gives it access to this one repository only:

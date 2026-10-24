@@ -30,7 +30,7 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       TRUST_PROXY: 'true'
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in deploy/.env}
-      SMTP_URL: ${SMTP_URL:?set SMTP_URL in deploy/.env}
+      SMTP_URL: ${SMTP_URL:-}
       MAIL_FROM: ${MAIL_FROM}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

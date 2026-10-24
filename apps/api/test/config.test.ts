@@ -13,7 +13,7 @@ describe('config', () => {
     expect(loadConfig({ ...base, TRUST_PROXY: 'false' }).TRUST_PROXY).toBe(false);
     expect(loadConfig({ ...base, TRUST_PROXY: 'true' }).TRUST_PROXY).toBe(true);
   });
-  it('refuses to start in production without mail', () => {
-    expect(() => loadConfig({ ...base, NODE_ENV: 'production', SMTP_URL: '' })).toThrow();
+  it('starts in production without mail (codes go to the log)', () => {
+    expect(loadConfig({ ...base, NODE_ENV: 'production', SMTP_URL: '' }).SMTP_URL).toBe('');
   });
 });

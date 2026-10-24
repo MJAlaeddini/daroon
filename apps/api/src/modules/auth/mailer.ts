@@ -21,7 +21,7 @@ export function loginCodeMail(code: string) {
   };
 }
 
-export function createMailer(config: Config, log: { info: (o: object, m: string) => void }): Mailer {
+export function createMailer(config: Config, log: { warn: (o: object, m: string) => void }): Mailer {
   if (config.MAIL_OUTBOX && !config.isProd) {
     const dir = config.MAIL_OUTBOX;
     mkdirSync(dir, { recursive: true });
@@ -34,7 +34,7 @@ export function createMailer(config: Config, log: { info: (o: object, m: string)
   if (!config.SMTP_URL) {
     return {
       async sendLoginCode(to, code) {
-        log.info({ to, code }, 'SMTP_URL is not set; login code printed instead of mailed');
+        log.warn({ to, code }, `LOGIN CODE for ${to}: ${code} (SMTP_URL is not set, so it was not mailed)`);
       },
     };
   }

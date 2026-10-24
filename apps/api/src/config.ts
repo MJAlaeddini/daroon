@@ -11,7 +11,10 @@ const Env = z.object({
   /** Secret mixed into stored login-code hashes. At least 32 characters. */
   AUTH_SECRET: z.string().min(32),
   SESSION_DAYS: z.coerce.number().int().min(1).max(400).default(180),
-  /** SMTP connection string, e.g. smtps://user:pass@smtp.example.com:465. Without it, codes are only logged (development). */
+  /**
+   * SMTP connection string, e.g. smtps://user:pass@smtp.example.com:465. Without it, login codes are written to the
+   * API log instead (fine for an owner trying the app; nobody else can sign in).
+   */
   SMTP_URL: z.string().optional(),
   MAIL_FROM: z.string().default('درون <no-reply@localhost>'),
   /** Development and tests only: write login mails as JSON files into this folder instead of sending them. */
@@ -48,7 +51,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error(`Invalid configuration:\n${msg}`);
   }
   const c = parsed.data;
-  if (c.NODE_ENV === 'production' && !c.SMTP_URL) throw new Error('SMTP_URL is required in production');
   if (c.NODE_ENV === 'production' && c.MAIL_OUTBOX) throw new Error('MAIL_OUTBOX must not be set in production');
   return { ...c, isProd: c.NODE_ENV === 'production', COOKIE_SECURE: c.COOKIE_SECURE ?? c.NODE_ENV === 'production' };
 }
