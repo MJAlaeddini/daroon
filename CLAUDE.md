@@ -38,6 +38,6 @@ psql -h localhost -p 5433 -U daroon -d postgres -c "create database daroon_test"
 
 ## Deploying
 
-Pushing to `main` runs CI; when it passes, the `Deploy` workflow SSHes into the server and runs `deploy/update.sh`
+Pushing to `main` runs CI; when every check passes, its last job (the `Deploy` workflow) SSHes into the server and runs `deploy/update.sh`
 (the app lives in `/opt/daroon`, currently in port mode over plain HTTP). Don't break `deploy/install.sh` re-runs:
 an existing `deploy/.env` and its secrets must be kept.

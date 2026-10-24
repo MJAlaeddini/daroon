@@ -89,7 +89,7 @@ Limits of this mode, since there is no HTTPS: login codes and the session cookie
 
 ## Automatic deploys from GitHub
 
-The `Deploy` workflow runs `deploy/update.sh` on the server over SSH every time CI passes on `main` (or when started by hand from the Actions tab). On the server, create a key that can do only that:
+The last CI job on `main` (the reusable `Deploy` workflow) runs `deploy/update.sh` on the server over SSH once every check passes (or when started by hand from the Actions tab). On the server, create a key that can do only that:
 
 ```bash
 ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/gha_deploy -N ""
