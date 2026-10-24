@@ -16,11 +16,14 @@ import { engine } from './stage/stage';
 import { todayKey } from '@daroon/shared';
 import { applyTheme } from './ui/theme';
 import { setupPwa } from './pwa';
+import { setupInstall } from './features/install';
 
 /* ═════════════════════════ boot ═════════════════════════ */
 document.documentElement.lang = 'fa';
 document.documentElement.dir = 'rtl';
-load();
+const E2E = new URLSearchParams(location.search).has('e2e');
+/* the browser tests get a fixed set of sample entries; real use starts empty */
+load(E2E ? (await import('./state/sample')).sampleEntries : undefined);
 if (DB.account && !DB.account.id) DB.account = null; /* a sample account from the prototype */
 reindex();
 applyTheme(false);
@@ -39,8 +42,9 @@ onSynced((changed) => {
 });
 startSync();
 setupPwa();
+setupInstall({ auto: !E2E });
 if (DB.account) pullStories();
-if (new URLSearchParams(location.search).has('e2e')) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
+if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
 try {
   mini.draw(buildU(staticState({ items: [], neutral: 1, seed: 0 }), 0.5, 0.7));
 } catch (e) {} /* compile the trace shader before the first calendar needs it */

@@ -9,7 +9,8 @@ import { closeStory, openStoryView, weekStory } from './features/stories';
 import { isDark, reduced } from './sculpture/engine';
 import { angleToward, engine, pickAnchor } from './stage/stage';
 import { S, isWide, newDraft, syncEngine } from './state/app';
-import { DB, genDemo, persist, reindex } from './state/store';
+import { DB, persist, reindex } from './state/store';
+import { installNow, openInstall } from './features/install';
 import { selectDay } from './ui/day-select';
 import { closeDone } from './ui/done';
 import { back, go, hintPath, refreshArchive, refreshExplore, renderView } from './ui/render';
@@ -305,22 +306,6 @@ export const ACT = {
     applyTheme(false);
     refreshSettings();
   },
-  toggleDemo() {
-    DB.settings.showDemo = !DB.settings.showDemo;
-    persist();
-    reindex();
-    refreshSettings();
-    renderView({ quiet: true });
-  },
-  resetDemo() {
-    DB.entries = DB.entries.filter((e) => !e.demo).concat(genDemo());
-    DB.settings.showDemo = true;
-    persist();
-    reindex();
-    refreshSettings();
-    renderView({ quiet: true });
-    toast('ردپاهای نمونه از نو ساخته شدن.');
-  },
   wipeAsk() {
     S.wipeArm = true;
     refreshSettings();
@@ -517,6 +502,12 @@ export const ACT = {
   },
   loginResend() {
     resendCode();
+  },
+  installApp() {
+    openInstall();
+  },
+  installNow() {
+    installNow();
   },
   loginSkip() {
     DB.loginDone = true;

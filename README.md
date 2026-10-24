@@ -28,7 +28,7 @@ cp apps/api/.env.example apps/api/.env
 pnpm dev                           # web on http://localhost:5173, API on 8787
 ```
 
-Without `SMTP_URL`, login codes are printed to the API console instead of being emailed. Without `GOOGLE_CLIENT_ID` the Google button is hidden, and without `ANTHROPIC_API_KEY` the weekly story is a plain summary written on the device. The app works fully without the server; only sign-in and sync are unavailable.
+Without `SMTP_URL`, login codes are printed to the API console instead of being emailed. Without `GOOGLE_CLIENT_ID` the Google button is hidden, and without `STORY_API_URL` (any OpenAI-compatible chat API) the weekly story is a plain summary written on the device. The app works fully without the server; only sign-in and sync are unavailable.
 
 ## Commands
 

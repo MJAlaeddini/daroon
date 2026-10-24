@@ -2,7 +2,7 @@
 
 ## Principles
 
-1. **Offline-first.** The app keeps everything on the device first and works fully without the server. The server adds three things: sign-in, sync between devices, and weekly stories written by Claude.
+1. **Offline-first.** The app keeps everything on the device first and works fully without the server. The server adds three things: sign-in, sync between devices, and weekly stories written by a language model behind any OpenAI-compatible API (`STORY_API_URL`).
 2. **One source of truth for shared rules.** The calendar, the allowed words, the data shapes and the story prompt live in `packages/shared`, used by both the web app and the API; the same zod schema validates in the browser and on the server.
 3. **One module per feature.** Each new feature gets its own folder and talks to the rest only through its small interface.
 
@@ -46,7 +46,7 @@ src/
     auth/            Email codes, Google, mail delivery
     account/         Profile, export, account deletion
     entries/         Sync
-    stories/         Weekly stories with Claude
+    stories/         Weekly stories (OpenAI-compatible chat API)
 ```
 
 Each module has a `routes.ts` (HTTP input and validation) and a `service.ts` (logic and database).

@@ -16,7 +16,7 @@ import { renderView } from '../ui/render';
 import { toast } from '../ui/toast';
 
 /* ═════════════════════════ weekly stories ═════════════════════════
-   Written by Claude on the server for signed-in people (net/api.ts); otherwise a plain local summary.
+   Written by a language model on the server for signed-in people (net/api.ts); otherwise a plain local summary.
    Saved in DB.stories and, when signed in, on the server too. */
 export function renderArt(spec, dk = 0, size = 360) {
   const k = 'A' + dk + traceKey(spec);
@@ -81,7 +81,7 @@ export async function weekStory(ws, regen = false) {
     <div class="st-txt"><p class="st-k">${weekRange(ws)}</p><p class="st-text">دارم هفته‌ات رو مرور می‌کنم…</p><p class="st-note">فقط ردپاها و یادداشت‌های همین هفته خونده می‌شه.</p></div></div>`,
   );
   el.querySelector<HTMLElement>('.st-x').focus();
-  /* signed in: Claude writes it on the server (the week's notes go along for this one request only);
+  /* signed in: the server writes it (the week's notes go along for this one request only);
      otherwise, or when that fails, a plain summary is written here */
   let st = null;
   if (isSignedIn() && S.story && S.story.el === el) {

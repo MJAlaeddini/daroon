@@ -7,6 +7,7 @@ import { pickAnchor, usingGL } from '../stage/stage';
 import { S, syncEngine } from '../state/app';
 import { DB, visible } from '../state/store';
 import { IC } from './icons';
+import { canInstall } from '../features/install';
 import { dayDetailHTML, monthHTML, weekHTML } from '../views/archive';
 
 /* sheets */
@@ -115,7 +116,7 @@ export function settingsHTML() {
       <p class="fine">${acc ? `${acc.provider === 'google' ? 'با Google' : 'با ایمیل'} · از ${fmtDay(acc.since, { weekday: false })}` : 'ردپاها فقط روی همین دستگاه هستن.'}</p></div>
       <div class="pstats"><div><b class="num">${fa(all.length)}</b><span>ردپا</span></div><div><b class="num">${fa(days)}</b><span>روز</span></div><div><b class="num">${fa(words)}</b><span>کلمه‌ی متفاوت</span></div></div>
       ${acc ? '' : `<div class="auth-btns"><button class="gbtn" data-act="loginGoogle"${authCfg.google ? '' : ' hidden'}><span class="g" aria-hidden="true">G</span>ادامه با Google</button><button class="gbtn" data-act="loginEmail"><span class="g" aria-hidden="true">@</span>ادامه با ایمیل</button></div>`}</section>
-    <section class="set-sec rows">${row('setPage', 'تنظیمات و ظاهر', 'حال‌وهوای بصری، کمک‌ها، داده‌ها')}${row('aboutPage', 'درباره‌ی کلمه‌ها و شکل‌ها', 'پژوهش‌ها و این‌که شکل چه چیزی نیست')}</section>
+    <section class="set-sec rows">${canInstall() ? row('installApp', 'نصب روی گوشی', 'از صفحه‌ی اصلی، مثل یه برنامه باز می‌شه') : ''}${row('setPage', 'تنظیمات و ظاهر', 'حال‌وهوای بصری، کمک‌ها، داده‌ها')}${row('aboutPage', 'درباره‌ی کلمه‌ها و شکل‌ها', 'پژوهش‌ها و این‌که شکل چه چیزی نیست')}</section>
     ${
       acc
         ? `<section class="set-sec"><button class="outline danger" data-act="signOut">خروج از حساب</button><p class="fine" style="margin-top:8px">ردپاها روی این دستگاه می‌مونن.</p>
@@ -129,7 +130,7 @@ export function settingsHTML() {
     return `${head('درباره‌ی کلمه‌ها و شکل‌ها')}<div class="sheet-scroll set">
     <section class="set-sec about">
       <p>واژه‌های درون با الهام از پژوهش‌هایی درباره‌ی واژگان احساس در زبان فارسی انتخاب شده‌اند؛ از جمله کشکولی (${fa(2014)}) درباره‌ی ساختار واژگان احساس فارسی، محجوب‌نواز و همکاران (${fa(2024)}) درباره‌ی هنجارهای عاطفی واژه‌ها، و نعمتی و همکاران (${fa(2026)}). این منابع به انتخاب واژه‌ها جهت می‌دهند، اما شکل‌ها، رنگ‌ها و پیشنهادهای این برنامه را تأیید علمی نمی‌کنند.</p>
-      <p>شکل درون یک استعاره‌ی بصریه که با انتخاب‌های خودت ساخته می‌شه. چیزی رو اندازه نمی‌گیره و تشخیص نمی‌ده. پیشنهادهای مسیر راهنمایی از قبل نوشته شده‌اند. داستان‌های هفته رو Claude فقط از روی ردپاها و یادداشت‌های همون هفته می‌نویسه؛ یادداشت‌ها فقط برای نوشتن همون داستان فرستاده می‌شن و جایی نگه داشته نمی‌شن. بدون حساب، یه خلاصه‌ی ساده روی همین دستگاه نوشته می‌شه.</p>
+      <p>شکل درون یک استعاره‌ی بصریه که با انتخاب‌های خودت ساخته می‌شه. چیزی رو اندازه نمی‌گیره و تشخیص نمی‌ده. پیشنهادهای مسیر راهنمایی از قبل نوشته شده‌اند. داستان‌های هفته فقط از روی ردپاها و یادداشت‌های همون هفته نوشته می‌شن؛ یادداشت‌ها فقط برای نوشتن همون داستان فرستاده می‌شن و جایی نگه داشته نمی‌شن. بدون حساب، یه خلاصه‌ی ساده روی همین دستگاه نوشته می‌شه.</p>
       ${usingGL ? '' : '<p>مرورگرت WebGL2 نداره؛ نسخه‌ی ساده‌تر شکل نمایش داده می‌شه.</p>'}</section>
   </div>`;
   return `${head('تنظیمات و ظاهر')}<div class="sheet-scroll set">
@@ -138,8 +139,7 @@ export function settingsHTML() {
       ${sw('toggleEmoji', s.emoji, 'ایموجی کمکی کنار کلمه‌ها', 'اگه نشانه‌های آشنا به تشخیص کلمه‌ها کمک می‌کنن. نشانه‌ی اصلی همیشه شکل خود احساسه.')}
       ${sw('toggleMotion', reduced(), 'حرکت کمتر', mqReduce.matches && s.motion === 'system' ? 'دستگاهت حرکت کمتر رو خواسته.' : 'شکل آهسته‌تر نفس می‌کشه و جابه‌جایی‌ها فوری می‌شن.')}</section>
     <section class="set-sec"><h3 class="sec">داده‌ها</h3>
-      ${sw('toggleDemo', s.showDemo, 'نمایش ردپاهای نمونه', 'ردپاهای ساختگی برای دیدن تقویم و الگوها. از ردپاهای خودت جدا نگه داشته می‌شن.')}
-      <div class="btnrow"><button class="outline" data-act="resetDemo">بازسازی نمونه‌ها</button><button class="outline danger" data-act="${S.wipeArm ? 'wipeYes' : 'wipeAsk'}">${S.wipeArm ? (acc ? 'مطمئنی؟ از همه‌ی دستگاه‌هات پاک می‌شه' : 'مطمئنی؟ همه‌ی ردپاهای خودت پاک می‌شه') : 'پاک کردن ردپاهای خودم'}</button></div>
+      <div class="btnrow"><button class="outline danger" data-act="${S.wipeArm ? 'wipeYes' : 'wipeAsk'}">${S.wipeArm ? (acc ? 'مطمئنی؟ از همه‌ی دستگاه‌هات پاک می‌شه' : 'مطمئنی؟ همه‌ی ردپاهای خودت پاک می‌شه') : 'پاک کردن ردپاهای خودم'}</button></div>
       <p class="fine">${IC.lock.replace('class="ic"', 'class="ic" style="width:14px;height:14px;vertical-align:-2px"')} ${acc ? 'ردپاها با حسابت روی دستگاه‌هات همگام می‌شن. یادداشت‌ها فقط روی همین دستگاه می‌مونن و به سرور فرستاده نمی‌شن.' : 'همه‌چیز فقط در همین مرورگر ذخیره می‌شه و به هیچ سروری فرستاده نمی‌شه.'}</p></section>
   </div>`;
 }

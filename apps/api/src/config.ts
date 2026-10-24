@@ -21,9 +21,14 @@ const Env = z.object({
   MAIL_OUTBOX: z.string().optional(),
   /** OAuth client id for Google sign-in. Without it the Google button is hidden. */
   GOOGLE_CLIENT_ID: z.string().optional(),
-  /** Claude API key for weekly stories. Without it the app writes a plain local summary instead. */
-  ANTHROPIC_API_KEY: z.string().optional(),
-  ANTHROPIC_MODEL: z.string().default('claude-sonnet-5-5'),
+  /**
+   * Weekly stories: base URL of any OpenAI-compatible chat API (e.g. https://api.openai.com/v1,
+   * https://openrouter.ai/api/v1, http://ollama:11434/v1). Without it the app writes a plain local summary instead.
+   */
+  STORY_API_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
+  /** Bearer token for STORY_API_URL; local model servers usually need none. */
+  STORY_API_KEY: z.string().optional(),
+  STORY_MODEL: z.string().default(''),
   /** Sign-in attempts allowed per IP address every 15 minutes. */
   AUTH_RATE_LIMIT: z.coerce.number().int().min(1).default(8),
   STORIES_PER_DAY: z.coerce.number().int().min(0).default(12),
@@ -52,5 +57,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   const c = parsed.data;
   if (c.NODE_ENV === 'production' && c.MAIL_OUTBOX) throw new Error('MAIL_OUTBOX must not be set in production');
+  if (c.STORY_API_URL && !c.STORY_MODEL) throw new Error('STORY_MODEL must be set when STORY_API_URL is');
   return { ...c, isProd: c.NODE_ENV === 'production', COOKIE_SECURE: c.COOKIE_SECURE ?? c.NODE_ENV === 'production' };
 }
