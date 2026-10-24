@@ -20,6 +20,13 @@
   --toast-bg: #221b2c;
   --toast-fg: #fbf9f7;
   --shadow: 0 1px 2px rgba(34, 27, 44, 0.05), 0 20px 44px -22px rgba(60, 40, 90, 0.26);
+  /* glass: translucent cards and day tiles over the soft background */
+  --glass: color-mix(in oklab, var(--surface) 62%, transparent);
+  --glass-line: color-mix(in oklab, var(--ink) 8%, transparent);
+  --glass-hi: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 1px 2px rgba(34, 27, 44, 0.04), 0 18px 40px -26px rgba(60, 40, 90, 0.3);
+  --tile: color-mix(in oklab, var(--surface) 58%, transparent);
+  --tile-empty: color-mix(in oklab, var(--surface) 26%, transparent);
   --focus: #6a55a3;
   --tint: rgba(0, 0, 0, 0);
   --nav-c: #b3a2dc;
@@ -56,6 +63,14 @@
     --toast-bg: #ece4f5;
     --toast-fg: #16111e;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 22px 48px -18px rgba(0, 0, 0, 0.7);
+    --glass-hi: rgba(255, 255, 255, 0.07);
+    --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px -24px rgba(0, 0, 0, 0.75);
+    --tile: color-mix(in oklab, var(--surface) 70%, transparent);
+    --tile-empty: color-mix(in oklab, var(--surface) 34%, transparent);
+    --glass-hi: rgba(255, 255, 255, 0.07);
+    --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px -24px rgba(0, 0, 0, 0.75);
+    --tile: color-mix(in oklab, var(--surface) 70%, transparent);
+    --tile-empty: color-mix(in oklab, var(--surface) 34%, transparent);
     --focus: #cdbcf3;
     --grain: 0.035;
     color-scheme: dark;
@@ -90,6 +105,7 @@
   --bg-2: #181229;
   --surface: #1a1427;
   --surface-2: #241c35;
+  --glass-hi: rgba(255, 255, 255, 0.07);
 }
 
 * {
@@ -740,16 +756,12 @@ body[data-flow='1'] #views {
   line-height: 1.6;
 }
 .wk-tr {
+  --mk: 34px;
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
   position: relative;
-}
-.wk-tr .tr {
-  width: 52px;
-  height: 52px;
-  max-width: none;
 }
 .wk-empty {
   width: 5px;
@@ -766,15 +778,6 @@ body[data-flow='1'] #views {
 }
 .wk-day.is-future {
   opacity: 0.42;
-}
-.wk-tr.arrived .tr {
-  animation: arrive 1s var(--ease);
-}
-@keyframes arrive {
-  from {
-    transform: scale(1.35);
-    filter: brightness(1.3);
-  }
 }
 .tr {
   display: block;
@@ -877,9 +880,8 @@ body[data-flow='1'] #views {
 .done .flyer {
   z-index: 2;
 }
-#doneSlot .tr {
+#doneSlot .wk-empty {
   position: absolute;
-  inset: -4px;
 }
 .is-today > .wk-dn {
   font-weight: 700;
@@ -1815,24 +1817,35 @@ body[data-kb='1'] .actionbar {
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
+  gap: 4px;
 }
+/* every day is a small glass tile; its mark sits inside with room on every side */
 .day {
+  --mk: 32px;
   position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
   justify-items: center;
   align-items: center;
-  min-height: 70px;
-  padding: 5px 0 6px;
+  gap: 2px;
+  min-height: 74px;
+  padding: 4px 0 7px;
   border-radius: 14px;
   min-width: 0;
+  background: var(--tile-empty);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
   transition:
     background 0.25s,
     box-shadow 0.25s;
 }
+.day.has {
+  background: var(--tile);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    inset 0 1px 0 var(--glass-hi);
+}
 .day:hover {
-  background: color-mix(in oklab, var(--surface) 72%, transparent);
+  background: color-mix(in oklab, var(--surface) 80%, transparent);
 }
 .dn {
   font-size: 14px;
@@ -1846,23 +1859,31 @@ body[data-kb='1'] .actionbar {
 .day.has .dn {
   color: var(--ink);
 }
+/* a mark's box (--mk) is what the layout reserves; the image is larger because the shape fills only about
+   half of it, so the shape itself ends up at roughly 80% of the box, never touching its neighbours */
 .trw {
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: var(--mk, 38px);
+  height: var(--mk, 38px);
   display: grid;
   place-items: center;
 }
-.trw .tr {
-  width: 48px;
-  height: 48px;
+.trw .tr,
+.wk-tr .tr {
+  /* larger than its box, so centre it explicitly: grid alignment pins an overflowing item to one corner */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--mk, 38px) * 1.45);
+  height: calc(var(--mk, 38px) * 1.45);
   max-width: none;
+  transform: translate(-50%, -50%);
 }
 .day.is-unnamed .trw::after,
 .wrow.is-unnamed .trw::after {
   content: '';
   position: absolute;
-  inset: 6px;
+  inset: -2px;
   border-radius: 50%;
   border: 1px dashed var(--ink-3);
   opacity: 0.8;
@@ -1896,10 +1917,14 @@ body[data-kb='1'] .actionbar {
 }
 .day.is-sel {
   background: var(--surface);
-  box-shadow: inset 0 0 0 1.5px var(--ink);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    var(--glass-shadow);
 }
 .day.is-future {
   opacity: 0.45;
+  background: none;
+  box-shadow: none;
 }
 .legend {
   display: flex;
@@ -2007,7 +2032,10 @@ body[data-kb='1'] .actionbar {
   gap: 4px;
 }
 .wpill {
+  --mk: 32px;
   position: relative;
+  background: var(--tile-empty);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
   display: grid;
   justify-items: center;
   align-content: start;
@@ -2020,10 +2048,15 @@ body[data-kb='1'] .actionbar {
     background 0.3s,
     box-shadow 0.3s;
 }
+.wpill.has {
+  background: var(--tile);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    inset 0 1px 0 var(--glass-hi);
+}
 .wpill .trw {
-  width: 40px;
-  height: 40px;
-  margin-top: 4px;
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 .wpill.is-sel {
   background: var(--surface);
@@ -2033,11 +2066,13 @@ body[data-kb='1'] .actionbar {
 }
 .wpill.is-future {
   opacity: 0.42;
+  background: none;
+  box-shadow: none;
 }
 .wpill.is-unnamed .trw::after {
   content: '';
   position: absolute;
-  inset: 6px;
+  inset: -2px;
   border-radius: 50%;
   border: 1px dashed var(--ink-3);
 }
@@ -2386,7 +2421,7 @@ body[data-kb='1'] .actionbar {
 .p-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  gap: 14px;
   margin-top: 18px;
 }
 .p-sec {
@@ -2395,10 +2430,22 @@ body[data-kb='1'] .actionbar {
   align-content: start;
   min-width: 0;
 }
+/* each part of the page is its own glass card, so it reads as sections instead of one long text */
+.card {
+  padding: 18px 18px 20px;
+  border-radius: var(--r-xl);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    inset 0 1px 0 var(--glass-hi),
+    var(--glass-shadow);
+}
 .p-sec h2 {
   font-family: var(--f-ed);
   font-weight: 750;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.5;
   margin: 0;
 }
@@ -2593,15 +2640,33 @@ body[data-kb='1'] .actionbar {
   color: var(--ink-2);
 }
 .p-empty {
-  display: grid;
-  gap: 12px;
-  justify-items: start;
-  padding: 24px 0;
+  padding: 4px 6px;
 }
-.p-empty p {
-  margin: 0;
-  color: var(--ink-2);
-  max-width: 46ch;
+.p-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.p-stat {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  padding: 10px 6px 8px;
+  border-radius: var(--r-l);
+  background: var(--tile);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+  text-align: center;
+}
+.p-stat b {
+  font-family: var(--f-ed);
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+.p-stat span {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.5;
 }
 
 .p-sec-h {
@@ -2689,15 +2754,11 @@ body[data-kb='1'] .actionbar {
   outline: 1.5px solid var(--ink);
   outline-offset: 2px;
 }
-.p-range {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.p-range .p-sec-h {
   flex-wrap: wrap;
-  margin-bottom: -14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
+}
+.card .pairs li:last-child {
+  border-bottom: 0;
 }
 .srow {
   display: flex;
@@ -3572,12 +3633,9 @@ body[data-flow='1'] .navfade {
     min-height: 110px;
   }
   .wk-tr {
+    --mk: 48px;
     width: 58px;
     height: 58px;
-  }
-  .wk-tr .tr {
-    width: 68px;
-    height: 68px;
   }
   .field {
     height: clamp(500px, 62vh, 620px);
@@ -3606,16 +3664,16 @@ body[data-flow='1'] .navfade {
     display: none;
   }
   .day {
-    min-height: 96px;
+    --mk: 50px;
+    min-height: 104px;
     padding-top: 8px;
+    border-radius: 18px;
   }
-  .trw {
-    width: 56px;
-    height: 56px;
+  .cal-grid {
+    gap: 6px;
   }
-  .trw .tr {
-    width: 70px;
-    height: 70px;
+  .wpill {
+    --mk: 50px;
   }
   .dots i {
     width: 5px;
@@ -3627,7 +3685,33 @@ body[data-flow='1'] .navfade {
   }
   .p-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 36px 48px;
+    gap: 18px;
+  }
+  .card {
+    padding: 22px 24px 24px;
+  }
+  /* stories and the counts share the first row; the month calendars get their own */
+  .p-sec.wide.p-stories,
+  .p-sec.wide.p-range {
+    grid-column: auto;
+  }
+  .p-stories {
+    order: 0;
+  }
+  .p-range {
+    order: 1;
+  }
+  .p-months {
+    order: 2;
+  }
+  .p-grid > .card:not(.wide) {
+    order: 3;
+  }
+  .p-grid:not(:has(.p-stories)) .p-sec.wide.p-range {
+    grid-column: 1/-1;
+  }
+  .p-grid .p-empty {
+    order: 4;
   }
   .p-sec.wide {
     grid-column: 1/-1;

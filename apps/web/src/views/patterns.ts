@@ -132,7 +132,7 @@ export function storiesRow() {
     })
     .join('');
   if (!fresh && !saved) return '';
-  return `<section class="p-sec wide"><div class="p-sec-h"><h2>داستان‌های هفته</h2></div><p class="fine">چند صفحه‌ی کوتاه درباره‌ی هفته‌ات، از روی ردپاها و یادداشت‌هایی که خودت نوشتی. داستان‌ها همین‌جا نگه داشته می‌شن.</p><div class="srow">${fresh}${saved}</div></section>`;
+  return `<section class="p-sec card wide p-stories"><div class="p-sec-h"><h2>داستان‌های هفته</h2></div><p class="fine">چند صفحه‌ی کوتاه درباره‌ی هفته‌ات، از روی ردپاها و یادداشت‌هایی که خودت نوشتی. داستان‌ها همین‌جا نگه داشته می‌شن.</p><div class="srow">${fresh}${saved}</div></section>`;
 }
 export function vPatterns() {
   const D = patternData(),
@@ -148,12 +148,16 @@ export function vPatterns() {
   const head = `<div class="p-head"><div class="p-head-txt"><h1 class="ed r" style="--i:0" tabindex="-1" data-autofocus>الگوها</h1>
     <p class="lede r" style="--i:1">فقط چیزهایی که خودت تأیید کردی؛ نه تحلیل روانی، نه تشخیص.</p></div>
     </div>`;
-  const months = `<section class="p-sec wide"><div class="p-sec-h"><h2>ردپای روزها</h2><div class="navbtns"><button class="ib" data-act="pm" data-d="1" ${M.older ? '' : 'disabled'} aria-label="ماه‌های قبل">${IC.prev}</button><button class="ib" data-act="pm" data-d="-1" ${M.newer ? '' : 'disabled'} aria-label="ماه‌های بعد">${IC.next}</button></div></div>
+  const months = `<section class="p-sec card wide p-months"><div class="p-sec-h"><h2>ردپای روزها</h2><div class="navbtns"><button class="ib" data-act="pm" data-d="1" ${M.older ? '' : 'disabled'} aria-label="ماه‌های قبل">${IC.prev}</button><button class="ib" data-act="pm" data-d="-1" ${M.newer ? '' : 'disabled'} aria-label="ماه‌های بعد">${IC.next}</button></div></div>
     <div class="mcals" id="mcals" style="--n:${M.n}">${M.html}</div><p class="fine">دایره‌ی رنگی یعنی روزی با ردپا؛ دایره‌ی توخالی یعنی حالی بی‌نام.</p></section>`;
+  const days = new Set(D.list.map((e) => e.day)).size;
+  const stat = (n: number, l: string) => `<div class="p-stat"><b class="num">${fa(n)}</b><span>${l}</span></div>`;
+  const range = `<section class="p-sec card wide p-range"><div class="p-sec-h"><h2>شمارش انتخاب‌ها</h2>${seg}</div>
+    <div class="p-stats">${stat(D.list.length, 'ردپا')}${stat(days, 'روز')}${stat(D.top.length, 'کلمه‌ی متفاوت')}</div></section>`;
   if (D.named.length < 3)
     return (
       head +
-      `<div class="p-grid">${storiesRow()}${months}</div><div class="p-empty"><p>در این بازه هنوز ردپای کافی برای شمردن نیست.</p>${seg}</div>`
+      `<div class="p-grid">${storiesRow()}${months}${range}<p class="fine p-empty">در این بازه هنوز ردپای کافی برای شمردن نیست.</p></div>`
     );
   const maxF = D.top[0][1];
   const freq = D.top
@@ -173,9 +177,9 @@ export function vPatterns() {
   return (
     head +
     `<div class="p-grid">${storiesRow()}${months}
-    <div class="p-sec wide p-range"><h2>شمارش انتخاب‌ها</h2>${seg}</div>
-    <section class="p-sec"><h2>کلمه‌هایی که بیشتر برگزیدی</h2><ul class="freq">${freq}</ul></section>
-    <section class="p-sec"><h2>احساس‌هایی که کنار هم اومدن</h2>${pairs ? `<ul class="pairs">${pairs}</ul>` : '<p class="fine">هنوز ردپایی با چند کلمه در این بازه نیست.</p>'}</section>
+    ${range}
+    <section class="p-sec card"><h2>کلمه‌هایی که بیشتر برگزیدی</h2><ul class="freq">${freq}</ul></section>
+    <section class="p-sec card"><h2>احساس‌هایی که کنار هم اومدن</h2>${pairs ? `<ul class="pairs">${pairs}</ul>` : '<p class="fine">هنوز ردپایی با چند کلمه در این بازه نیست.</p>'}</section>
   </div>`
   );
 }
