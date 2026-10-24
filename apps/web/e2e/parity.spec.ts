@@ -33,6 +33,16 @@ async function screens(page: Page, url: string) {
   const shots: Record<string, Buffer> = {};
   const snap = async (name: string) => {
     await page.waitForTimeout(2600);
+    // on a slow machine the entrance animations can still be running after the fixed wait; compare only once every
+    // finite one has finished (the sculpture's breathing and other endless loops are hidden or ignored)
+    await page.waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
+      undefined,
+      { timeout: 15_000, polling: 100 },
+    );
     await page.evaluate(() => {
       (document.getElementById('stage') as HTMLElement).style.visibility = 'hidden';
       document.querySelectorAll('#toast > *').forEach((t) => t.remove());
