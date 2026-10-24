@@ -72,7 +72,10 @@ export function pickAnchor() {
   const a = cands.find((el) => el.getBoundingClientRect().width > 8) || null;
   if (a === Stage.anchor) return;
   const r = a ? grow(a.getBoundingClientRect()) : null;
-  Stage.from = Stage.shown && Stage.rect ? { ...Stage.rect } : null;
+  /* on a tab change a sculpture whose page is already sliding away does not fly over to the new one: the new one
+     arrives in place, riding with its own page */
+  const leaving = Stage.anchor && Stage.anchor.closest('.view.sliding');
+  Stage.from = Stage.shown && Stage.rect && !leaving ? { ...Stage.rect } : null;
   Stage.anchor = a;
   Stage.t0 = now;
   Stage.dur = reduced() ? 0 : 950 * (1 - 0.25 * habit());
