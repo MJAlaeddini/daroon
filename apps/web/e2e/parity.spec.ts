@@ -45,11 +45,14 @@ async function screens(page: Page, url: string) {
     );
     await page.evaluate(() => {
       (document.getElementById('stage') as HTMLElement).style.visibility = 'hidden';
+      // the wordmark logo replaced the prototype's typed name
+      document.querySelectorAll<HTMLElement>('.brand').forEach((b) => (b.style.visibility = 'hidden'));
       document.querySelectorAll('#toast > *').forEach((t) => t.remove());
     });
     shots[name] = await page.screenshot();
     await page.evaluate(() => {
       (document.getElementById('stage') as HTMLElement).style.visibility = '';
+      document.querySelectorAll<HTMLElement>('.brand').forEach((b) => (b.style.visibility = ''));
     });
   };
   await page.click('[data-act=loginSkip]');

@@ -12,7 +12,7 @@ export function vLogin() {
     })
     .join('');
   return `<div class="login">
-    <p class="login-brand r" style="--i:0"><span class="brand-seed" aria-hidden="true"></span>درون</p>
+    <p class="login-brand r" style="--i:0"><span class="brand-seed" aria-hidden="true"></span><span class="logo" role="img" aria-label="درون"></span></p>
     <div class="login-stage r" style="--i:1"><div class="anchor-login" data-anchor data-scale=".5"></div><ul class="login-words" aria-hidden="true">${words}</ul></div>
     <div class="login-copy">
       <h1 class="hero r" style="--i:2" tabindex="-1" data-autofocus>حال‌هایی که هنوز اسم ندارن، این‌جا جا دارن.</h1>
