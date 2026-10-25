@@ -17,6 +17,7 @@ import { todayKey } from '@daroon/shared';
 import { applyTheme } from './ui/theme';
 import { setupPwa } from './pwa';
 import { setupInstall } from './features/install';
+import { setupSwipe } from './ui/swipe';
 
 /* ═════════════════════════ boot ═════════════════════════ */
 document.documentElement.lang = 'fa';
@@ -43,6 +44,7 @@ onSynced((changed) => {
 startSync();
 setupPwa();
 setupInstall({ auto: !E2E });
+setupSwipe();
 if (DB.account) pullStories();
 if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
 try {

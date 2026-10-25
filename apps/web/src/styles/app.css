@@ -29,6 +29,9 @@
   --tile-empty: color-mix(in oklab, var(--surface) 26%, transparent);
   /* the wordmark: navy on light themes, light ink on dark ones */
   --logo: url('../assets/brand/logo-ink.webp');
+  /* the orb beside the wordmark, in the wordmark's own colours: a lavender highlight over its navy */
+  --orb: radial-gradient(circle at 34% 28%, #e6e4fb 0%, #7a7eb9 34%, #2b3360 68%, #141c3e 100%);
+  --orb-glow: rgba(90, 96, 160, 0.42);
   --focus: #6a55a3;
   --tint: rgba(0, 0, 0, 0);
   --nav-c: #b3a2dc;
@@ -70,6 +73,8 @@
     --tile: color-mix(in oklab, var(--surface) 70%, transparent);
     --tile-empty: color-mix(in oklab, var(--surface) 34%, transparent);
     --logo: url('../assets/brand/logo-light.webp');
+    --orb: radial-gradient(circle at 34% 28%, #ffffff 0%, #f1ecfe 22%, #c9c4ec 56%, #8f8acb 100%);
+    --orb-glow: rgba(196, 190, 240, 0.45);
     --focus: #cdbcf3;
     --grain: 0.035;
     color-scheme: dark;
@@ -100,6 +105,8 @@
   --tile: color-mix(in oklab, var(--surface) 70%, transparent);
   --tile-empty: color-mix(in oklab, var(--surface) 34%, transparent);
   --logo: url('../assets/brand/logo-light.webp');
+  --orb: radial-gradient(circle at 34% 28%, #ffffff 0%, #f1ecfe 22%, #c9c4ec 56%, #8f8acb 100%);
+  --orb-glow: rgba(196, 190, 240, 0.45);
   --focus: #cdbcf3;
   --grain: 0.035;
   color-scheme: dark;
@@ -301,14 +308,8 @@ button {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    #fff6e8,
-    var(--nav-c) 60%,
-    color-mix(in oklab, var(--nav-c) 50%, #3b2f55)
-  );
-  box-shadow: 0 0 12px -2px var(--nav-c);
-  transition: background 0.8s;
+  background: var(--orb);
+  box-shadow: 0 0 12px -2px var(--orb-glow);
 }
 .topnav {
   display: none;
@@ -2394,6 +2395,7 @@ body[data-kb='1'] .actionbar {
   margin-inline-end: -8px;
 }
 .tool {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -2401,34 +2403,48 @@ body[data-kb='1'] .actionbar {
   place-items: center;
   color: var(--ink-3);
   transition:
-    background 0.2s,
     color 0.2s,
     opacity 0.2s;
 }
+/* the visible shape is a 34px disc (or pill) inside the 44px touch target */
+.tool::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 17px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    background 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+.tool > * {
+  position: relative;
+}
 .tool .ic {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 .tool:hover {
-  background: var(--surface-2);
   color: var(--ink);
+}
+.tool:hover::before {
+  background: var(--surface-2);
 }
 .tool.danger:hover {
   color: var(--danger);
 }
-/* the trash icon opens into a «حذف؟» pill in place; a second tap deletes */
+/* delete in place: the bin's lid lifts and the button opens into a soft «حذف؟» pill; a second tap deletes */
 .tool.del {
   width: auto;
   min-width: 44px;
-  padding-inline: 13.5px;
-  border-radius: 22px;
+  padding-inline: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0;
   transition:
-    background 0.28s var(--ease),
-    color 0.28s var(--ease),
+    color 0.25s var(--ease),
     gap 0.32s var(--ease),
     padding 0.32s var(--ease);
 }
@@ -2440,31 +2456,38 @@ body[data-kb='1'] .actionbar {
   font-size: 13px;
   font-weight: 700;
   line-height: 1;
+  padding-block: 2px;
   transition:
     max-width 0.32s var(--ease),
     opacity 0.2s 0.08s;
 }
+.tool.del .lid {
+  transform-box: view-box;
+  transform-origin: 19px 7px;
+  transition: transform 0.38s var(--ease);
+}
 .tool.del.arm,
 .tool.del.arm:hover {
-  gap: 6px;
-  padding-inline: 13px 15px;
-  background: var(--danger);
-  color: var(--bg);
+  gap: 5px;
+  padding-inline: 14px 16px;
+  color: var(--danger);
+}
+.tool.del.arm::before {
+  background: color-mix(in oklab, var(--danger) 13%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--danger) 34%, transparent);
+}
+.tool.del.arm:hover::before {
+  background: color-mix(in oklab, var(--danger) 20%, var(--surface));
 }
 .tool.del.arm .del-t {
   max-width: 4em;
   opacity: 1;
 }
-.tool.del.arm .ic {
-  animation: trashNudge 0.5s var(--ease);
+.tool.del.arm .lid {
+  transform: translate(0.4px, -1.6px) rotate(-16deg);
 }
-@keyframes trashNudge {
-  30% {
-    transform: rotate(-14deg);
-  }
-  65% {
-    transform: rotate(8deg);
-  }
+.tool.del:active::before {
+  transform: scale(0.96);
 }
 .ent-tools.arming .tool:not(.del) {
   opacity: 0;
