@@ -76,14 +76,21 @@ test.describe('reduced motion', () => {
     await settle(page, 900);
     const r = await watch(page, () => page.click('[data-act=startA]'), 1200);
     expect({ overlaps: r.overlaps, ghosts: r.ghosts, jumps: r.jumps }).toEqual({ overlaps: [], ghosts: 0, jumps: [] });
-    const long = await page.evaluate(
-      () =>
-        document.getAnimations().filter((a) => {
+    // name what is still moving, so a failure says which animation ignored reduced motion
+    const long = await page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => {
           const t = a.effect!.getTiming();
           return ((t.duration as number) > 50 || (t.delay as number) > 50) && t.iterations !== Infinity;
-        }).length,
+        })
+        .map((a) => {
+          const el = (a.effect as KeyframeEffect).target as Element | null;
+          const name = (a as CSSAnimation).animationName || (a as CSSTransition).transitionProperty || a.id || 'script';
+          return `${name} on ${el ? el.tagName.toLowerCase() + '.' + el.className : '?'}`;
+        }),
     );
-    expect(long).toBe(0);
+    expect(long).toEqual([]);
   });
 });
 
@@ -93,15 +100,46 @@ test.describe('keyboard', () => {
     await open(page);
     await page.click('[data-act=loginSkip]');
     await settle(page, 1200);
-    for (let i = 0; i < 18; i++) {
-      await page.keyboard.press('Tab');
-      const r = await page.evaluate(() => {
-        const a = document.activeElement as HTMLElement | null;
-        if (!a || a === document.body) return null;
-        const cs = getComputedStyle(a);
-        return (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || cs.boxShadow !== 'none';
+    // a Tab that never returns means the page stopped answering; say where focus was and what the page reported
+    let crashed = false;
+    const logs: string[] = [];
+    page.on('crash', () => (crashed = true));
+    page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`.slice(0, 200)));
+    let at = 'start';
+    const bounded = <T>(what: string, p: Promise<T>): Promise<T> => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const hung = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new Error(
+                `${what} did not return within 15 s; focus was on ${at}; crashed: ${crashed}; ` +
+                  `last console: ${logs.slice(-5).join(' | ') || 'none'}`,
+              ),
+            ),
+          15_000,
+        );
       });
-      if (r !== null) expect(r).toBe(true);
+      return Promise.race([p, hung]).finally(() => clearTimeout(timer));
+    };
+    for (let i = 0; i < 18; i++) {
+      await bounded(`Tab #${i + 1}`, page.keyboard.press('Tab'));
+      const r = await bounded(
+        `reading focus after Tab #${i + 1}`,
+        page.evaluate(() => {
+          const a = document.activeElement as HTMLElement | null;
+          if (!a || a === document.body) return { ok: null, at: 'body' };
+          const cs = getComputedStyle(a);
+          const label =
+            a.getAttribute('aria-label') || a.dataset.act || a.dataset.go || a.textContent?.trim().slice(0, 24);
+          return {
+            ok: (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || cs.boxShadow !== 'none',
+            at: `${a.tagName.toLowerCase()}.${a.className} «${label}»`,
+          };
+        }),
+      );
+      at = r.at;
+      if (r.ok !== null) expect(r.ok, `focus ring on ${r.at}`).toBe(true);
     }
   });
 });
