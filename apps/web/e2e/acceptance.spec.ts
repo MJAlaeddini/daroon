@@ -100,6 +100,10 @@ test.describe('keyboard', () => {
     await open(page);
     await page.click('[data-act=loginSkip]');
     await settle(page, 1200);
+    // Focus rings are what this checks. The sculpture is drawn in software on CI runners (a few hundred ms a draw, and
+    // focusing a path or a day sets it moving), so every Tab would wait behind draws; 18 of them outran the timeout.
+    // A hidden canvas is not composited, so the page answers at once.
+    await page.addStyleTag({ content: '#stage canvas { display: none !important }' });
     // a Tab that never returns means the page stopped answering; say where focus was and what the page reported
     let crashed = false;
     const logs: string[] = [];
