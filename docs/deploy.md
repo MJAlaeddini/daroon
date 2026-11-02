@@ -100,7 +100,11 @@ The script checks that the domain points at the server, then:
 
 - if nothing else uses ports 80 and 443, Daroon takes them and Caddy gets the Let's Encrypt certificate itself (Mode A);
 - if nginx already serves another site there, it adds a server block for the domain that proxies to Daroon on `127.0.0.1:PORT` and runs certbot for it; the other site is untouched;
+- if another app already has port 80 but 443 is free, Daroon takes 443 only and gets its certificate over 443 (TLS-ALPN); the other app is not touched, and plain `http://DOMAIN` keeps reaching it;
+- if another app's **container** publishes port 443 (its own nginx, Caddy or Traefik in Docker), it changes nothing and prints what to add to that front server: send the domain to `http://172.17.0.1:PORT` (the host's Docker bridge address) and get a certificate for it there. Once `https://DOMAIN` reaches Daroon, `BEHIND=1 ./deploy/domain.sh DOMAIN EMAIL` switches Daroon's own settings;
 - with another web server in front, it prints what to add there.
+
+If starting Daroon on 80/443 fails, the previous `deploy/.env` is put back and the app restarted, so it keeps running on its old port.
 
 It sets `APP_ORIGIN=https://DOMAIN` and `COOKIE_SECURE=true`, moves a sender address that still uses the IP to the domain, keeps every secret, and saves the old `deploy/.env` beside it. `deploy/update.sh` checks health over HTTPS once the domain is set, so automatic deploys keep working. Ports 80 and 443 must be reachable from the internet (also in the provider's firewall) for the certificate.
 

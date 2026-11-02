@@ -57,15 +57,44 @@ fi
 echo "OK: $DOMAIN → $DNS_IPS"
 
 # ── 2. Who holds ports 80 and 443? ──────────────────────────────────────────
-holders=$($SUDO ss -ltnpH '( sport = :80 or sport = :443 )' 2>/dev/null | grep -oE 'users:\(\("[^"]+"' | cut -d'"' -f2 | sort -u | tr '\n' ' ' || true)
-others=$(tr ' ' '\n' <<<"$holders" | grep -vE '^(docker-proxy|)$' | sort -u | tr '\n' ' ' || true)
-others=${others% }
+# processes other than docker-proxy, and containers other than Daroon's own (docker-proxy publishes those)
+procs_on() { $SUDO ss -ltnpH "( sport = :$1 )" 2>/dev/null | grep -oE 'users:\(\("[^"]+"' | cut -d'"' -f2 |
+  grep -v '^docker-proxy$' | sort -u | paste -sd' ' - || true; }
+ctrs_on() { ${DOCKER_SUDO:-} docker ps --format '{{.Names}} ({{.Image}})|{{.Ports}}' 2>/dev/null |
+  grep -E ":$1->" | grep -v '^daroon-' | cut -d'|' -f1 | sort -u | paste -sd, - || true; }
+procs80=$(procs_on 80)
+procs443=$(procs_on 443)
+ctrs80=$(ctrs_on 80)
+ctrs443=$(ctrs_on 443)
+others=$(printf '%s %s' "$procs80" "$procs443" | tr ' ' '\n' | grep -v '^$' | sort -u | paste -sd' ' - || true)
 PORT=$(env_get HTTP_BIND)
 PORT=${PORT##*:}
 PORT=${PORT:-8080}
-[[ $PORT == 80 ]] && PORT=8080
+[[ $PORT == 80 || $PORT == 443 ]] && PORT=8080
+# a container in front reaches Daroon through the host's Docker bridge address
+GW=$(ip -4 -o addr show docker0 2>/dev/null | awk '{print $4}' | cut -d/ -f1)
+GW=${GW:-172.17.0.1}
 
-cp "$ENV_FILE" "$ENV_FILE.bak.$(date +%Y%m%d-%H%M%S)"
+if [[ -n $ctrs443 && -z ${BEHIND:-} ]]; then
+  say "Port 443 belongs to another app's container: $ctrs443"
+  echo "Daroon's settings were NOT changed and it keeps running on port $PORT."
+  echo
+  echo "Let that front server also serve $DOMAIN and pass it to Daroon:"
+  echo "  $DOMAIN  →  http://$GW:$PORT   (keep the Host header; add X-Forwarded-For / X-Forwarded-Proto)"
+  echo "  and get a certificate for $DOMAIN there, as for the other site."
+  echo
+  echo "Once https://$DOMAIN reaches Daroon, switch Daroon's own settings with:"
+  echo "  BEHIND=1 ./deploy/domain.sh $DOMAIN ${EMAIL:-you@example.com}"
+  exit 0
+fi
+
+BACKUP="$ENV_FILE.bak.$(date +%Y%m%d-%H%M%S)"
+cp "$ENV_FILE" "$BACKUP"
+restore() {
+  warn "Putting the previous settings back ($BACKUP) so the app keeps running."
+  cp "$BACKUP" "$ENV_FILE"
+  "${COMPOSE[@]}" up -d || true
+}
 env_set APP_ORIGIN "https://$DOMAIN"
 env_set COOKIE_SECURE true
 [[ -n $EMAIL ]] && env_set ACME_EMAIL "$EMAIL"
@@ -76,7 +105,53 @@ if [[ $from =~ $ip_at ]]; then
   env_set MAIL_FROM "${from/${BASH_REMATCH[0]}/@$DOMAIN}"
 fi
 
-if [[ -z $others ]]; then
+if [[ -n ${BEHIND:-} ]]; then
+  # ── 3c. Another server in front already sends the domain here ───────────
+  say "Switching Daroon to https://$DOMAIN behind the server in front (Daroon stays on port $PORT)."
+  env_set SITE_ADDRESS ":80"
+  "${COMPOSE[@]}" up -d || { restore; die "Could not restart Daroon."; }
+  for _ in $(seq 1 20); do
+    if curl -fsS --max-time 8 "https://$DOMAIN/api/health" 2>/dev/null | grep -q '"ok":true'; then
+      say "Done: https://$DOMAIN"
+      exit 0
+    fi
+    sleep 3
+  done
+  warn "Daroon is set for https://$DOMAIN, but https://$DOMAIN/api/health does not answer yet."
+  warn "Check that the server in front sends $DOMAIN to http://$GW:$PORT and has its certificate."
+  exit 1
+fi
+
+if [[ -z $procs443$ctrs443 && -n $procs80$ctrs80 ]]; then
+  # ── 3d. Port 80 is another app's, 443 is free: Daroon takes 443 alone ────
+  say "Port 80 belongs to another app (${ctrs80:-$procs80}); port 443 is free."
+  echo "Daroon takes port 443 only and gets its certificate over 443 (TLS-ALPN); the other app is not touched."
+  echo "Plain http://$DOMAIN will still reach the other app on port 80; links and the installed app use https."
+  env_set SITE_ADDRESS "$DOMAIN"
+  env_set HTTP_BIND "127.0.0.1:$PORT"
+  env_set HTTPS_BIND 443
+  if command -v ufw >/dev/null && $SUDO ufw status 2>/dev/null | grep -q 'Status: active'; then
+    $SUDO ufw allow 443/tcp >/dev/null && echo "Opened 443 in ufw."
+  fi
+  if ! "${COMPOSE[@]}" up -d --build; then
+    restore
+    die "Daroon could not take port 443. Nothing else was changed."
+  fi
+  say "Waiting for the certificate and the app (up to three minutes)…"
+  for _ in $(seq 1 60); do
+    if curl -fsS --max-time 5 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/api/health" 2>/dev/null | grep -q '"ok":true'; then
+      say "Done: https://$DOMAIN"
+      echo "Daroon is no longer reachable on port $PORT from outside; you can close it (sudo ufw delete allow $PORT/tcp)."
+      exit 0
+    fi
+    sleep 3
+  done
+  "${COMPOSE[@]}" logs --tail 40 web
+  restore
+  die "No certificate yet: port 443 must be reachable from the internet (also in your provider's firewall) and $DOMAIN must point here. The previous settings are back; run this again after fixing that."
+fi
+
+if [[ -z $others && -z $ctrs80 ]]; then
   # ── 3a. Ports are free: Daroon serves the domain itself ──────────────────
   say "Ports 80 and 443 are free: Daroon will serve $DOMAIN itself."
   [[ -n $EMAIL || -n $(env_get ACME_EMAIL | grep -v example.com) ]] ||
@@ -87,7 +162,10 @@ if [[ -z $others ]]; then
   if command -v ufw >/dev/null && $SUDO ufw status 2>/dev/null | grep -q 'Status: active'; then
     $SUDO ufw allow 80/tcp >/dev/null && $SUDO ufw allow 443/tcp >/dev/null && echo "Opened 80 and 443 in ufw."
   fi
-  "${COMPOSE[@]}" up -d --build
+  if ! "${COMPOSE[@]}" up -d --build; then
+    restore
+    die "Daroon could not take ports 80/443. Nothing else was changed."
+  fi
   say "Waiting for the certificate and the app (up to two minutes)…"
   for _ in $(seq 1 40); do
     if curl -fsS --max-time 5 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/api/health" 2>/dev/null | grep -q '"ok":true'; then
