@@ -65,7 +65,8 @@ test('deleting can be undone, and works without an account', async ({ page }) =>
   await settle(page, 900);
   const id = await page.evaluate('__daroon.DB.entries.find(e => e.demo && e.day === __daroon.todayKey())?.id');
   test.skip(!id, 'no sample entry today');
-  await page.evaluate("__daroon.go('archive')");
+  // the archive opens in month view after the first week of a month; the day's entries are listed in week view
+  await page.evaluate("__daroon.S.arch.mode = 'week'; __daroon.go('archive')");
   await settle(page, 1500);
   await page.click(`[data-act=askDel][data-id="${id}"]`);
   await page.click(`[data-act=delYes][data-id="${id}"]`);

@@ -76,14 +76,21 @@ test.describe('reduced motion', () => {
     await settle(page, 900);
     const r = await watch(page, () => page.click('[data-act=startA]'), 1200);
     expect({ overlaps: r.overlaps, ghosts: r.ghosts, jumps: r.jumps }).toEqual({ overlaps: [], ghosts: 0, jumps: [] });
-    const long = await page.evaluate(
-      () =>
-        document.getAnimations().filter((a) => {
+    // name what is still moving, so a failure says which animation ignored reduced motion
+    const long = await page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => {
           const t = a.effect!.getTiming();
           return ((t.duration as number) > 50 || (t.delay as number) > 50) && t.iterations !== Infinity;
-        }).length,
+        })
+        .map((a) => {
+          const el = (a.effect as KeyframeEffect).target as Element | null;
+          const name = (a as CSSAnimation).animationName || (a as CSSTransition).transitionProperty || a.id || 'script';
+          return `${name} on ${el ? el.tagName.toLowerCase() + '.' + el.className : '?'}`;
+        }),
     );
-    expect(long).toBe(0);
+    expect(long).toEqual([]);
   });
 });
 
