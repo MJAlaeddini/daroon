@@ -1,9 +1,11 @@
 import {
   J_MONTHS,
+  SCENES,
   WD,
   WD_S,
   fa,
   fmtDay,
+  isScene,
   jMonthLen,
   jOfKey,
   keyAdd,
@@ -208,6 +210,11 @@ export function ringGrad(days) {
   if (!cs.length) return 'var(--line-2)';
   return `conic-gradient(${cs.concat(cs[0]).join(',')})`;
 }
+/** «خانواده، بیرون» after the time, when the check-in says who or what was around. */
+export function sceneLine(scenes?: string[]) {
+  const l = (scenes || []).filter(isScene).map((s) => SCENES[s]);
+  return l.length ? `<span class="ent-sc">${l.join('، ')}</span>` : '';
+}
 export function ctxLine(c) {
   return c ? `<p class="ent-ctx"><span>${c.name}:</span> ${esc(c.value)}</p>` : '';
 }
@@ -217,7 +224,7 @@ export function entryHTML(e, next?) {
   return `<li class="ent ${next ? 'has-next' : ''}" data-id="${e.id}" style="--ec:${entryColor(e)};--en:${next ? entryColor(next) : 'transparent'}">
     <div class="ent-mark ${e.emotions.length ? '' : 'un'}">${traceImg(entrySpec(e))}</div>
     <div class="ent-body">
-      <div class="ent-meta"><span class="num">${fa(e.time)}</span>${e.demo ? '<span class="tag">نمونه</span>' : ''}
+      <div class="ent-meta"><span class="num">${fa(e.time)}</span>${sceneLine(e.scenes)}${e.demo ? '<span class="tag">نمونه</span>' : ''}
         <span class="ent-tools"><button class="tool" data-act="edit" data-id="${e.id}" aria-label="ویرایش ردپای ساعت ${fa(e.time)}" title="ویرایش">${IC.edit}</button><button class="tool danger del" data-act="askDel" data-id="${e.id}" aria-label="حذف ردپای ساعت ${fa(e.time)}" title="حذف">${IC.trash}<span class="del-t" aria-hidden="true">حذف؟</span></button></span></div>
       ${e.emotions.length ? `<p class="ent-words">${e.emotions.map((x) => wordWithGlyph(x.key, x.color)).join('')}</p>` : `<p class="ent-words un">حالی بی‌نام</p>`}
       ${ctxLine(e.context)}

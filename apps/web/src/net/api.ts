@@ -2,7 +2,7 @@
  * The only place the app talks to the server. Same-origin JSON over fetch; the session lives in an
  * httpOnly cookie, so nothing secret is ever held in JavaScript.
  */
-import type { Account, Story, StoryRequest, SyncedEntry, SyncResponse } from '@daroon/shared';
+import type { Account, InsightFeedback, Story, StoryRequest, SyncedEntry, SyncResponse } from '@daroon/shared';
 
 const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? '';
 
@@ -47,7 +47,8 @@ export const api = {
   logout: () => call<void>('POST', '/auth/logout'),
   me: () => call<{ account: Account }>('GET', '/me'),
   deleteAccount: () => call<void>('DELETE', '/me'),
-  sync: (since: number, changes: SyncedEntry[]) => call<SyncResponse>('POST', '/sync', { since, changes }),
+  sync: (since: number, changes: SyncedEntry[], feedback: InsightFeedback[] = []) =>
+    call<SyncResponse>('POST', '/sync', { since, changes, feedback }),
   stories: () => call<{ stories: Story[]; writer: boolean }>('GET', '/stories'),
   writeStory: (req: StoryRequest, signal?: AbortSignal) => call<{ story: Story }>('POST', '/stories', req, signal),
 };

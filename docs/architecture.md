@@ -32,6 +32,12 @@ The interface layer is typed loosely for now (`strict: false`) because it came s
 - The server stamps every write with an increasing number (`seq`). A device asks for "everything written after N", and the newest edit wins.
 - Sync runs shortly after each save, on reconnect, on returning to the app, and every minute.
 - Notes and sample entries are never sent.
+- Answers to patterns travel with the same request (`feedback`); the server keeps them in `insight_feedback`, apart from the entries, and returns them all on each sync so every device knows them.
+
+### Context and patterns
+
+- A check-in can say who or what was around: up to two of eight settings (`SCENE_IDS` in `packages/shared/src/insights.ts`: family, friends, partner, work, alone, out, online, body). It is the social setting, not a location; it syncs with the entry (`scenes`) so per-person analysis can run on the server too.
+- `findPatterns` (shared, so the API can run the same rules) compares how often a feeling family shows up in one setting against all other check-ins. It waits for 20 check-ins over 8 days, needs 5 in the setting and 8 elsewhere, at least 4 hits and a share 25 points higher than elsewhere (after the sociologist's draft). The patterns page shows two at most, with both counts, the contrary cases and «آره / تا حدی / نه». A «نه» hides that pattern; an answer never changes the entries.
 
 ## API (`apps/api`)
 

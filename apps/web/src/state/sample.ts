@@ -116,5 +116,16 @@ export function sampleEntries() {
   const now = new Date(),
     mins = now.getHours() * 60 + now.getMinutes();
   if (mins > 90) out.push(mk(new Date(base), 0, Math.min(8 * 60 + 40, mins - 30)));
+  // who or what was around, from a separate stream so the entries above stay as they were; worry leans to work and
+  // closeness to friends, so the patterns card has something to say
+  const r2 = mulberry32(1405),
+    LEAN: Record<string, string> = { نگرانی: 'work', صمیمیت: 'friends', دلتنگی: 'alone', خوشحالی: 'friends' },
+    ANY = ['family', 'friends', 'work', 'alone', 'out', 'online', 'body'];
+  for (const e of out as any[]) {
+    const fam = e.emotions.map((x) => x.parent).find((k) => LEAN[k]);
+    if (fam && r2() < 0.7) e.scenes = [LEAN[fam]];
+    else if (r2() < 0.4) e.scenes = [ANY[Math.floor(r2() * ANY.length)]];
+    else e.scenes = [];
+  }
   return out;
 }

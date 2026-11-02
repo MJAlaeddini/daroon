@@ -1,4 +1,4 @@
-import { REFINE, fa, fmtDay, labelOf, pad, todayKey } from '@daroon/shared';
+import { REFINE, SCENES, SCENE_IDS, fa, fmtDay, labelOf, pad, todayKey } from '@daroon/shared';
 import { esc } from '../core/util';
 import { SWATCHES, cvars } from '../domain/lexicon';
 import { S } from '../state/app';
@@ -50,6 +50,7 @@ export function vReflect() {
         ${d.context ? `<div class="rec"><dt>${d.context.name}</dt><dd>${esc(d.context.value)} <small>· از جواب‌های خودت</small></dd></div>` : ''}
         <div class="rec" style="border-top:0;padding-top:0"><dd><button class="link" data-act="changeWords">${items.length ? 'تغییر کلمه‌ها' : 'افزودن کلمه'}</button></dd></div>
         ${unchosen.length ? `<p class="fine">پیشنهادهایی که انتخاب نکردی و ثبت نمی‌شن: ${unchosen.map(esc).join('، ')}</p>` : ''}
+        ${scenesHTML()}
       </dl>
       <div class="note r" style="--i:3"><label class="vh" for="noteInput">یادداشت</label>
         <textarea id="noteInput" rows="4" placeholder="اگر دوست داری، چند خط بنویس…">${esc(d.note)}</textarea>
@@ -58,6 +59,13 @@ export function vReflect() {
         <button class="quiet" data-act="${ed ? 'back' : 'discard'}">${ed ? 'انصراف' : S.discardArm ? 'یادداشت پاک می‌شه؛ مطمئنی؟' : 'بیرون رفتن بدون ثبت'}</button></div>
     </div>
   </div>`;
+}
+/** Optional: who or what was around. Up to two; a third replaces the oldest. */
+export function scenesHTML() {
+  const on = S.draft.scenes;
+  return `<div class="rec scn"><dt id="scnH">کجا بودی، با کی؟ <small>اگه خواستی</small></dt><dd role="group" aria-labelledby="scnH">${SCENE_IDS.map(
+    (s) => `<button class="chip" data-act="scene" data-s="${s}" aria-pressed="${on.includes(s)}">${SCENES[s]}</button>`,
+  ).join('')}</dd></div>`;
 }
 export function paletteHTML(i) {
   const it = S.draft.items[i];

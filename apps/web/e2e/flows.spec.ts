@@ -59,6 +59,44 @@ test('a saved entry with a note survives a reload; three words at most', async (
   expect(own).toEqual([{ n: 3, note: 'یه روز معمولی', u: true }]);
 });
 
+test('a check-in can say who or what was around (two at most), and patterns take a yes or a no', async ({ page }) => {
+  await open(page);
+  await page.click('[data-act=loginSkip]');
+  await settle(page, 900);
+  await page.click('[data-act=startA]');
+  await settle(page, 1300);
+  await tap(page, '.word[data-key="امید"]');
+  await page.click('#xbar .primary');
+  await settle(page, 1500);
+  // a third choice replaces the oldest
+  for (const s of ['family', 'out', 'work']) await tap(page, `[data-act=scene][data-s=${s}]`);
+  const pressed = () => page.$$eval('[data-act=scene][aria-pressed=true]', (b) => b.map((x) => x.dataset.s).sort());
+  expect(await pressed()).toEqual(['out', 'work'].sort());
+  await tap(page, '[data-act=scene][data-s=out]');
+  expect(await pressed()).toEqual(['work']);
+  await page.click('[data-act=save]');
+  await settle(page, 2800);
+  expect(await page.evaluate('__daroon.DB.entries.filter(e => !e.demo).map(e => e.scenes)')).toEqual([['work']]);
+
+  // the samples lean worry towards work and missing towards being alone, so there is something to answer
+  await page.evaluate("__daroon.go('patterns', { push: false })");
+  await settle(page, 1500);
+  const ids = () => page.$$eval('.ins', (l) => l.map((x) => (x as HTMLElement).dataset.id));
+  const before = await ids();
+  expect(before.length).toBeGreaterThan(0);
+  await tap(page, `.ins[data-id="${before[0]}"] [data-v=yes]`);
+  expect(await page.evaluate(`__daroon.DB.insights[${JSON.stringify(before[0])}].verdict`)).toBe('yes');
+  await tap(page, `.ins[data-id="${before[0]}"] [data-v=no]`);
+  await settle(page, 900);
+  expect(await ids()).not.toContain(before[0]);
+  const saved = (await page.evaluate(`__daroon.DB.insights[${JSON.stringify(before[0])}]`)) as {
+    verdict: string;
+    hits: number;
+  };
+  expect(saved).toMatchObject({ verdict: 'no' });
+  expect(saved.hits).toBeGreaterThan(0);
+});
+
 test('deleting can be undone, and works without an account', async ({ page }) => {
   await open(page);
   await page.click('[data-act=loginSkip]');

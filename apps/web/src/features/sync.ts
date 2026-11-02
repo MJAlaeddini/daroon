@@ -2,7 +2,7 @@
  * Offline-first sync. Every entry carries `updatedAt`; an entry whose last pushed version (`syncedAt`)
  * differs from it still has to travel. Notes and sample entries never leave the device.
  */
-import type { SyncedEntry } from '@daroon/shared';
+import { MAX_SCENES, isScene, type InsightFeedback, type SyncedEntry } from '@daroon/shared';
 import { api, ApiError } from '../net/api';
 import { DB, onPersist, persist, reindex } from '../state/store';
 
@@ -31,6 +31,7 @@ function toWire(e): SyncedEntry {
     })),
     suggested: (e.suggested || []).slice(0, 8),
     context: e.context ?? null,
+    scenes: (e.scenes || []).filter(isScene).slice(0, MAX_SCENES),
     unnamed: !!e.unnamed,
     path: e.path === 'guide' ? 'guide' : 'explore',
     createdAt: e.createdAt,
@@ -40,6 +41,28 @@ function toWire(e): SyncedEntry {
 }
 
 const pending = () => DB.entries.filter((e) => !e.demo && e.syncedAt !== (e.updatedAt || e.createdAt));
+/** Answers to patterns («درسته / تا حدی / نه») not yet on the server. */
+const pendingAnswers = (): InsightFeedback[] =>
+  Object.entries<any>(DB.insights || {})
+    .filter(([, f]) => f.syncedAt !== f.at)
+    .map(([id, f]) => ({
+      id,
+      verdict: f.verdict,
+      group: f.group,
+      hits: f.hits,
+      others: f.others,
+      elsewhere: f.elsewhere,
+      at: f.at,
+    }));
+function mergeAnswers(sent: InsightFeedback[], incoming: InsightFeedback[] = []) {
+  const mine = (DB.insights = DB.insights || {});
+  for (const f of sent) if (mine[f.id]?.at === f.at) mine[f.id].syncedAt = f.at;
+  for (const f of incoming)
+    if (!mine[f.id] || mine[f.id].at < f.at) {
+      const { id, ...rest } = f;
+      mine[id] = { ...rest, syncedAt: f.at };
+    }
+}
 
 /** Applies what the server sent. The newer edit wins; a local note is kept on the local copy. */
 function merge(incoming: SyncedEntry[]): boolean {
@@ -63,10 +86,12 @@ function merge(incoming: SyncedEntry[]): boolean {
 
 async function run(): Promise<void> {
   if (!isSignedIn() || !navigator.onLine) return;
-  const batch = pending().slice(0, 400);
+  const batch = pending().slice(0, 400),
+    answers = pendingAnswers().slice(0, 100);
   const sent = new Map(batch.map((e) => [e.id, e.updatedAt || e.createdAt]));
   try {
-    const res = await api.sync(DB.sync.cursor || 0, batch.map(toWire));
+    const res = await api.sync(DB.sync.cursor || 0, batch.map(toWire), answers);
+    mergeAnswers(answers, res.feedback);
     for (const e of DB.entries)
       if (sent.has(e.id) && (e.updatedAt || e.createdAt) === sent.get(e.id)) e.syncedAt = sent.get(e.id);
     const changed = merge(res.changes);
@@ -107,11 +132,12 @@ export function scheduleSync(ms = 1500) {
 export function resetSync() {
   DB.sync = { cursor: 0, at: null };
   for (const e of DB.entries) delete e.syncedAt;
+  for (const f of Object.values<any>(DB.insights || {})) delete f.syncedAt;
 }
 
 export function startSync() {
   onPersist(() => {
-    if (isSignedIn() && pending().length) scheduleSync();
+    if (isSignedIn() && (pending().length || pendingAnswers().length)) scheduleSync();
   });
   addEventListener('online', () => scheduleSync(200));
   document.addEventListener('visibilitychange', () => {

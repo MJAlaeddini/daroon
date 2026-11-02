@@ -1,5 +1,5 @@
 import { isSignedIn } from './features/sync';
-import { fa, jOfKey, keyAdd, keyOfJ, todayKey, weekStart } from '@daroon/shared';
+import { MAX_SCENES, fa, jOfKey, keyAdd, keyOfJ, todayKey, weekStart } from '@daroon/shared';
 import { $, $$ } from './core/util';
 import { Q2, ctxFor } from './domain/guide';
 import { lex } from './domain/lexicon';
@@ -19,7 +19,7 @@ import { applyTheme, themeChanged } from './ui/theme';
 import { toast } from './ui/toast';
 import { dayDetailHTML, jumpHTML } from './views/archive';
 import { trayHTML } from './views/explore';
-import { monthsPage } from './views/patterns';
+import { monthsPage, shownPatterns } from './views/patterns';
 import { vReflect } from './views/reflect';
 
 export const ACT = {
@@ -255,6 +255,40 @@ export const ACT = {
     engine.rippleAt((lex(it.key).angle * Math.PI) / 180, it.key, false);
     syncEngine();
     reRenderReflect();
+  },
+  verdict(el) {
+    const p = shownPatterns().find((x) => x.id === el.dataset.id);
+    if (!p) return;
+    const { id, scene: _s, key: _k, ...counts } = p;
+    DB.insights = DB.insights || {};
+    DB.insights[id] = { verdict: el.dataset.v, ...counts, at: new Date().toISOString() };
+    persist();
+    const row = el.closest('.ins');
+    row?.querySelectorAll('[data-act="verdict"]').forEach((b) => b.setAttribute('aria-pressed', String(b === el)));
+    if (el.dataset.v !== 'no') return toast('ممنون؛ ثبت شد.');
+    // «نه»: the row (or the card, if it was the only one) folds away, the way a deleted entry does
+    toast('باشه؛ دیگه نشونش نمی‌دیم.');
+    const target = row && row.parentElement?.children.length === 1 ? (row.closest('.card') as HTMLElement | null) : row;
+    if (!target || reduced()) return renderView({ quiet: true });
+    target.style.overflow = 'hidden';
+    target.animate(
+      [
+        { height: target.offsetHeight + 'px', opacity: 1 },
+        { height: '0px', opacity: 0, paddingBlock: '0px', marginBlock: '0px', borderWidth: '0px' },
+      ],
+      { duration: 340, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' },
+    ).onfinish = () => renderView({ quiet: true });
+  },
+  scene(el) {
+    const id = el.dataset.s,
+      on = S.draft.scenes;
+    const i = on.indexOf(id);
+    if (i >= 0) on.splice(i, 1);
+    else {
+      on.push(id);
+      if (on.length > MAX_SCENES) on.shift();
+    }
+    $$('[data-act="scene"]').forEach((b) => b.setAttribute('aria-pressed', String(on.includes(b.dataset.s))));
   },
   changeWords() {
     S.draft.note = $('#noteInput')?.value ?? S.draft.note;

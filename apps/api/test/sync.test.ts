@@ -54,7 +54,7 @@ describe('sync', () => {
 
     // nothing new: empty reply, cursor unchanged
     const r5 = (await tablet.post('/api/sync', { since: r4.cursor, changes: [] })).json();
-    expect(r5).toEqual({ cursor: r4.cursor, changes: [] });
+    expect(r5).toEqual({ cursor: r4.cursor, changes: [], feedback: [] });
   });
 
   it('keeps people apart', async () => {
@@ -90,5 +90,40 @@ describe('sync', () => {
     const e = entry({ emotions: [{ key: 'custom:بی‌حس', parent: null, custom: true, color: 'lilac' }] });
     const r = (await c.post('/api/sync', { since: 0, changes: [e] })).json();
     expect(r.changes[0].emotions[0]).toEqual({ key: 'custom:بی‌حس', parent: null, custom: true, color: 'lilac' });
+  });
+
+  it('carries who or what was around, and old devices that send none get none', async () => {
+    const c = await signInWithEmail(h, 'scenes@example.com');
+    const e = entry({ scenes: ['family', 'out'] }),
+      bare = entry();
+    const r = (await c.post('/api/sync', { since: 0, changes: [e, bare] })).json();
+    const got = (id: string) => r.changes.find((x: { id: string }) => x.id === id);
+    expect(got(e.id).scenes).toEqual(['family', 'out']);
+    expect(got(bare.id).scenes).toEqual([]);
+    expect((await c.post('/api/sync', { since: 0, changes: [entry({ scenes: ['mars'] })] })).statusCode).toBe(400);
+  });
+
+  it('keeps answers to patterns per person; the later answer wins', async () => {
+    const c = await signInWithEmail(h, 'answers@example.com');
+    const other = await signInWithEmail(h, 'answers2@example.com');
+    const fb = {
+      id: 'family|نگرانی',
+      verdict: 'yes',
+      group: 6,
+      hits: 5,
+      others: 18,
+      elsewhere: 2,
+      at: '2026-10-20T10:00:00.000Z',
+    };
+    const r1 = (await c.post('/api/sync', { since: 0, changes: [], feedback: [fb] })).json();
+    expect(r1.feedback).toEqual([fb]);
+    const later = { ...fb, verdict: 'no', at: '2026-10-21T10:00:00.000Z' },
+      stale = { ...fb, verdict: 'partly', at: '2026-10-19T10:00:00.000Z' };
+    await c.post('/api/sync', { since: 0, changes: [], feedback: [later] });
+    const r2 = (await c.post('/api/sync', { since: 0, changes: [], feedback: [stale] })).json();
+    expect(r2.feedback).toEqual([later]);
+    expect((await other.post('/api/sync', { since: 0, changes: [] })).json().feedback).toEqual([]);
+    const bad = await c.post('/api/sync', { since: 0, changes: [], feedback: [{ ...fb, verdict: 'maybe' }] });
+    expect(bad.statusCode).toBe(400);
   });
 });

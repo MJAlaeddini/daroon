@@ -71,6 +71,7 @@ export function draftFromEntry(e) {
     })),
     suggested: [],
     context: e.context,
+    scenes: [...(e.scenes || [])],
     path: e.path,
     note: e.note || '',
     focus: -1,
@@ -93,6 +94,7 @@ export async function saveDraft() {
     if (e) {
       Object.assign(e, {
         emotions,
+        scenes: [...d.scenes],
         unnamed: !emotions.length,
         note: d.note.trim(),
         updatedAt: new Date().toISOString(),
@@ -122,6 +124,7 @@ export async function saveDraft() {
     emotions,
     suggested: (d.suggested || []).filter((k) => !emotions.some((x) => x.key === k)),
     context: d.context || null,
+    scenes: [...d.scenes],
     unnamed: !emotions.length,
     note: d.note.trim(),
     path: d.path || 'explore',

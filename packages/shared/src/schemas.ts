@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { DAY_KEY } from './jalali';
 import { MAX_CUSTOM_LEN, MAX_EMOTIONS, isCustomEmotion, isKnownEmotion, CUSTOM_PREFIX } from './lexicon';
+import { MAX_SCENES, SCENE_IDS, isScene } from './insights';
 
 export const SWATCH_IDS = ['mist', 'sage', 'apricot', 'gold', 'rose', 'lilac', 'indigo', 'ember', 'graphite'] as const;
 
@@ -32,6 +33,12 @@ export type EntryContext = z.infer<typeof EntryContext>;
 
 const iso = z.iso.datetime({ offset: true });
 
+/** Who or what was around: at most two settings, no repeats. */
+export const Scenes = z
+  .array(z.enum(SCENE_IDS))
+  .max(MAX_SCENES)
+  .refine((a) => new Set(a).size === a.length, 'repeated scene');
+
 /** One saved check-in ("ردپا"). Notes never leave the device, so they are not part of the synced shape. */
 export const SyncedEntry = z.object({
   id: z
@@ -44,6 +51,7 @@ export const SyncedEntry = z.object({
   emotions: z.array(EmotionItem).max(MAX_EMOTIONS),
   suggested: z.array(z.string().max(40)).max(8).default([]),
   context: EntryContext.nullable().default(null),
+  scenes: Scenes.default([]),
   unnamed: z.boolean(),
   path: z.enum(['explore', 'guide', 'write']).default('explore'),
   createdAt: iso,
@@ -52,15 +60,34 @@ export const SyncedEntry = z.object({
 });
 export type SyncedEntry = z.infer<typeof SyncedEntry>;
 
+/** The person's answer to a pattern, with the counts they were shown, so it can be read against later data. */
+const count = z.number().int().min(0).max(1_000_000);
+export const InsightFeedback = z.object({
+  id: z
+    .string()
+    .max(80)
+    .refine((id) => isScene(id.split('|')[0]) && id.split('|').length === 2, 'bad pattern id'),
+  verdict: z.enum(['yes', 'partly', 'no']),
+  group: count,
+  hits: count,
+  others: count,
+  elsewhere: count,
+  at: iso,
+});
+export type InsightFeedback = z.infer<typeof InsightFeedback>;
+
 export const SyncRequest = z.object({
   /** Server cursor from the last successful sync; 0 for a first sync. */
   since: z.coerce.number().int().min(0),
   changes: z.array(SyncedEntry).max(500),
+  feedback: z.array(InsightFeedback).max(100).default([]),
 });
 export type SyncRequest = z.infer<typeof SyncRequest>;
 export interface SyncResponse {
   cursor: number;
   changes: SyncedEntry[];
+  /** Every answer this person has given to a pattern (a few dozen at most). */
+  feedback: InsightFeedback[];
 }
 
 export const StoryPage = z.object({ key: z.string().nullable(), text: z.string().max(300) });
@@ -76,7 +103,13 @@ export const Story = z.object({
 export type Story = z.infer<typeof Story>;
 
 /** What the app sends to have a week's story written. Notes are included only for this one request. */
-export const StoryEntryInput = SyncedEntry.pick({ day: true, time: true, emotions: true, context: true }).extend({
+export const StoryEntryInput = SyncedEntry.pick({
+  day: true,
+  time: true,
+  emotions: true,
+  context: true,
+  scenes: true,
+}).extend({
   note: z.string().max(2000).default(''),
 });
 export const StoryRequest = z.object({
