@@ -13,8 +13,16 @@ $SUDO docker image prune -f >/dev/null
 
 BIND=$(grep '^HTTP_BIND=' deploy/.env | cut -d= -f2-)
 PORT=${BIND##*:}
+SITE=$(grep '^SITE_ADDRESS=' deploy/.env | cut -d= -f2-)
+# with its own domain Caddy answers only that name, over HTTPS; ask it on this machine without going through DNS
+if [[ -n $SITE && $SITE != :* ]]; then
+  HB=$(grep '^HTTPS_BIND=' deploy/.env | cut -d= -f2-)
+  HEALTH=(curl -fsS --max-time 5 --resolve "$SITE:${HB##*:}:127.0.0.1" "https://$SITE:${HB##*:}/api/health")
+else
+  HEALTH=(curl -fsS --max-time 5 "http://127.0.0.1:${PORT:-80}/api/health")
+fi
 for _ in $(seq 1 40); do
-  if curl -fsS "http://127.0.0.1:${PORT:-80}/api/health" 2>/dev/null | grep -q '"ok":true'; then
+  if "${HEALTH[@]}" 2>/dev/null | grep -q '"ok":true'; then
     echo "Updated to $(git log -1 --format='%h %s') and healthy."
     exit 0
   fi

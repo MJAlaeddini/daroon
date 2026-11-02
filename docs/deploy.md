@@ -87,6 +87,25 @@ Then open the port (`sudo ufw allow 8080/tcp`, and in your provider's firewall i
 
 Limits of this mode, since there is no HTTPS: login codes and the session cookie travel unencrypted, the app cannot be installed or work offline (browsers allow service workers only over HTTPS), and Google sign-in is unavailable. Use it for trying things out; for real use move to a subdomain with HTTPS — either Mode A, or keep this port and add a block for the subdomain to the existing web server that proxies to `http://127.0.0.1:8080` (then set `APP_ORIGIN=https://SUBDOMAIN`, `COOKIE_SECURE=true`, and `HTTP_BIND=127.0.0.1:8080`). Caddy obtains the HTTPS certificate from Let's Encrypt itself; ports 80 and 443 must be open.
 
+## Moving to your own domain (HTTPS)
+
+1. In the domain's DNS panel add an **A record** for the name you want (e.g. `daroon` for `daroon.example.com`, or `@` for the bare domain) pointing to the server's IP. Wait until `getent hosts DOMAIN` on the server shows that IP (minutes, sometimes an hour).
+2. On the server:
+
+   ```bash
+   cd /opt/daroon && git pull && ./deploy/domain.sh DOMAIN you@example.com
+   ```
+
+The script checks that the domain points at the server, then:
+
+- if nothing else uses ports 80 and 443, Daroon takes them and Caddy gets the Let's Encrypt certificate itself (Mode A);
+- if nginx already serves another site there, it adds a server block for the domain that proxies to Daroon on `127.0.0.1:PORT` and runs certbot for it; the other site is untouched;
+- with another web server in front, it prints what to add there.
+
+It sets `APP_ORIGIN=https://DOMAIN` and `COOKIE_SECURE=true`, moves a sender address that still uses the IP to the domain, keeps every secret, and saves the old `deploy/.env` beside it. `deploy/update.sh` checks health over HTTPS once the domain is set, so automatic deploys keep working. Ports 80 and 443 must be reachable from the internet (also in the provider's firewall) for the certificate.
+
+With HTTPS the app can be installed on phones and works offline, and Google sign-in becomes possible (add `https://DOMAIN` to the OAuth client's JavaScript origins and set `GOOGLE_CLIENT_ID`).
+
 ## Automatic deploys from GitHub
 
 The last CI job on `main` (the reusable `Deploy` workflow) runs `deploy/update.sh` on the server over SSH once every check passes (or when started by hand from the Actions tab). On the server, create a key that can do only that:

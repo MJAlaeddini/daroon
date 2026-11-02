@@ -28,9 +28,12 @@ export function renderView({ quiet = false, slide = 0 } = {}) {
       old.classList.add('leaving', 'sliding');
       old.setAttribute('aria-hidden', 'true');
       old.style.top = -y0 + 'px';
+      // a swipe may have left the page leaning with the finger; it leaves from there
+      const lean = old.style.transform || 'translateX(0)';
+      old.style.transition = '';
       old.animate(
         [
-          { transform: 'translateX(0)', opacity: 1 },
+          { transform: lean, opacity: 1 },
           { transform: `translateX(${-slide * 28}%)`, opacity: 0.15, offset: 0.3 },
           { transform: `translateX(${-slide * 100}%)`, opacity: 0 },
         ],

@@ -94,3 +94,40 @@ test('works offline after the first visit', async ({ page, context }) => {
   await settle(page, 1200);
   await expect(page.locator('.login-acts')).toBeVisible();
 });
+
+test.describe('swiping', () => {
+  test.use({ hasTouch: true, isMobile: true });
+  test('a sideways swipe moves between the tabs; a short one springs back', async ({ page }) => {
+    await open(page);
+    await page.click('[data-act=loginSkip]');
+    await settle(page, 1500);
+    const cdp = await page.context().newCDPSession(page);
+    const swipe = async (dx: number, ms = 220) => {
+      const x0 = 195 - dx / 2,
+        y = 560,
+        steps = 8;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y }] });
+      for (let i = 1; i <= steps; i++) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove',
+          touchPoints: [{ x: x0 + (dx * i) / steps, y: y + i }],
+        });
+        await page.waitForTimeout(ms / steps);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await settle(page, 900);
+    };
+    const view = () => page.evaluate('__daroon.S.view');
+    await swipe(160);
+    expect(await view()).toBe('archive');
+    await swipe(160);
+    expect(await view()).toBe('patterns');
+    await swipe(160);
+    expect(await view()).toBe('patterns');
+    await swipe(-160);
+    expect(await view()).toBe('archive');
+    await swipe(40, 600);
+    expect(await view()).toBe('archive');
+    expect(await page.$eval('#views .view:not(.leaving)', (v) => (v as HTMLElement).style.transform)).toBe('');
+  });
+});
