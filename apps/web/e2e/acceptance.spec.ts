@@ -100,15 +100,40 @@ test.describe('keyboard', () => {
     await open(page);
     await page.click('[data-act=loginSkip]');
     await settle(page, 1200);
+    // a Tab that never returns means the page stopped answering; say where focus was and what the page reported
+    let crashed = false;
+    const logs: string[] = [];
+    page.on('crash', () => (crashed = true));
+    page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`.slice(0, 200)));
+    let at = 'start';
     for (let i = 0; i < 18; i++) {
-      await page.keyboard.press('Tab');
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const hung = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new Error(
+                `Tab #${i + 1} did not return within 15 s; focus was on ${at}; crashed: ${crashed}; ` +
+                  `last console: ${logs.slice(-5).join(' | ') || 'none'}`,
+              ),
+            ),
+          15_000,
+        );
+      });
+      await Promise.race([page.keyboard.press('Tab'), hung]).finally(() => clearTimeout(timer));
       const r = await page.evaluate(() => {
         const a = document.activeElement as HTMLElement | null;
-        if (!a || a === document.body) return null;
+        if (!a || a === document.body) return { ok: null, at: 'body' };
         const cs = getComputedStyle(a);
-        return (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || cs.boxShadow !== 'none';
+        const label =
+          a.getAttribute('aria-label') || a.dataset.act || a.dataset.go || a.textContent?.trim().slice(0, 24);
+        return {
+          ok: (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || cs.boxShadow !== 'none',
+          at: `${a.tagName.toLowerCase()}.${a.className} «${label}»`,
+        };
       });
-      if (r !== null) expect(r).toBe(true);
+      at = r.at;
+      if (r.ok !== null) expect(r.ok, `focus ring on ${r.at}`).toBe(true);
     }
   });
 });
