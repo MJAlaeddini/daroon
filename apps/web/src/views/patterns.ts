@@ -1,5 +1,9 @@
 import {
   J_MONTHS,
+  SCENES,
+  SCENE_WHEN,
+  findPatterns,
+  type Pattern,
   WD_S,
   fa,
   fmtDay,
@@ -134,6 +138,42 @@ export function storiesRow() {
   if (!fresh && !saved) return '';
   return `<section class="p-sec card wide p-stories"><div class="p-sec-h"><h2>داستان‌های هفته</h2></div><p class="fine">چند صفحه‌ی کوتاه درباره‌ی هفته‌ات، از روی ردپاها و یادداشت‌هایی که خودت نوشتی. داستان‌ها همین‌جا نگه داشته می‌شن.</p><div class="srow">${fresh}${saved}</div></section>`;
 }
+/* what came up more often in one setting than elsewhere; the person says whether it rings true */
+const VERDICTS: [string, string][] = [
+  ['yes', 'آره'],
+  ['partly', 'تا حدی'],
+  ['no', 'نه'],
+];
+/** Patterns worth showing: answered «نه» ones step aside; two at most, to keep the page quiet. */
+export function shownPatterns(): Pattern[] {
+  const said = DB.insights || {};
+  return findPatterns(visible())
+    .filter((p) => said[p.id]?.verdict !== 'no')
+    .slice(0, 2);
+}
+export function insightHTML(p: Pattern) {
+  const label = esc(labelOf(p.key)),
+    pct = (a: number, b: number) => `${Math.max(4, (a / b) * 100).toFixed(1)}%`,
+    v = DB.insights?.[p.id]?.verdict,
+    miss = p.group - p.hits;
+  return `<li class="ins" data-id="${esc(p.id)}" style="${cvars(p.key)}">
+    <p class="ins-say">وقتی ${SCENE_WHEN[p.scene]}، <span class="ins-w">${glyph(p.key)}${label}</span> بیشتر اومده.</p>
+    <div class="ins-ev">
+      <span class="ins-l">${SCENES[p.scene]}</span><span class="filament" aria-hidden="true"><i style="--p:${pct(p.hits, p.group)}"></i></span><span class="n num">${fa(p.hits)} از ${fa(p.group)}</span>
+      <span class="ins-l">بقیه‌ی وقتا</span><span class="filament dim" aria-hidden="true"><i style="--p:${pct(p.elsewhere, p.others)}"></i></span><span class="n num">${fa(p.elsewhere)} از ${fa(p.others)}</span>
+    </div>
+    <p class="fine">${miss ? `${fa(miss)} بار هم ${SCENE_WHEN[p.scene]} و ${label} نبود. ` : ''}فقط شمردن ردپاهاست، نه دلیل.</p>
+    <div class="ins-ask" role="group" aria-label="با تجربه‌ات جوره؟"><span>با تجربه‌ات جوره؟</span><span class="seg">${VERDICTS.map(
+      ([k, l]) =>
+        `<button data-act="verdict" data-id="${esc(p.id)}" data-v="${k}" aria-pressed="${v === k}">${l}</button>`,
+    ).join('')}</span></div>
+  </li>`;
+}
+export function insightsCard() {
+  const list = shownPatterns();
+  if (!list.length) return '';
+  return `<section class="p-sec card wide p-ins"><div class="p-sec-h"><h2>چیزی که تکرار شده</h2></div><ul class="ins-list">${list.map(insightHTML).join('')}</ul></section>`;
+}
 export function vPatterns() {
   const D = patternData(),
     R = S.pat.range,
@@ -157,7 +197,7 @@ export function vPatterns() {
   if (D.named.length < 3)
     return (
       head +
-      `<div class="p-grid">${storiesRow()}${months}${range}<p class="fine p-empty">در این بازه هنوز ردپای کافی برای شمردن نیست.</p></div>`
+      `<div class="p-grid">${storiesRow()}${insightsCard()}${months}${range}<p class="fine p-empty">در این بازه هنوز ردپای کافی برای شمردن نیست.</p></div>`
     );
   const maxF = D.top[0][1];
   const freq = D.top
@@ -176,7 +216,7 @@ export function vPatterns() {
     .join('');
   return (
     head +
-    `<div class="p-grid">${storiesRow()}${months}
+    `<div class="p-grid">${storiesRow()}${insightsCard()}${months}
     ${range}
     <section class="p-sec card"><h2>کلمه‌هایی که بیشتر برگزیدی</h2><ul class="freq">${freq}</ul></section>
     <section class="p-sec card"><h2>احساس‌هایی که کنار هم اومدن</h2>${pairs ? `<ul class="pairs">${pairs}</ul>` : '<p class="fine">هنوز ردپایی با چند کلمه در این بازه نیست.</p>'}</section>

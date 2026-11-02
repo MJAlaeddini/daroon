@@ -1,6 +1,6 @@
 import { and, eq, gt, sql } from 'drizzle-orm';
-import type { SyncedEntry, SyncResponse } from '@daroon/shared';
-import { entries } from '../../db/schema';
+import type { InsightFeedback, SyncedEntry, SyncResponse } from '@daroon/shared';
+import { entries, insightFeedback } from '../../db/schema';
 import type { Deps } from '../../app';
 
 type Row = typeof entries.$inferSelect;
@@ -11,6 +11,7 @@ const toWire = (r: Row): SyncedEntry => ({
   emotions: r.emotions,
   suggested: r.suggested,
   context: r.context,
+  scenes: r.scenes ?? [],
   unnamed: r.unnamed,
   path: r.path as SyncedEntry['path'],
   createdAt: r.createdAt.toISOString(),
@@ -26,7 +27,12 @@ const toWire = (r: Row): SyncedEntry => ({
 export function entriesService(deps: Deps) {
   const { db } = deps.db;
   return {
-    async sync(userId: string, since: number, changes: SyncedEntry[]): Promise<SyncResponse> {
+    async sync(
+      userId: string,
+      since: number,
+      changes: SyncedEntry[],
+      feedback: InsightFeedback[] = [],
+    ): Promise<SyncResponse> {
       return db.transaction(async (tx) => {
         await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`);
         for (const c of changes) {
@@ -38,6 +44,7 @@ export function entriesService(deps: Deps) {
             emotions: c.emotions,
             suggested: c.suggested,
             context: c.context,
+            scenes: c.scenes,
             unnamed: c.unnamed,
             path: c.path,
             createdAt: new Date(c.createdAt),
@@ -55,6 +62,28 @@ export function entriesService(deps: Deps) {
               setWhere: sql`${entries.updatedAt} < excluded.updated_at`,
             });
         }
+        for (const f of feedback) {
+          const values = {
+            userId,
+            id: f.id,
+            verdict: f.verdict,
+            groupSize: f.group,
+            hits: f.hits,
+            others: f.others,
+            elsewhere: f.elsewhere,
+            updatedAt: new Date(f.at),
+          };
+          const { userId: _u, id: _i, ...update } = values;
+          await tx
+            .insert(insightFeedback)
+            .values(values)
+            .onConflictDoUpdate({
+              target: [insightFeedback.userId, insightFeedback.id],
+              set: update,
+              setWhere: sql`${insightFeedback.updatedAt} < excluded.updated_at`,
+            });
+        }
+        const answers = await tx.select().from(insightFeedback).where(eq(insightFeedback.userId, userId));
         const rows = await tx
           .select()
           .from(entries)
@@ -66,7 +95,19 @@ export function entriesService(deps: Deps) {
           .from(entries)
           .where(eq(entries.userId, userId));
         const cursor = rows.length === 5000 ? rows[rows.length - 1].seq : Math.max(Number(max), since);
-        return { cursor, changes: rows.map(toWire) };
+        return {
+          cursor,
+          changes: rows.map(toWire),
+          feedback: answers.map((a) => ({
+            id: a.id,
+            verdict: a.verdict,
+            group: a.groupSize,
+            hits: a.hits,
+            others: a.others,
+            elsewhere: a.elsewhere,
+            at: a.updatedAt.toISOString(),
+          })),
+        };
       });
     },
   };

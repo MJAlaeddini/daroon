@@ -10,6 +10,8 @@ export let DB: any = {
   settings: { direction: 'auto', motion: 'system' },
   visits: 0,
   sync: { cursor: 0, at: null },
+  /** Answers to patterns, by pattern id: { verdict, group, hits, others, elsewhere, at, syncedAt? }. */
+  insights: {},
 };
 const persistListeners = new Set<() => void>();
 /** Lets other parts (sync) react to local saves without the store knowing about them. */

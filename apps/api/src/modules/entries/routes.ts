@@ -9,7 +9,7 @@ export default async function entryRoutes(app: FastifyInstance, { deps }: { deps
   app.addHook('preHandler', app.requireUser);
 
   app.post('/sync', { bodyLimit: 2 * 1024 * 1024 }, async (req) => {
-    const { since, changes } = parse(SyncRequest, req.body);
-    return svc.sync(req.user!.id, since, changes);
+    const { since, changes, feedback } = parse(SyncRequest, req.body);
+    return svc.sync(req.user!.id, since, changes, feedback);
   });
 }

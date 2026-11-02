@@ -1686,6 +1686,33 @@ body[data-kb='1'] .actionbar {
   width: 14px;
   height: 14px;
 }
+/* who or what was around: quiet chips, a pressed one fills softly */
+.scn dd {
+  gap: 6px;
+}
+.chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-2);
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+.chip:hover {
+  border-color: var(--line-2);
+}
+.chip[aria-pressed='true'] {
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+  color: var(--ink);
+  font-weight: 600;
+}
 
 /* ───────── ARCHIVE ───────── */
 .a-grid {
@@ -2532,6 +2559,10 @@ body[data-kb='1'] .actionbar {
   color: var(--ink-3);
   min-height: 28px;
 }
+.ent-sc::before {
+  content: '·';
+  margin-inline-end: 8px;
+}
 .tag {
   font-size: 12px;
   font-weight: 600;
@@ -2752,6 +2783,95 @@ body[data-kb='1'] .actionbar {
   font-size: 13px;
   color: var(--ink-3);
   white-space: nowrap;
+}
+/* patterns that came up more often in one setting */
+.ins-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.ins {
+  display: grid;
+  gap: 12px;
+  padding-block: 16px;
+  border-top: 1px solid var(--line);
+}
+.ins:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+.ins:last-child {
+  padding-bottom: 0;
+}
+.ins-say {
+  margin: 0;
+  font-family: var(--f-ed);
+  font-size: 18px;
+  line-height: 1.7;
+}
+.ins-w {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  vertical-align: bottom;
+}
+.ins-w .glyph {
+  width: 18px;
+  height: 18px;
+}
+.ins-ev {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.ins-ev .n {
+  font-size: 13px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.filament.dim i {
+  background: var(--ink-3);
+  opacity: 0.5;
+}
+.filament.dim i::after {
+  background: var(--ink-3);
+}
+.ins .fine {
+  margin: 0;
+}
+.ins-ask {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.ins-ask .seg button {
+  min-height: 38px;
+  padding: 0 14px;
+}
+@media (min-width: 1000px) {
+  /* two patterns sit side by side rather than stretching across the page */
+  .ins-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 48px;
+  }
+  .ins,
+  .ins:first-child {
+    border-top: 0;
+    padding-block: 2px 0;
+  }
+  .ins + .ins {
+    padding-inline-start: 48px;
+    margin-inline-start: -48px;
+    border-inline-start: 1px solid var(--line);
+  }
 }
 .pairs {
   list-style: none;

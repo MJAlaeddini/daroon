@@ -4,6 +4,7 @@
  */
 import { fa } from './digits';
 import { WD, wdIndex, weekRange } from './jalali';
+import { SCENES, isScene } from './insights';
 import { labelOf } from './lexicon';
 
 export interface StoryEntry {
@@ -11,6 +12,7 @@ export interface StoryEntry {
   time: string;
   emotions: { key: string }[];
   context: { name: string; value: string } | null;
+  scenes?: readonly string[];
   note?: string;
 }
 export interface StoryDraft {
@@ -25,6 +27,11 @@ export function storyPrompt(ws: string, list: StoryEntry[], allowed: string[]): 
     احساس‌ها: e.emotions.map((x) => labelOf(x.key)),
     بی‌نام: !e.emotions.length,
     زمینه: e.context ? `${e.context.name}: ${e.context.value}` : null,
+    'کجا یا با کی':
+      (e.scenes || [])
+        .filter(isScene)
+        .map((x) => SCENES[x])
+        .join('، ') || null,
     یادداشت: e.note || null,
   }));
   return `تو برای یک دفترچه‌ی شخصیِ احساس به اسم «درون»، «داستان هفته» می‌نویسی: چند صفحه‌ی کوتاه که آدم بخونه و ببینه هفته‌اش چطور گذشته.

@@ -12,7 +12,7 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { EmotionItem, EntryContext } from '@daroon/shared';
+import type { EmotionItem, EntryContext, SceneId } from '@daroon/shared';
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
 
@@ -74,6 +74,10 @@ export const entries = pgTable(
       .notNull()
       .default(sql`'[]'::jsonb`),
     context: jsonb('context').$type<EntryContext | null>(),
+    scenes: jsonb('scenes')
+      .$type<SceneId[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     unnamed: boolean('unnamed').notNull(),
     path: text('path').notNull(),
     createdAt: ts('created_at').notNull(),
@@ -86,6 +90,27 @@ export const entries = pgTable(
     index('entries_user_seq_idx').on(t.userId, t.seq),
     index('entries_user_day_idx').on(t.userId, t.day),
   ],
+);
+
+/**
+ * What a person said about a pattern («درسته / تا حدی / نه»), with the counts they were shown at the time. Kept
+ * apart from the entries: an answer never changes what was recorded.
+ */
+export const insightFeedback = pgTable(
+  'insight_feedback',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    id: text('id').notNull(),
+    verdict: text('verdict', { enum: ['yes', 'partly', 'no'] }).notNull(),
+    groupSize: integer('group_size').notNull(),
+    hits: integer('hits').notNull(),
+    others: integer('others').notNull(),
+    elsewhere: integer('elsewhere').notNull(),
+    updatedAt: ts('updated_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.id] })],
 );
 
 export const stories = pgTable(

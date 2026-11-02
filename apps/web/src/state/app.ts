@@ -1,4 +1,4 @@
-import { jMonthLen, jOfKey, keyOfJ, todayKey } from '@daroon/shared';
+import { jMonthLen, jOfKey, keyOfJ, todayKey, type SceneId } from '@daroon/shared';
 import { guideMods } from '../domain/guide';
 import { HOME_LABS, NEU_LABS } from '../domain/lexicon';
 import { aggregate, daySpec } from '../domain/specs';
@@ -12,6 +12,8 @@ export interface Draft {
   items: { key: string; parent: string | null; custom?: boolean; color?: string | null }[];
   suggested: string[];
   context: any;
+  /** Who or what was around (ids from SCENE_IDS), at most two. */
+  scenes: SceneId[];
   path: string | null;
   note: string;
   focus: number;
@@ -41,6 +43,7 @@ export const newDraft = (): Draft => ({
   items: [],
   suggested: [],
   context: null,
+  scenes: [],
   path: null,
   note: '',
   focus: -1,
