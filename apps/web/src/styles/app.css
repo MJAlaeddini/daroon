@@ -1690,10 +1690,15 @@ body[data-kb='1'] .actionbar {
 .scn dd {
   gap: 6px;
 }
+.scn dt small {
+  font-size: 12px;
+  font-weight: 400;
+}
 .chip {
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 18px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
   border: 1px solid var(--line);
   background: color-mix(in oklab, var(--surface) 70%, transparent);
   font-size: 14px;
@@ -2853,7 +2858,7 @@ body[data-kb='1'] .actionbar {
   color: var(--ink-2);
 }
 .ins-ask .seg button {
-  min-height: 38px;
+  min-width: 52px;
   padding: 0 14px;
 }
 @media (min-width: 1000px) {
