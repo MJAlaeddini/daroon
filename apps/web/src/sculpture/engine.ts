@@ -1,6 +1,6 @@
 import { labToHex } from '../core/color';
 import { clamp, lerp } from '../core/util';
-import { NEUTRAL_PAL, NEU_LABS, P0, PK, labsFor, lex, palFor } from '../domain/lexicon';
+import { NEUTRAL_PAL, NEU_LABS, NO_MOTIF, P0, PK, labsFor, lex, palFor } from '../domain/lexicon';
 import { DB } from '../state/store';
 
 /* ═════════════════════════ engine: springs, slots, phases ═════════════════════════ */
@@ -208,6 +208,10 @@ export class Engine {
 }
 export function buildU(st, scale: number, halo: number, dk?: number) {
   const S = new Float32Array(12),
+    M = new Float32Array(12),
+    M2 = new Float32Array(12),
+    Mg = [0, 0, 0, 0],
+    M2g = [0, 0, 0, 0],
     K = new Float32Array(27),
     N = new Float32Array(9),
     P = st.P;
@@ -217,7 +221,20 @@ export function buildU(st, scale: number, halo: number, dk?: number) {
     S[i * 4 + 2] = s.lexp;
     S[i * 4 + 3] = s.ltens;
     for (let j = 0; j < 3; j++) for (let c = 0; c < 3; c++) K[i * 9 + j * 3 + c] = s.lab[j][c];
+    // gestures add up rather than average out, so each chosen feeling stays visible in the mix
+    const m = s.key ? lex(s.key).M : NO_MOTIF,
+      w = s.key ? clamp(s.w, 0, 1.1) : 0;
+    for (let j = 0; j < 4; j++) {
+      M[i * 4 + j] = m[j] * w;
+      M2[i * 4 + j] = m[j + 4] * w;
+      Mg[j] += m[j] * w;
+      M2g[j] += m[j + 4] * w;
+    }
   });
+  for (let j = 0; j < 4; j++) {
+    Mg[j] = Math.min(Mg[j], 1.25);
+    M2g[j] = Math.min(M2g[j], 1.25);
+  }
   (st.neu || NEU_LABS).forEach((l, j) => {
     N[j * 3] = l[0];
     N[j * 3 + 1] = l[1];
@@ -239,6 +256,10 @@ export function buildU(st, scale: number, halo: number, dk?: number) {
     C: [P.diff, P.sep, P.dx, P.dy],
     D: [st.open, dk != null ? dk : isDark() ? 1 : 0, dk != null ? 0 : isSpectrum() ? 1 : 0, st.neutral],
     S,
+    M,
+    M2,
+    Mg,
+    M2g,
     K,
     N,
     R: [r.x, r.y, r.age, r.str],

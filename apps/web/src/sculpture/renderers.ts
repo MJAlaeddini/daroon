@@ -39,9 +39,27 @@ export class GLRenderer {
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     this.u = {};
-    ['uRes', 'uPh', 'uA', 'uB', 'uC', 'uD', 'uS', 'uK', 'uN', 'uR', 'uR2', 'uPt', 'uSeed', 'uScale', 'uHalo'].forEach(
-      (n) => (this.u[n] = gl.getUniformLocation(pr, n)),
-    );
+    [
+      'uRes',
+      'uPh',
+      'uA',
+      'uB',
+      'uC',
+      'uD',
+      'uS',
+      'uM',
+      'uM2',
+      'uMg',
+      'uM2g',
+      'uK',
+      'uN',
+      'uR',
+      'uR2',
+      'uPt',
+      'uSeed',
+      'uScale',
+      'uHalo',
+    ].forEach((n) => (this.u[n] = gl.getUniformLocation(pr, n)));
     this.lost = false;
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
@@ -62,6 +80,10 @@ export class GLRenderer {
     gl.uniform4fv(u.uC, U.C);
     gl.uniform4fv(u.uD, U.D);
     gl.uniform4fv(u.uS, U.S);
+    gl.uniform4fv(u.uM, U.M);
+    gl.uniform4fv(u.uM2, U.M2);
+    gl.uniform4fv(u.uMg, U.Mg);
+    gl.uniform4fv(u.uM2g, U.M2g);
     gl.uniform3fv(u.uK, U.K);
     gl.uniform3fv(u.uN, U.N);
     gl.uniform4fv(u.uR, U.R);

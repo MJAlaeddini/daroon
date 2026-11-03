@@ -1086,9 +1086,18 @@ body[data-flow='1'] #views {
   display: grid;
   gap: 14px;
   align-content: start;
+  justify-items: center;
+  text-align: center;
   min-width: 0;
   padding-top: 4px;
   padding-bottom: 8px;
+}
+.tray .own {
+  display: flex;
+  justify-content: center;
+}
+.tray .custom {
+  width: min(100%, 360px);
 }
 .tray-head {
   display: flex;
@@ -1106,20 +1115,19 @@ body[data-flow='1'] #views {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
 }
 .sel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: inline-flex;
   align-items: center;
-  gap: 2px 6px;
-  padding: 6px 8px 6px 4px;
-  padding-inline-start: 12px;
-  border-radius: var(--r-m);
-  background: var(--surface);
-  background: color-mix(in oklab, var(--surface) 78%, transparent);
-  border: 1px solid var(--line);
+  gap: 2px;
+  padding-inline: 14px 2px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--c1) 14%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--c1) 30%, var(--line));
   animation: rise 0.5s var(--ease) both;
 }
 .sel-chip {
@@ -1144,12 +1152,9 @@ body[data-flow='1'] #views {
   color: var(--ink-3);
 }
 .refine {
-  grid-column: 1/-1;
   display: grid;
-  gap: 8px;
-  padding: 10px 0 6px;
-  border-top: 1px dashed var(--line-2);
-  margin-top: 4px;
+  justify-items: center;
+  gap: 10px;
   animation: rise 0.5s var(--ease) both;
 }
 .refine-q {
@@ -1161,6 +1166,7 @@ body[data-flow='1'] #views {
 .refine-opts {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
 }
 .rf {
@@ -1168,9 +1174,9 @@ body[data-flow='1'] #views {
   align-items: center;
   gap: 7px;
   min-height: 44px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  border: 1px dashed var(--line-2);
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
   font-family: var(--f-ed);
   font-size: 16px;
   font-weight: 500;
@@ -1186,14 +1192,13 @@ body[data-flow='1'] #views {
   opacity: 0.7;
 }
 .rf:hover {
-  border-style: solid;
+  border-color: var(--line-2);
   color: var(--ink);
 }
 .rf[aria-pressed='true'] {
-  border: 1px solid var(--ink);
-  border-style: solid;
+  border-color: color-mix(in oklab, var(--c1, var(--accent)) 55%, var(--line));
   color: var(--ink);
-  background: var(--surface);
+  background: color-mix(in oklab, var(--c1, var(--accent)) 16%, var(--surface));
   font-weight: 700;
 }
 .rf[aria-pressed='true'] .glyph {
@@ -1202,6 +1207,11 @@ body[data-flow='1'] #views {
 .rf.keep {
   font-family: var(--f-ui);
   font-size: 13px;
+}
+.rf.keep[aria-pressed='true'] {
+  background: var(--surface-2);
+  border-color: var(--line-2);
+  color: var(--ink);
 }
 .empty-note {
   margin: 0;
@@ -1267,9 +1277,16 @@ body[data-flow='1'] #views {
   margin-top: 8px;
   padding-block: 14px calc(12px + env(safe-area-inset-bottom, 0px));
   background: var(--bg);
-  box-shadow:
-    0 -1px 0 var(--line),
-    0 -14px 18px -6px var(--bg);
+}
+/* no rule above the buttons: the page just fades into them */
+.actionbar::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 100%;
+  height: 28px;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--bg) 0%, transparent));
 }
 .ab-in {
   display: flex;
@@ -1500,6 +1517,33 @@ body[data-kb='1'] .actionbar {
     transparent 86%
   );
   padding-inline: 2px;
+}
+button.hw {
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+  border-radius: 6px;
+  transition: background-size 0.3s var(--ease);
+}
+button.hw[aria-expanded='true'] {
+  background: linear-gradient(
+    transparent 20%,
+    color-mix(in oklab, var(--c1) 34%, transparent) 20%,
+    color-mix(in oklab, var(--c1) 34%, transparent) 92%,
+    transparent 92%
+  );
+}
+.r-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.r-sub .link {
+  margin-inline-start: auto;
 }
 .amp {
   color: var(--ink-3);
@@ -3931,6 +3975,39 @@ body[data-flow='1'] .navfade {
 .toast.out {
   animation: leave 0.3s var(--ease-in) both;
 }
+/* a new version is ready: stays at the top until tapped */
+.upd {
+  position: fixed;
+  z-index: 60;
+  top: calc(64px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100% - 32px);
+  padding: 3px;
+  padding-inline-start: 16px;
+  border-radius: 26px;
+  background: var(--toast-bg);
+  color: var(--toast-fg);
+  font-size: 13px;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  animation: rise 0.45s var(--ease) both;
+}
+.upd button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  font-weight: 700;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.upd.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
 .toast button {
   font-weight: 700;
   text-decoration: underline;
@@ -4138,6 +4215,19 @@ body[data-flow='1'] .navfade {
     background: none;
     padding: 0;
     margin-top: 4px;
+  }
+  .actionbar::before {
+    display: none;
+  }
+  .tray,
+  .refine {
+    justify-items: start;
+    text-align: start;
+  }
+  .tray .own,
+  .sel-list,
+  .refine-opts {
+    justify-content: flex-start;
   }
   .x-grid .actionbar {
     grid-area: tray;

@@ -346,6 +346,27 @@ export const TWEAK = {
   دوگانگی: { sep: 0.15, asym: 0.2 },
   پریشانی: { turb: 0.15, tens: 0.15 },
 };
+/* Each feeling's own gesture in the sculpture, kept apart from the averaged form above so that a mix of feelings
+   still shows each one: [sag, rise, swirl, spike, tremor, hollow, bloom, embrace].
+   sag: the body grows heavy and drops · rise: the crown lifts toward the light · swirl: the layers twist ·
+   spike: sharp points break the edge · tremor: the edge trembles · hollow: the centre empties and the inner layers
+   drift away · bloom: soft petals open · embrace: the inner layers become two that lean together. */
+export const MOTIF_KEYS = ['sag', 'rise', 'swirl', 'spike', 'tremor', 'hollow', 'bloom', 'embrace'] as const;
+export const MOTIF: Record<string, number[]> = {
+  آرامش: [0, 0.1, 0, 0, 0, 0, 0.25, 0],
+  امید: [0, 1, 0, 0, 0, 0, 0.3, 0],
+  خوشحالی: [0, 0.35, 0, 0, 0.1, 0, 1, 0],
+  اشتیاق: [0, 0.3, 0.15, 0.2, 0.45, 0, 0.5, 0],
+  سردرگمی: [0, 0, 1, 0, 0.15, 0.15, 0, 0],
+  نگرانی: [0, 0, 0.25, 0, 1, 0.1, 0, 0],
+  ترس: [0.1, 0, 0, 0.25, 0.75, 0.35, 0, 0],
+  خشم: [0, 0, 0.1, 1, 0.25, 0, 0, 0],
+  دلخوری: [0.35, 0, 0.1, 0.4, 0.1, 0, 0, 0],
+  غم: [1, 0, 0, 0, 0, 0.2, 0, 0],
+  دلتنگی: [0.3, 0, 0, 0, 0, 1, 0, 0.15],
+  صمیمیت: [0, 0.1, 0, 0, 0, 0, 0.3, 1],
+};
+export const NO_MOTIF = [0, 0, 0, 0, 0, 0, 0, 0];
 export const tweak = (P, t: Record<string, number> = {}) => {
   const o = { ...P };
   for (const k in t) o[k] = k === 'dx' || k === 'dy' ? clamp(o[k] + t[k], -1, 1) : clamp(o[k] + t[k]);
@@ -353,7 +374,7 @@ export const tweak = (P, t: Record<string, number> = {}) => {
 };
 export const LEX: Record<string, any> = {};
 CORE_DEF.forEach(([key, angle, pal, P, emo]) => {
-  LEX[key] = { key, angle, pal, P: { ...P0, ...P }, emo, core: true, parent: key };
+  LEX[key] = { key, angle, pal, P: { ...P0, ...P }, M: MOTIF[key] || NO_MOTIF, emo, core: true, parent: key };
 });
 export function addChild(k, par, i) {
   if (LEX[k]) return;
@@ -363,6 +384,7 @@ export function addChild(k, par, i) {
     angle: p.angle + (i - 1) * 9,
     pal: p.pal.map((h) => labToHex(labRot(hexToLab(h), (i - 1) * 16 + 6, (i - 1) * 0.02))),
     P: tweak(p.P, TWEAK[k]),
+    M: p.M,
     emo: p.emo,
     core: false,
     parent: par,
@@ -380,9 +402,11 @@ export function lex(key) {
     ['coh', 'reg', 'exp', 'asym', 'turb', 'tens', 'energy', 'lum', 'sep'].forEach(
       (k) => (P[k] = clamp(P[k] + (rnd() - 0.5) * 0.3)),
     );
-    return (LEX[key] = { key, angle: (h % 360) - 180, pal, P, emo: '', core: false, parent: null, custom: true });
+    // a word of one's own gets a quiet gesture of its own too
+    const M = NO_MOTIF.map(() => (rnd() < 0.3 ? rnd() * 0.6 : 0));
+    return (LEX[key] = { key, angle: (h % 360) - 180, pal, P, M, emo: '', core: false, parent: null, custom: true });
   }
-  return { key, angle: 0, pal: NEUTRAL_PAL, P: { ...P0 }, emo: '', core: false, parent: null };
+  return { key, angle: 0, pal: NEUTRAL_PAL, P: { ...P0 }, M: NO_MOTIF, emo: '', core: false, parent: null };
 }
 export const SWATCHES = {
   mist: { n: 'مه', pal: ['#e2ecf2', '#9fb8cf', '#6c8bab'] },

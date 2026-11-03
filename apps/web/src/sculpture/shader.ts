@@ -11,6 +11,10 @@ uniform vec4 uB;       // turbulence, tension, luminosity, cohesion
 uniform vec4 uC;       // diffusion, separation, drift x, drift y
 uniform vec4 uD;       // open, dark, spectrum, neutral weight
 uniform vec4 uS[3];    // per emotion: anchor angle, weight, local expansion, local tension
+uniform vec4 uM[3];    // per emotion gesture × weight: sag, rise, swirl, spike
+uniform vec4 uM2[3];   // per emotion gesture × weight: tremor, hollow, bloom, embrace
+uniform vec4 uMg;      // the same, summed over the chosen feelings
+uniform vec4 uM2g;
 uniform vec3 uK[9];    // per emotion OKLab: glow, core, edge
 uniform vec3 uN[3];    // neutral pearl OKLab
 uniform vec4 uR;       // ripple x, y, age, strength
@@ -47,8 +51,20 @@ float shapeR(float th, float rot, float k){
     float w = S.y * exp((cos(th - S.x) - 1.0) * 2.4);
     r += w * S.z * 0.14;
     r += w * S.w * 0.022 * sin(th * 13.0 + uPh.z * 2.0 + float(s) * 2.1);
+    // gestures that belong to one side: they gather around the feeling's place on the ring, so in a mix you can
+    // tell which part is anger and which is worry
+    float wl = exp((cos(th - S.x) - 1.0) * 0.9);
+    float fs = float(s);
+    float fl = 7.0 * h + ph * 3.0 + fs * 1.9 + 0.35 * sin(t * 0.6 + h * 3.0 + fs);
+    r += wl * uM[s].w * 0.2 * pow(max(0.0, cos(fl)), 6.0);
+    r += wl * uM2[s].x * 0.032 * sin(th * 21.0 + uPh.w * 9.0 + fs * 1.7) * (0.65 + 0.35 * sin(th * 7.0 - uPh.w * 4.0));
   }
-  return r;
+  // gestures of the whole body
+  float up = sin(th);
+  r += uMg.x * (0.22 * pow(max(0.0, -up), 1.6) - 0.08 * max(0.0, up));
+  r += uMg.y * (0.26 * pow(max(0.0, up), 2.4) - 0.06 * max(0.0, -up));
+  r += uM2g.z * 0.13 * (pow(0.5 + 0.5 * cos(5.0 * h + t * 0.18 + ph), 3.0) - 0.3);
+  return max(r, 0.35);
 }
 vec3 fieldLab(vec2 p, float d, float th, float R){
   float wn = uD.w + 0.001;
@@ -94,7 +110,22 @@ void main(){
     float sc = 1.0 - fk * 0.2;
     float rot = fk * 1.05 + 0.35 * sin(uPh.x * 0.07 + fk * 1.3);
     vec2 off = ctr + spread * vec2(cos(fk * 2.3 + uPh.x * 0.11), sin(fk * 1.7 + uPh.x * 0.09)) * min(fk, 1.0) * (0.7 + 0.5 * fk);
+    float inner = min(fk, 1.0);
+    // embrace: the two inner layers become a pair, side by side and leaning in
+    float emb = uM2g.w * inner;
+    sc = mix(sc, 0.58, emb);
+    off += emb * R * vec2((fk < 1.5 ? -0.24 : 0.24) * (0.9 + 0.1 * sin(uPh.x * 0.3)), 0.03 * sin(uPh.x * 0.21 + fk));
+    // hollow: the inner layers shrink and drift away from the middle
+    float hol = uM2g.y * inner;
+    sc *= 1.0 - 0.22 * hol;
+    off += hol * R * 0.2 * vec2(cos(fk * 2.4 + uPh.x * 0.05), sin(fk * 1.9 + uPh.x * 0.04));
+    // rise lifts the inner light, sag lets it settle low
+    off.y += (uMg.y * 0.1 - uMg.x * 0.1) * R * inner;
     vec2 q = p - off;
+    // swirl: each layer turns a little more toward its middle
+    float tw = uMg.z * (0.5 + 0.6 * fk) * (0.8 + 0.2 * sin(uPh.x * 0.17 + fk));
+    float qa = tw * (1.15 - clamp(length(q) / (R * sc), 0.0, 1.15));
+    q = mat2(cos(qa), sin(qa), -sin(qa), cos(qa)) * q;
     float th = atan(q.y, q.x);
     float rr = R * sc * shapeR(th, rot, fk);
     float d = length(q) / rr;
@@ -121,6 +152,8 @@ void main(){
     rgb = mix(rgb, rimC, fres * mix(0.35, 0.45, dark));
     rgb += sp * mix(0.24, 0.3, dark);
     float a = inside * mix(0.2 + 0.5 * pow(clamp(d, 0.0, 1.0), 2.0) + 0.12 * fres, 0.16 + 0.5 * pow(clamp(d, 0.0, 1.0), 2.2) + 0.16 * fres, dark) * (1.0 - fk * 0.15);
+    // hollow: the outer body thins toward an empty middle
+    a *= 1.0 - (1.0 - inner) * uM2g.y * 0.85 * smoothstep(0.75, 0.15, d);
     col = rgb * a + col * (1.0 - a);
     alpha = a + alpha * (1.0 - a);
     float ra = exp(-pow((1.0 - d) * rr / px * 0.6, 2.0)) * inside * mix(0.42, 0.34, dark) * (1.0 - fk * 0.2);
@@ -144,7 +177,7 @@ void main(){
     col += mix(lc, iri, 0.35 + 0.4 * spec) * mi * alpha * mix(0.6, 1.0, dark);
   }
   float in1 = smoothstep(1.02, 0.98, d0);
-  vec2 gc = uC.zw * 0.25 * R + uPt * 0.08 * R + vec2(-0.12, 0.16) * R;
+  vec2 gc = uC.zw * 0.25 * R + uPt * 0.08 * R + vec2(-0.12, 0.16) * R + vec2(0.0, 0.3 * uMg.y - 0.2 * uMg.x) * R;
   float gl = exp(-dot(p - gc, p - gc) / (R * R * 0.22));
   vec3 glc = lab2rgb(vec3(min(lab0.x + 0.2, 0.97), lab0.yz * 1.2));
   col += glc * gl * in1 * (0.10 + 0.32 * uB.z) * mix(0.4, 1.0, dark);

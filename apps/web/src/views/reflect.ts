@@ -3,7 +3,6 @@ import { esc } from '../core/util';
 import { SWATCHES, cvars } from '../domain/lexicon';
 import { S } from '../state/app';
 import { DB } from '../state/store';
-import { glyph } from '../ui/glyph';
 import { IC } from '../ui/icons';
 
 export function vReflect() {
@@ -14,26 +13,21 @@ export function vReflect() {
     when = ed
       ? `${fmtDay(ed.day)} · ${fa(ed.time)}`
       : `${fmtDay(todayKey())} · ${fa(pad(now.getHours()) + ':' + pad(now.getMinutes()))}`;
+  /* the words are said once, large; each one is also the button for its personal colour */
   const title = items.length
     ? items
         .map(
           (it, i) =>
-            `${i ? (i === items.length - 1 ? '<span class="amp"> و </span>' : '<span class="amp">، </span>') : ''}<span class="hw" style="${cvars(it.key, it.color)}">${esc(labelOf(it.key))}</span>`,
+            `${i ? (i === items.length - 1 ? '<span class="amp"> و </span>' : '<span class="amp">، </span>') : ''}<button class="hw" data-act="palette" data-i="${i}" aria-expanded="${d.palette === i}" aria-label="رنگ شخصی برای ${esc(labelOf(it.key))}" title="رنگ شخصی" style="${cvars(it.key, it.color)}">${esc(labelOf(it.key))}</button>`,
         )
         .join('')
     : d.context && d.context.kind === 'body'
       ? 'حسی در بدن'
       : 'حالی بی‌نام';
-  const recWords = items
-    .map(
-      (
-        it,
-        i,
-      ) => `<span class="rw" style="${cvars(it.key, it.color)}"><button class="swb" data-act="palette" data-i="${i}" aria-label="رنگ شخصی برای ${esc(labelOf(it.key))}" aria-expanded="${d.palette === i}" title="رنگ شخصی">${glyph(it.key, it.color)}</button><span>${esc(labelOf(it.key))}</span>${it.parent && it.parent !== it.key && REFINE[it.parent] ? `<small>از «${it.parent}»</small>` : ''}
-</span>
-      ${d.palette === i ? paletteHTML(i) : ''}`,
-    )
-    .join('');
+  const from = items.filter((it) => it.parent && it.parent !== it.key && REFINE[it.parent]);
+  const sub = items.length
+    ? from.map((it) => `«${esc(labelOf(it.key))}» از خانواده‌ی «${it.parent}»`).join('، ')
+    : 'اسمی براش انتخاب نکردی؛ این هم یه جوابه.';
   const unchosen = (d.suggested || []).filter((k) => !items.some((i) => i.key === k));
   return `<div class="flow-head"><button class="back" data-act="back">${IC.back}بازگشت</button><span class="step">${ed ? 'ویرایش ردپا' : 'پیش از ثبت'}</span></div>
   <div class="r-grid">
@@ -41,16 +35,12 @@ export function vReflect() {
     <div class="r-body">
       <p class="eyebrow r" style="--i:0">${ed && ed.demo ? 'ردپای نمونه · ' : ''}${when}</p>
       <h1 class="r-title r" style="--i:1" tabindex="-1" data-autofocus>${title}</h1>
+      <div class="r-sub r" style="--i:1">${sub ? `<span>${sub}</span>` : ''}<button class="link" data-act="changeWords">${items.length ? 'تغییر کلمه‌ها' : 'افزودن کلمه'}</button></div>
+      ${d.palette >= 0 && items[d.palette] ? paletteHTML(d.palette) : ''}
       <dl class="record r" style="--i:2">
-        ${
-          items.length
-            ? `<div class="rec"><dt>احساس‌هایی که خودت انتخاب کردی</dt><dd>${recWords}</dd></div>`
-            : `<div class="rec"><dt>حال بی‌نام</dt><dd>اسمی براش انتخاب نکردی؛ این هم یه جوابه.</dd></div>`
-        }
         ${d.context ? `<div class="rec"><dt>${d.context.name}</dt><dd>${esc(d.context.value)} <small>· از جواب‌های خودت</small></dd></div>` : ''}
-        <div class="rec" style="border-top:0;padding-top:0"><dd><button class="link" data-act="changeWords">${items.length ? 'تغییر کلمه‌ها' : 'افزودن کلمه'}</button></dd></div>
-        ${unchosen.length ? `<p class="fine">پیشنهادهایی که انتخاب نکردی و ثبت نمی‌شن: ${unchosen.map(esc).join('، ')}</p>` : ''}
         ${scenesHTML()}
+        ${unchosen.length ? `<p class="fine">پیشنهادهایی که انتخاب نکردی و ثبت نمی‌شن: ${unchosen.map(esc).join('، ')}</p>` : ''}
       </dl>
       <div class="note r" style="--i:3"><label class="vh" for="noteInput">یادداشت</label>
         <textarea id="noteInput" rows="4" placeholder="اگر دوست داری، چند خط بنویس…">${esc(d.note)}</textarea>
@@ -60,7 +50,6 @@ export function vReflect() {
     </div>
   </div>`;
 }
-/** Optional: who or what was around. Up to two; a third replaces the oldest. */
 export function scenesHTML() {
   const on = S.draft.scenes;
   return `<div class="rec scn"><dt id="scnH">کجا بودی، با کی؟ <small>اگه خواستی</small></dt><dd role="group" aria-labelledby="scnH">${SCENE_IDS.map(

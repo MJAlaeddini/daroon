@@ -8,7 +8,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * The web app must look like the prototype it came from. Both are driven through the same screens and
  * compared pixel by pixel, with the (always moving) sculpture hidden. Screens redesigned since the port
- * (today, archive, patterns) are left out.
+ * (today, archive, patterns, the word ring) are left out.
  */
 const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 function prototypeUrl(): string {
@@ -57,21 +57,14 @@ async function screens(page: Page, url: string) {
   };
   await page.click('[data-act=loginSkip]');
   await page.waitForTimeout(2600);
-  await page.click('[data-act=startA]');
-  await page.waitForTimeout(1500);
-  await page.click('.word[data-key="امید"]');
-  await page.click('.word[data-key="نگرانی"]');
-  await snap('explore');
-  await page.evaluate("__daroon.go('today', { push: false })");
-  await page.waitForTimeout(1200);
   await page.click('[data-act=startB]');
   await snap('guide');
   await page.click('.stone[data-id=thoughts]');
   await page.waitForTimeout(1200);
   await page.click('.stone[data-id=future]');
   await snap('suggestions');
-  // today, the archive and patterns have been redesigned past the prototype (glass cards, day tiles, the day
-  // page); the acceptance suite guards their layout and motion instead
+  // today, the archive, patterns and the word ring have been redesigned past the prototype (glass cards, day
+  // tiles, the day page, the ring of words); the acceptance suite guards their layout and motion instead
   return shots;
 }
 
