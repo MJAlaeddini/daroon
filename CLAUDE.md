@@ -9,7 +9,7 @@ Read `docs/architecture.md` for the module map and `docs/deploy.md` for the serv
 - `pnpm lint`, `pnpm typecheck`, `pnpm exec prettier --check .` — must all pass before committing
 - `pnpm test` — unit + API tests; API tests need PostgreSQL at `TEST_DATABASE_URL`
   (default `postgres://daroon:daroon@localhost:5433/daroon_test`)
-- `pnpm test:e2e` — Playwright (acceptance, parity, flows); add `E2E_API=1 DATABASE_URL=…` for the two-device sync test
+- `pnpm test:e2e` — Playwright (acceptance, flows); add `E2E_API=1 DATABASE_URL=…` for the two-device sync test
 - `pnpm build` — web (Vite) and API (esbuild bundle)
 
 Without Docker, a throwaway PostgreSQL for tests:
@@ -23,9 +23,9 @@ psql -h localhost -p 5433 -U daroon -d postgres -c "create database daroon_test"
 
 ## Rules of the house
 
-- **The look and motion are the product.** The UI was ported 1:1 from `docs/prototype/daroon.html` (today, archive, patterns and the word ring have since been redesigned with glass
-  cards, day tiles, a day page and a ring of words, and are no longer compared); `e2e/parity` and
-  `e2e/acceptance` guard it (no text over the sculpture, no jumps, the old page leaves before the new one arrives).
+- **The look and motion are the product.** The UI started as a 1:1 port of `docs/prototype/daroon.html` and has since
+  been redesigned screen by screen for the phone (glass cards, day tiles, a day page, a ring of words), so it is no
+  longer compared with the prototype; `e2e/acceptance` guards it (no text over the sculpture, no jumps, the old page leaves before the new one arrives).
   Run them after any change under `apps/web/src`. The owner is very sensitive to choreography, clutter and typography.
 - **User-facing text is colloquial Persian** («می‌شه»، «نمی‌دونم»). Never mention "AI" in the UI; stories are written by a language model
   (any OpenAI-compatible API, `STORY_API_URL`) but presented simply as the week's story. Code, comments, commits and docs are in English.

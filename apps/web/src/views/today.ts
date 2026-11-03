@@ -30,8 +30,8 @@ export function vToday() {
     </div>
     <div class="t-paths">
       <div class="paths r" style="--i:3" role="group" aria-label="دو راه برای شروع">
-        <button class="path" data-act="startA" data-hint="A"><span class="aperture">${IC.apA}</span><span class="path-title">می‌خوام بین احساس‌ها بگردم</span><span class="path-hint">دوازده کلمه، و کلمه‌های نزدیک‌تر به هرکدوم</span></button>
-        <button class="path" data-act="startB" data-hint="B"><span class="aperture">${IC.apB}</span><span class="path-title">واقعاً نمی‌دونم چه حسی دارم</span><span class="path-hint">دو سؤال کوتاه؛ جواب درست یا غلط نداره</span></button>
+        <button class="path" data-act="startA" data-hint="A"><span class="aperture">${IC.apA}</span><span class="path-title">می‌خوام بین احساس‌ها بگردم</span><span class="path-hint">از بین کلمه‌ها</span></button>
+        <button class="path" data-act="startB" data-hint="B"><span class="aperture">${IC.apB}</span><span class="path-title">واقعاً نمی‌دونم چه حسی دارم</span><span class="path-hint">با دو سؤال کوتاه</span></button>
       </div>
     </div>
     <section class="week r" style="--i:4" aria-label="ردپاهای این هفته">

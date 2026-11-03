@@ -38,12 +38,12 @@ export function guideBody() {
     const sugs = o.sug
       .map((k, i) => {
         const on = picks.includes(k);
-        return `<button class="sug" data-act="pickSug" data-key="${k}" aria-pressed="${on}" style="--i:${i};${cvars(k)}">${glyph(k)}<span>${k}</span><span class="st">${on ? 'انتخاب شد' : 'پیشنهاد'}</span></button>`;
+        return `<button class="sug" data-act="pickSug" data-key="${k}" aria-pressed="${on}" style="--i:${i};${cvars(k)}">${glyph(k)}<span>${k}</span></button>`;
       })
       .join('');
     const n = S.draft.items.length;
     return `<h1 class="q" tabindex="-1" data-autofocus>${body ? 'همین که تنت چی حس می‌کنه، کافیه.' : 'شاید یکی از این کلمه‌ها نزدیک باشه'}</h1>
-      <p class="q-sub">${body ? 'اگه خواستی، چند کلمه هم هست که شاید کنارش بشینه؛ هیچ‌کدوم لازم نیست.' : 'این‌ها فقط پیشنهادن، نه جواب. هر کدوم به دلت نشست انتخاب کن؛ یا هیچ‌کدوم.'}</p>
+      <p class="q-sub">${body ? 'اگه خواستی، چند کلمه هم هست که شاید کنارش بشینه.' : 'فقط پیشنهادن؛ هر کدوم به دلت نشست، یا هیچ‌کدوم.'}</p>
       <div class="sugs" role="group" aria-label="کلمه‌های پیشنهادی">${sugs}</div>
       ${S.customOpen && n < 3 ? customHTML() : ''}
       ${

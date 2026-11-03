@@ -8,7 +8,7 @@
 
 ## Web (`apps/web`)
 
-The single-file prototype was split into modules without changing its behaviour. The `e2e/parity` test keeps its look identical to `docs/prototype/daroon.html`.
+The single-file prototype (`docs/prototype/daroon.html`) was split into modules and has since been redesigned for the phone; `e2e/acceptance` guards layout and motion.
 
 | Folder                    | Responsibility                                                                                      |
 | ------------------------- | --------------------------------------------------------------------------------------------------- |

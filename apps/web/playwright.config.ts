@@ -2,7 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * e2e/acceptance: motion choreography, layout, accessibility and flows on the built app (no server needed).
- * e2e/parity: the app against the original prototype in docs/prototype.
  * e2e/sync: two devices through the real API (needs E2E_API=1 and a database; see docs/testing.md).
  */
 const withApi = !!process.env.E2E_API;

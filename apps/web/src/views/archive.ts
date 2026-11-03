@@ -85,7 +85,7 @@ export function vArchive() {
       </div>
       ${A.jump ? jumpHTML() : ''}
       <div id="archCal">${A.mode === 'month' ? monthHTML() : weekHTML()}</div>
-      ${A.mode === 'month' ? `<p class="legend">هر نشانه از احساس‌هایی ساخته شده که همون روز تأیید کردی. نقطه‌ها یعنی چند ردپا، و حلقه‌ی خط‌چین یعنی حالی بی‌نام.</p>` : ''}
+
     </div>
     <aside class="a-detail" id="archDetail" aria-label="جزئیات روز">${isWide() ? dayDetailHTML(A.sel, false) : ''}</aside>
   </div>`;
