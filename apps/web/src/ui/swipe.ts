@@ -26,7 +26,7 @@ function blocked(target: EventTarget | null): boolean {
   if (S.sheet || S.story || S.done || !(TABS as readonly string[]).includes(S.view)) return true;
   const el = target instanceof Element ? target : null;
   if (!el) return false;
-  if (el.closest('input, textarea, select, [contenteditable], [data-noswipe], .srow, .jump')) return true;
+  if (el.closest('input, textarea, select, [contenteditable], [data-noswipe], .srow, .jump, #calGrid')) return true;
   // anything that scrolls sideways keeps the gesture for itself
   for (let n: Element | null = el; n && n !== document.body; n = n.parentElement) {
     const cs = getComputedStyle(n);
@@ -49,9 +49,58 @@ function settle(view: HTMLElement | null) {
   setTimeout(() => (view.style.transition = ''), 340);
 }
 
+/**
+ * On the calendar itself (the week strip or the month grid), a sideways swipe moves to the next or previous week or month instead of changing tab. As with
+ * the tabs, time runs right to left: a finger moving right brings the next period in. The calendar follows the
+ * finger a little, then the period changes.
+ */
+function setupCalendarSwipe(host: HTMLElement) {
+  let c: { x: number; y: number; t: number; dx: number; axis: 'x' | 'y' | null; el: HTMLElement } | null = null;
+  host.addEventListener(
+    'touchstart',
+    (e: TouchEvent) => {
+      c = null;
+      const el = (e.target as Element | null)?.closest?.<HTMLElement>('#calGrid');
+      if (!el || e.touches.length !== 1 || S.view !== 'archive' || S.sheet) return;
+      const p = e.touches[0];
+      if (p.clientX < EDGE || p.clientX > innerWidth - EDGE) return;
+      c = { x: p.clientX, y: p.clientY, t: performance.now(), dx: 0, axis: null, el };
+    },
+    { passive: true },
+  );
+  host.addEventListener(
+    'touchmove',
+    (e: TouchEvent) => {
+      if (!c || e.touches.length !== 1) return;
+      const p = e.touches[0],
+        dx = p.clientX - c.x,
+        dy = p.clientY - c.y;
+      if (!c.axis && Math.hypot(dx, dy) > 10) c.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+      if (c.axis !== 'x') return;
+      c.dx = dx;
+      if (!reduced()) {
+        c.el.style.transition = 'none';
+        c.el.style.transform = `translateX(${Math.max(-40, Math.min(40, dx * 0.3))}px)`;
+      }
+    },
+    { passive: true },
+  );
+  host.addEventListener('touchend', () => {
+    const t = c;
+    c = null;
+    if (!t || t.axis !== 'x') return;
+    t.el.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1)';
+    t.el.style.transform = '';
+    setTimeout(() => (t.el.style.transition = ''), 320);
+    const far = Math.abs(t.dx) > 60 || (Math.abs(t.dx) > 30 && performance.now() - t.t < 260);
+    if (far) ($(`[data-act="shift"][data-d="${t.dx > 0 ? 1 : -1}"]`) as HTMLElement | null)?.click();
+  });
+}
+
 export function setupSwipe() {
   const host: HTMLElement | null = $('#views');
   if (!host) return;
+  setupCalendarSwipe(host);
   host.addEventListener(
     'touchstart',
     (e: TouchEvent) => {

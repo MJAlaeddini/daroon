@@ -396,13 +396,6 @@ export const ACT = {
     refreshArchive();
     if (A.jump) reRenderJump();
   },
-  dayShift(el) {
-    const k = keyAdd(S.arch.sel, +el.dataset.d);
-    if (k > todayKey()) return;
-    selectDay(k, false);
-    // keep the finger (and focus) on the arrow, not on the day in the strip
-    requestAnimationFrame(() => $(`[data-act="dayShift"][data-d="${el.dataset.d}"]`)?.focus({ preventScroll: true }));
-  },
   goToday() {
     const k = todayKey();
     S.arch.cursor = k;

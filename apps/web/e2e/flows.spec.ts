@@ -157,6 +157,8 @@ test.describe('swiping', () => {
       await settle(page, 900);
     };
     const view = () => page.evaluate('__daroon.S.view');
+    // the archive opens in week view here, so the swipe lands on the day (y 560), not on the calendar
+    await page.evaluate("__daroon.S.arch.mode = 'week'");
     await swipe(160);
     expect(await view()).toBe('archive');
     await swipe(160);
@@ -168,5 +170,32 @@ test.describe('swiping', () => {
     await swipe(40, 600);
     expect(await view()).toBe('archive');
     expect(await page.$eval('#views .view:not(.leaving)', (v) => (v as HTMLElement).style.transform)).toBe('');
+  });
+
+  test('on the calendar a sideways swipe changes the month instead of the tab', async ({ page }) => {
+    await open(page);
+    await page.click('[data-act=loginSkip]');
+    await settle(page, 1200);
+    await page.evaluate("__daroon.S.arch.mode = 'month'; __daroon.go('archive', { push: false })");
+    await settle(page, 1500);
+    const box = (await page.$eval('#calGrid', (g) => {
+      const r = g.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    })) as { x: number; y: number };
+    const cdp = await page.context().newCDPSession(page);
+    const month = () => page.evaluate('__daroon.S.arch.cursor.slice(0, 7)');
+    const before = await month();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x + 80, y: box.y }] });
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: box.x + 80 - 20 * i, y: box.y + i }],
+      });
+      await page.waitForTimeout(25);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await settle(page, 900);
+    expect(await page.evaluate('__daroon.S.view')).toBe('archive');
+    expect(await month()).not.toBe(before);
   });
 });

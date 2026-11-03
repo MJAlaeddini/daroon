@@ -67,8 +67,12 @@ export function pickAnchor() {
     Stage.holdT = setTimeout(pickAnchor, Stage.hold - now + 16);
     return;
   }
-  const scope = $('#layer .sheet') || $('#views .view:not(.leaving)');
-  const cands = scope ? $$('[data-anchor]', scope) : [];
+  /* a sheet with its own place for the sculpture takes it; one without (the account, settings) leaves it standing
+     where it was on the page, dimmed behind the sheet, instead of making it vanish */
+  const sheet = $('#layer .sheet'),
+    view = $('#views .view:not(.leaving)');
+  const inSheet = sheet ? $$('[data-anchor]', sheet) : [];
+  const cands = inSheet.length ? inSheet : view ? $$('[data-anchor]', view) : [];
   const a = cands.find((el) => el.getBoundingClientRect().width > 8) || null;
   if (a === Stage.anchor) return;
   const r = a ? grow(a.getBoundingClientRect()) : null;
