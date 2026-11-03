@@ -155,13 +155,16 @@ export function layoutField(f) {
     cx = W / 2,
     cy = H / 2,
     narrow = W < 560;
-  const hx = narrow ? W / 2 - 48 : Math.min(W / 2 - 80, H * 0.62),
-    hy = narrow ? H / 2 - 24 : H / 2 - 34,
-    bl = narrow ? 0.72 : 0.28;
+  // the words sit on a ring around the sculpture, at their place on the semantic circle
+  const hx = narrow ? W / 2 - 46 : Math.min(W / 2 - 80, H * 0.62),
+    hy = narrow ? H / 2 - 22 : H / 2 - 34,
+    bl = narrow ? 0.18 : 0.12;
   $$('.word', f).forEach((w) => {
+    // a softened ring: words near the top and bottom are pushed sideways so neighbours there keep apart
     const a = (+w.dataset.angle * Math.PI) / 180,
-      c = Math.cos(a),
-      s = Math.sin(a);
+      c0 = Math.cos(a),
+      s = Math.sin(a),
+      c = Math.sign(c0) * Math.abs(c0) ** (narrow ? 0.6 : 0.85);
     const t = Math.min(hx / Math.max(Math.abs(c), 1e-6), hy / Math.max(Math.abs(s), 1e-6));
     const x = cx + lerp(hx * c, t * c, bl),
       y = cy - lerp(hy * s, t * s, bl);
@@ -171,7 +174,7 @@ export function layoutField(f) {
     w.style.setProperty('--fy', cy - y + 'px');
   });
   const A = $('.anchor-field', f),
-    sz = narrow ? Math.min(W * 0.62, H * 0.5) : Math.min(hx * 1.3, hy * 1.4, 480);
+    sz = narrow ? Math.min(W * 0.78, H * 0.62) : Math.min(hx * 1.45, hy * 1.6, 520);
   A.style.width = A.style.height = sz + 'px';
   A.style.left = cx - sz / 2 + 'px';
   A.style.top = cy - sz / 2 + 'px';
