@@ -145,33 +145,14 @@ body::before {
   z-index: 45;
   background: var(--bg);
 }
-/* scrollbars: a thin rounded thumb, no track and no arrow buttons. Chrome and Safari use the ::-webkit rules;
-   setting scrollbar-width there would switch them back to the standard bar with arrows, so only Firefox gets it */
+/* no scrollbars anywhere: content scrolls under the finger and nothing marks the edge */
+* {
+  scrollbar-width: none;
+}
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track,
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  border-radius: 6px;
-  background: color-mix(in oklab, var(--ink) 22%, transparent);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklab, var(--ink) 36%, transparent);
-}
-::-webkit-scrollbar-button {
   display: none;
   width: 0;
   height: 0;
-}
-@supports not selector(::-webkit-scrollbar) {
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--ink) 22%, transparent) transparent;
-  }
 }
 button,
 input,
@@ -861,11 +842,10 @@ body[data-flow='1'] #views {
   background: var(--line-2);
 }
 .wk-day.is-today .wk-dn {
-  font-weight: 700;
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 8px;
-  padding: 0 7px;
+  font-weight: 800;
+  color: var(--accent);
+  background: none;
+  padding: 0;
 }
 .wk-day.is-future {
   opacity: 0.42;
@@ -974,12 +954,12 @@ body[data-flow='1'] #views {
 #doneSlot .wk-empty {
   position: absolute;
 }
+/* today is told by colour, not a black box */
 .is-today > .wk-dn {
-  font-weight: 700;
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 8px;
-  padding: 0 7px;
+  font-weight: 800;
+  color: var(--accent);
+  background: none;
+  padding: 0;
 }
 
 /* ───────── FLOW HEAD ───────── */
@@ -1907,20 +1887,19 @@ button.hw[aria-expanded='true'] {
 }
 .today-btn {
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 12px;
   border-radius: 12px;
-  border: 1px solid var(--line-2);
-  font-size: 14px;
-  font-weight: 500;
-  margin-inline-end: 4px;
-  transition: 0.2s;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  transition: background 0.2s;
 }
 .today-btn:hover {
-  border-color: var(--ink-3);
+  background: var(--surface-2);
 }
+/* only offered when you have wandered away from today */
 .today-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
+  display: none;
 }
 .jump {
   display: grid;
@@ -1991,36 +1970,30 @@ button.hw[aria-expanded='true'] {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
-/* every day is a small glass tile; its mark sits inside with room on every side */
+/* the month reads as a mood map, not a grid of buttons: no tiles, a day with a mark is its number and its shape,
+   an empty day only a faint number */
 .day {
-  --mk: 32px;
+  --mk: 34px;
   position: relative;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   justify-items: center;
   align-items: center;
-  gap: 2px;
-  min-height: 74px;
-  padding: 4px 0 7px;
-  border-radius: 14px;
+  gap: 0;
+  min-height: 66px;
+  padding: 4px 0 6px;
+  border-radius: 16px;
   min-width: 0;
-  background: var(--tile-empty);
-  box-shadow: inset 0 0 0 1px var(--glass-line);
+  background: none;
   transition:
     background 0.25s,
     box-shadow 0.25s;
 }
-.day.has {
-  background: var(--tile);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    inset 0 1px 0 var(--glass-hi);
-}
 .day:hover {
-  background: color-mix(in oklab, var(--surface) 80%, transparent);
+  background: var(--glass);
 }
 .dn {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.55;
   color: var(--ink-3);
@@ -2029,7 +2002,7 @@ button.hw[aria-expanded='true'] {
   border-radius: 8px;
 }
 .day.has .dn {
-  color: var(--ink);
+  color: var(--ink-2);
 }
 /* a mark's box (--mk) is what the layout reserves; the image is larger because the shape fills only about
    half of it, so the shape itself ends up at roughly 80% of the box, never touching its neighbours */
@@ -2060,43 +2033,20 @@ button.hw[aria-expanded='true'] {
   border: 1px dashed var(--ink-3);
   opacity: 0.8;
 }
-.dots {
-  display: flex;
-  gap: 3px;
-  height: 6px;
-  align-items: center;
-}
-.dots i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--ink-2);
-}
-.dots i.o {
-  background: none;
-  box-shadow: inset 0 0 0 1px var(--ink-2);
-}
-.dots b {
-  font-size: 10px;
-  line-height: 1;
-  font-weight: 700;
-  color: var(--ink-2);
-}
 .day.is-today .dn {
-  background: var(--ink);
-  color: var(--bg);
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--accent);
+  background: none;
+  padding: 0;
 }
 .day.is-sel {
-  background: var(--surface);
+  background: var(--glass);
   box-shadow:
-    inset 0 0 0 1.5px var(--ink),
+    inset 0 0 0 1px var(--glass-line),
     var(--glass-shadow);
 }
 .day.is-future {
-  opacity: 0.45;
-  background: none;
-  box-shadow: none;
+  opacity: 0.3;
 }
 .legend {
   display: flex;
@@ -2111,9 +2061,6 @@ button.hw[aria-expanded='true'] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-.legend .dots {
-  height: auto;
 }
 .demo-note {
   font-size: 12px;
@@ -2203,43 +2150,40 @@ button.hw[aria-expanded='true'] {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
+/* the week: no boxes; the chosen day alone gets a soft glass capsule */
 .wpill {
   --mk: 32px;
   position: relative;
-  background: var(--tile-empty);
-  box-shadow: inset 0 0 0 1px var(--glass-line);
   display: grid;
   justify-items: center;
   align-content: start;
   gap: 2px;
-  padding: 10px 0 8px;
-  border-radius: 20px;
-  min-height: 116px;
+  padding: 10px 0 10px;
+  border-radius: 22px;
+  min-height: 104px;
   min-width: 0;
   transition:
     background 0.3s,
     box-shadow 0.3s;
 }
-.wpill.has {
-  background: var(--tile);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    inset 0 1px 0 var(--glass-hi);
-}
 .wpill .trw {
   margin-top: 8px;
-  margin-bottom: 4px;
 }
 .wpill.is-sel {
-  background: var(--surface);
+  background: var(--glass);
   box-shadow:
-    var(--shadow),
-    inset 0 0 0 1px var(--line);
+    inset 0 0 0 1px var(--glass-line),
+    inset 0 1px 0 var(--glass-hi),
+    var(--glass-shadow);
 }
 .wpill.is-future {
-  opacity: 0.42;
+  opacity: 0.35;
+}
+.wpill.is-today .wk-dn {
+  font-weight: 800;
+  color: var(--accent);
   background: none;
-  box-shadow: none;
+  padding: 0;
 }
 .wpill.is-unnamed .trw::after {
   content: '';
@@ -2252,13 +2196,14 @@ button.hw[aria-expanded='true'] {
   display: grid;
   gap: 8px;
   margin-top: 6px;
-  padding: 14px 16px 8px;
-  border-radius: 22px;
-  background: var(--surface-2);
+  padding: 16px 18px 8px;
+  border-radius: 24px;
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
 }
 .wflow {
-  height: 8px;
-  border-radius: 4px;
+  height: 4px;
+  border-radius: 2px;
 }
 .wsum-t {
   margin: 0;
@@ -2310,50 +2255,19 @@ button.hw[aria-expanded='true'] {
   display: grid;
   gap: 12px;
 }
-.a-main:has(.wk2) [data-act='shift'] {
-  display: none;
-}
-.wk2-nav {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
-  align-items: center;
-  min-height: 52px;
-  padding: 4px;
-  border-radius: var(--r-xl);
-  background: var(--glass);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    inset 0 1px 0 var(--glass-hi);
-}
 .wk2-date {
-  margin: 0;
-  display: grid;
-  justify-items: center;
-  line-height: 1.5;
-  text-align: center;
-}
-.wk2-date b {
-  font-size: 16px;
-  font-weight: 700;
-}
-.wk2-date small {
-  font-size: 12px;
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink-3);
+  animation: fade 0.45s var(--ease);
 }
-.wk2-nav .ib:disabled {
-  opacity: 0.25;
-}
+/* the chosen day stands free on the page, like the home screen: date, its shape, its words */
 .wk2-day {
   display: grid;
   justify-items: center;
   gap: 2px;
-  padding: 6px 16px 18px;
-  border-radius: var(--r-xl);
-  background: var(--glass);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    inset 0 1px 0 var(--glass-hi),
-    var(--glass-shadow);
+  padding: 0 0 10px;
   text-align: center;
 }
 .wk2-stage {
@@ -2376,9 +2290,9 @@ button.hw[aria-expanded='true'] {
 .wk2-words span {
   color: var(--ink);
   text-decoration: underline;
-  text-decoration-color: var(--c1);
-  text-decoration-thickness: 3px;
-  text-underline-offset: 7px;
+  text-decoration-color: color-mix(in oklab, var(--c1) 80%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 8px;
   text-decoration-skip-ink: none;
 }
 .wk2-words i {
@@ -2398,13 +2312,9 @@ button.hw[aria-expanded='true'] {
   flex-wrap: wrap;
   animation: fade 0.45s var(--ease);
 }
-.wk2-meta span {
+.wk2-meta {
   font-size: 12px;
-  color: var(--ink-2);
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--tile);
-  box-shadow: inset 0 0 0 1px var(--glass-line);
+  color: var(--ink-3);
 }
 .wk2-list .ents {
   margin-top: 4px;
@@ -3468,7 +3378,7 @@ body[data-view='login'] .topbar {
 .st-bars i {
   position: relative;
   flex: 1;
-  height: 3px;
+  height: 2px;
   border-radius: 2px;
   overflow: hidden;
   background: color-mix(in srgb, var(--sfg) 26%, transparent);
@@ -3551,53 +3461,25 @@ body[data-view='login'] .topbar {
   content: '';
   position: absolute;
   inset: auto 0 0;
-  height: 52%;
-  background: linear-gradient(to top, color-mix(in srgb, var(--sbgc) 72%, transparent), transparent);
+  height: 56%;
+  background: linear-gradient(to top, color-mix(in srgb, var(--sbgc) 88%, transparent) 30%, transparent);
   pointer-events: none;
 }
-.st-pat {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: var(--spc);
-  pointer-events: none;
-  animation: patIn 1.8s var(--ease) both;
-}
-.st-pat .spin {
-  transform-origin: 200px 300px;
-  animation: spin 90s linear infinite;
-}
-.st-pat .drift {
-  animation: drift 14s ease-in-out infinite alternate;
-}
-.st-pat .rise-g {
-  animation: drift 18s ease-in-out infinite alternate;
-}
-@keyframes patIn {
+@keyframes artIn2 {
   from {
     opacity: 0;
-    transform: scale(1.06);
-  }
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes drift {
-  to {
-    transform: translate(-14px, -10px);
+    transform: translate(-50%, -46%) scale(0.9);
+    filter: blur(6px);
   }
 }
 .st-art {
   position: absolute;
   left: 50%;
-  top: 37.5%;
-  width: min(60%, 290px);
+  top: 34%;
+  width: min(78%, 360px);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  animation: artIn 1.2s var(--ease) both;
+  animation: artIn2 1.4s var(--ease) both;
 }
 .st-art.breathe {
   animation: breathe 3.2s ease-in-out infinite;
@@ -3631,30 +3513,62 @@ body[data-view='login'] .topbar {
   animation: rise 0.8s 0.25s var(--ease) both;
 }
 .st-k {
-  margin: 0;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  margin: 0 0 4px;
+  font-size: 13px;
   font-weight: 600;
-  opacity: 0.75;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--sfg) 72%, transparent);
+}
+.st-k i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--spc);
+  box-shadow: 0 0 10px var(--spc);
 }
 .st-h {
   margin: 0;
-  font-weight: 850;
-  font-size: clamp(36px, 10vw, 50px);
-  line-height: 1.25;
-  letter-spacing: -0.015em;
+  font-family: var(--f-ed);
+  font-weight: 800;
+  font-size: clamp(38px, 11vw, 52px);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
+/* the page's words: an editorial face, generous leading, sentences arriving one after another */
 .st-text {
   margin: 0;
-  font-weight: 650;
-  font-size: clamp(21px, 5.8vw, 26px);
-  line-height: 1.75;
+  font-family: var(--f-ed);
+  font-weight: 500;
+  font-size: clamp(23px, 6.4vw, 28px);
+  line-height: 1.9;
+  color: color-mix(in srgb, var(--sfg) 94%, transparent);
   text-wrap: pretty;
 }
+.st-text em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--spc);
+}
+.st-line {
+  display: inline;
+  animation: lineIn 0.9s var(--ease) both;
+  animation-delay: calc(0.35s + var(--l, 0) * 0.55s);
+}
+@keyframes lineIn {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
 .st-note {
-  margin: 0;
+  margin: 6px 0 0;
   font-size: 12px;
-  opacity: 0.7;
+  color: color-mix(in srgb, var(--sfg) 55%, transparent);
 }
 .st-end {
   display: flex;
@@ -4134,10 +4048,6 @@ body[data-flow='1'] .navfade {
   .wpill {
     --mk: 50px;
   }
-  .dots i {
-    width: 5px;
-    height: 5px;
-  }
   .dd-anchor {
     width: 150px;
     height: 150px;
@@ -4407,9 +4317,6 @@ body[data-flow='1'] .navfade {
     background: none;
   }
 }
-[data-motion='reduced'] .st-pat g {
-  animation: none !important;
-}
 [data-motion='reduced'] *,
 [data-motion='reduced'] *::before,
 [data-motion='reduced'] *::after {
@@ -4443,5 +4350,29 @@ body[data-flow='1'] .navfade {
   html,
   body {
     overscroll-behavior-y: none;
+  }
+}
+
+/* ───────── archive on a phone: one header row; the calendar itself is swiped to change week or month ───────── */
+@media (max-width: 699px) {
+  .a-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .a-ctrls {
+    grid-row: 1;
+    grid-column: 2;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .a-ctrls [data-act='shift'] {
+    display: none;
+  }
+  .a-ctrls .seg button {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .title-jump {
+    font-size: clamp(28px, 8.4vw, 36px);
   }
 }
