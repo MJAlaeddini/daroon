@@ -200,7 +200,6 @@ export const ACT = {
       engine.rippleAt(angleToward(el), k, true);
     }
     el.setAttribute('aria-pressed', String(i < 0));
-    el.querySelector('.st').textContent = i < 0 ? 'انتخاب شد' : 'پیشنهاد';
     const n = d.items.length,
       body = S.guide.q1 === 'body',
       p = $('#gbody .acts .primary');
