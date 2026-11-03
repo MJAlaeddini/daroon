@@ -26,7 +26,7 @@ function blocked(target: EventTarget | null): boolean {
   if (S.sheet || S.story || S.done || !(TABS as readonly string[]).includes(S.view)) return true;
   const el = target instanceof Element ? target : null;
   if (!el) return false;
-  if (el.closest('input, textarea, select, [contenteditable], [data-noswipe], .srow, .jump, #archCal')) return true;
+  if (el.closest('input, textarea, select, [contenteditable], [data-noswipe], .srow, .jump, #calGrid')) return true;
   // anything that scrolls sideways keeps the gesture for itself
   for (let n: Element | null = el; n && n !== document.body; n = n.parentElement) {
     const cs = getComputedStyle(n);
@@ -50,7 +50,7 @@ function settle(view: HTMLElement | null) {
 }
 
 /**
- * On the calendar, a sideways swipe moves to the next or previous week or month instead of changing tab. As with
+ * On the calendar itself (the week strip or the month grid), a sideways swipe moves to the next or previous week or month instead of changing tab. As with
  * the tabs, time runs right to left: a finger moving right brings the next period in. The calendar follows the
  * finger a little, then the period changes.
  */
@@ -60,7 +60,7 @@ function setupCalendarSwipe(host: HTMLElement) {
     'touchstart',
     (e: TouchEvent) => {
       c = null;
-      const el = (e.target as Element | null)?.closest?.<HTMLElement>('#archCal');
+      const el = (e.target as Element | null)?.closest?.<HTMLElement>('#calGrid');
       if (!el || e.touches.length !== 1 || S.view !== 'archive' || S.sheet) return;
       const p = e.touches[0];
       if (p.clientX < EDGE || p.clientX > innerWidth - EDGE) return;
