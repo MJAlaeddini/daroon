@@ -74,7 +74,16 @@ test.describe('reduced motion', () => {
     await open(page);
     await page.click('[data-act=loginSkip]');
     await settle(page, 900);
-    const r = await watch(page, () => page.click('[data-act=startA]'), 1200);
+    // the pointer is moved off afterwards: left where it clicked, it would rest on a word of the ring and its
+    // hover fade (motion the test started, not the app) could still be running when we look
+    const r = await watch(
+      page,
+      async () => {
+        await page.click('[data-act=startA]');
+        await page.mouse.move(1, 1);
+      },
+      1200,
+    );
     expect({ overlaps: r.overlaps, ghosts: r.ghosts, jumps: r.jumps }).toEqual({ overlaps: [], ghosts: 0, jumps: [] });
     // name what is still moving, so a failure says which animation ignored reduced motion
     const long = await page.evaluate(() =>
