@@ -136,7 +136,7 @@ export function storiesRow() {
     })
     .join('');
   if (!fresh && !saved) return '';
-  return `<section class="p-sec card wide p-stories"><div class="p-sec-h"><h2>داستان‌های هفته</h2></div><p class="fine">چند صفحه‌ی کوتاه درباره‌ی هفته‌ات، از روی ردپاها و یادداشت‌هایی که خودت نوشتی. داستان‌ها همین‌جا نگه داشته می‌شن.</p><div class="srow">${fresh}${saved}</div></section>`;
+  return `<section class="p-sec card wide p-stories"><div class="p-sec-h"><h2>داستان‌های هفته</h2></div><div class="srow">${fresh}${saved}</div></section>`;
 }
 /* what came up more often in one setting than elsewhere; the person says whether it rings true */
 const VERDICTS: [string, string][] = [
@@ -186,10 +186,10 @@ export function vPatterns() {
     .map(([v, l]) => `<button data-act="range" data-r="${v}" aria-pressed="${R === v}">${l}</button>`)
     .join('')}</div>`;
   const head = `<div class="p-head"><div class="p-head-txt"><h1 class="ed r" style="--i:0" tabindex="-1" data-autofocus>الگوها</h1>
-    <p class="lede r" style="--i:1">فقط چیزهایی که خودت تأیید کردی؛ نه تحلیل روانی، نه تشخیص.</p></div>
+    <p class="lede r" style="--i:1">شمردنِ ردپاهات؛ نه تحلیل، نه تشخیص.</p></div>
     </div>`;
   const months = `<section class="p-sec card wide p-months"><div class="p-sec-h"><h2>ردپای روزها</h2><div class="navbtns"><button class="ib" data-act="pm" data-d="1" ${M.older ? '' : 'disabled'} aria-label="ماه‌های قبل">${IC.prev}</button><button class="ib" data-act="pm" data-d="-1" ${M.newer ? '' : 'disabled'} aria-label="ماه‌های بعد">${IC.next}</button></div></div>
-    <div class="mcals" id="mcals" style="--n:${M.n}">${M.html}</div><p class="fine">دایره‌ی رنگی یعنی روزی با ردپا؛ دایره‌ی توخالی یعنی حالی بی‌نام.</p></section>`;
+    <div class="mcals" id="mcals" style="--n:${M.n}">${M.html}</div></section>`;
   const days = new Set(D.list.map((e) => e.day)).size;
   const stat = (n: number, l: string) => `<div class="p-stat"><b class="num">${fa(n)}</b><span>${l}</span></div>`;
   const range = `<section class="p-sec card wide p-range"><div class="p-sec-h"><h2>شمارش انتخاب‌ها</h2>${seg}</div>

@@ -16,6 +16,8 @@ import { engine } from './stage/stage';
 import { todayKey } from '@daroon/shared';
 import { applyTheme } from './ui/theme';
 import { setupPwa } from './pwa';
+import { setupChrome } from './ui/chrome';
+import { setupHaptics } from './ui/haptics';
 import { setupInstall } from './features/install';
 import { setupSwipe } from './ui/swipe';
 
@@ -45,6 +47,8 @@ startSync();
 setupPwa();
 setupInstall({ auto: !E2E });
 setupSwipe();
+setupChrome();
+setupHaptics();
 if (DB.account) pullStories();
 if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
 try {

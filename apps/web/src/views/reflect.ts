@@ -28,7 +28,6 @@ export function vReflect() {
   const sub = items.length
     ? from.map((it) => `«${esc(labelOf(it.key))}» از خانواده‌ی «${it.parent}»`).join('، ')
     : 'اسمی براش انتخاب نکردی؛ این هم یه جوابه.';
-  const unchosen = (d.suggested || []).filter((k) => !items.some((i) => i.key === k));
   return `<div class="flow-head"><button class="back" data-act="back">${IC.back}بازگشت</button><span class="step">${ed ? 'ویرایش ردپا' : 'پیش از ثبت'}</span></div>
   <div class="r-grid">
     <div class="r-stage"><div class="anchor-reflect" data-anchor></div></div>
@@ -40,7 +39,6 @@ export function vReflect() {
       <dl class="record r" style="--i:2">
         ${d.context ? `<div class="rec"><dt>${d.context.name}</dt><dd>${esc(d.context.value)} <small>· از جواب‌های خودت</small></dd></div>` : ''}
         ${scenesHTML()}
-        ${unchosen.length ? `<p class="fine">پیشنهادهایی که انتخاب نکردی و ثبت نمی‌شن: ${unchosen.map(esc).join('، ')}</p>` : ''}
       </dl>
       <div class="note r" style="--i:3"><label class="vh" for="noteInput">یادداشت</label>
         <textarea id="noteInput" rows="4" placeholder="اگر دوست داری، چند خط بنویس…">${esc(d.note)}</textarea>
