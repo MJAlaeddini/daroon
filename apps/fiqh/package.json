@@ -1,0 +1,21 @@
+{
+  "name": "fiqh-tree",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tree of jurisprudential reasoning: sources, chains of narration, inferences and rulings. Standalone; no dependency on Daroon.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/amiri": "^5.3.0",
+    "@fontsource/vazirmatn": "^5.3.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vite": "^8.3.5"
+  }
+}

@@ -12,6 +12,19 @@ COPY packages/shared packages/shared
 COPY apps/web apps/web
 RUN pnpm --filter @daroon/web build
 
+# the reasoning tree at /fiqh/: a separate app with no dependency on Daroon, built on its own
+FROM node:22-alpine AS fiqh
+WORKDIR /repo
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/fiqh/package.json apps/fiqh/
+RUN pnpm install --frozen-lockfile --filter fiqh-tree
+COPY apps/fiqh apps/fiqh
+RUN pnpm --filter fiqh-tree build
+
 FROM caddy:2-alpine
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /repo/apps/web/dist /srv
+COPY --from=fiqh /repo/apps/fiqh/dist /srv-fiqh
+# a broken Caddyfile would take the whole site down: fail the image build instead
+RUN SITE_ADDRESS=:80 ACME_EMAIL=ci@example.com caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
