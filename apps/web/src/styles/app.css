@@ -3618,6 +3618,10 @@ body[data-view='login'] .topbar {
 .navrow:last-child {
   border-bottom: 0;
 }
+a.navrow {
+  color: inherit;
+  text-decoration: none;
+}
 .navrow b {
   display: block;
   font-size: 15px;
