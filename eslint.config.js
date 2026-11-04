@@ -42,6 +42,11 @@ export default tseslint.config(
     },
   },
   {
+    // the reasoning tree (served at /fiqh/): a separate app in the browser
+    files: ['apps/fiqh/src/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['apps/web/e2e/**/*.ts', 'apps/api/test/**/*.ts'],
     rules: { '@typescript-eslint/no-explicit-any': 'off', '@typescript-eslint/no-non-null-assertion': 'off' },
   },

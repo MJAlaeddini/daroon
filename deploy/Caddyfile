@@ -11,6 +11,18 @@
 		reverse_proxy api:8787
 	}
 
+	# the reasoning tree, a separate app (apps/fiqh) served from its own folder
+	redir /fiqh /fiqh/ 308
+	handle_path /fiqh/* {
+		root * /srv-fiqh
+		@fiqhAssets path /assets/*
+		header @fiqhAssets Cache-Control "public, max-age=31536000, immutable"
+		@fiqhPage path / /index.html
+		header @fiqhPage Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
 	handle {
 		root * /srv
 		# the service worker and the page itself must always be fresh; hashed assets can be cached forever
