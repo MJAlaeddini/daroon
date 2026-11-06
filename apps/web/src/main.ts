@@ -20,6 +20,7 @@ import { setupChrome } from './ui/chrome';
 import { setupHaptics } from './ui/haptics';
 import { setupGlide } from './ui/glide';
 import { setupPress } from './ui/press';
+import { setupEntrySwipe } from './ui/entry-swipe';
 import { setupInstall } from './features/install';
 import { setupSwipe } from './ui/swipe';
 
@@ -53,6 +54,7 @@ setupChrome();
 setupHaptics();
 setupGlide();
 setupPress();
+setupEntrySwipe();
 if (DB.account) pullStories();
 if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
 try {

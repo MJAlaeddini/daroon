@@ -26,7 +26,8 @@ function blocked(target: EventTarget | null): boolean {
   if (S.sheet || S.story || S.done || !(TABS as readonly string[]).includes(S.view)) return true;
   const el = target instanceof Element ? target : null;
   if (!el) return false;
-  if (el.closest('input, textarea, select, [contenteditable], [data-noswipe], .srow, .jump, #calGrid')) return true;
+  if (el.closest('input, textarea, select, [contenteditable], [data-noswipe], .srow, .jump, #calGrid, .ent-card'))
+    return true;
   // anything that scrolls sideways keeps the gesture for itself
   for (let n: Element | null = el; n && n !== document.body; n = n.parentElement) {
     const cs = getComputedStyle(n);

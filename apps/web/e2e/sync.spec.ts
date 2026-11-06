@@ -57,7 +57,7 @@ test('an entry travels between two devices without its note, and so does its del
   await settle(tablet, 1400);
   await tablet.click(`[data-act=entMore][data-id="${got.id}"]`);
   await tablet.click(`[data-act=askDel][data-id="${got.id}"]`);
-  await tablet.click(`[data-act=delYes][data-id="${got.id}"]`);
+  await tablet.click(`.ent-tools [data-act=delYes][data-id="${got.id}"]`);
   await settle(tablet, 2500);
   await phone.evaluate("document.dispatchEvent(new Event('visibilitychange'))");
   await expect

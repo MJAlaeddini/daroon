@@ -89,6 +89,10 @@ Taken from the catalog and adapted to Daroon; each has a recipe:
   choice with a slight stretch instead of jumping. Segmented controls, the bottom nav and the week strip use it; the
   nav icon nudges and the day's entries arrive after it. A new control that should glide: style its chosen state on
   `::before` and add a line to `GROUPS`.
+- **Swipe for actions (built: `ui/entry-swipe.ts`):** on a phone an entry card is dragged to the left to uncover
+  delete (outer edge) and edit. The card follows the finger, stretches past the actions and settles open or closed
+  by position and speed; a tap elsewhere or a scroll closes it. The first time, the first card leans aside once to
+  teach the gesture. Mouse and keyboard use the card's «⋯» instead.
 - **Staggered reveal:** day entries, stories and insights arrive 50 ms apart, rising 12 px, once per visit.
 - **Breathing orb for waiting:** while a story is being written, a soft orb breathes (scale 0.96 ↔ 1, opacity
   0.6 ↔ 1, 2.4 s) instead of a spinner, with a line of colloquial text that changes slowly.

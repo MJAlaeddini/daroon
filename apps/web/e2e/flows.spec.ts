@@ -108,7 +108,7 @@ test('deleting can be undone, and works without an account', async ({ page }) =>
   await settle(page, 1500);
   await page.click(`[data-act=entMore][data-id="${id}"]`);
   await page.click(`[data-act=askDel][data-id="${id}"]`);
-  await page.click(`[data-act=delYes][data-id="${id}"]`);
+  await page.click(`.ent-tools [data-act=delYes][data-id="${id}"]`);
   await settle(page, 400);
   expect(await page.evaluate(`!!__daroon.DB.entries.find(e => e.id === '${id}').deletedAt`)).toBe(true);
   await page.click('[data-act=toastAct]');
@@ -198,5 +198,35 @@ test.describe('swiping', () => {
     await settle(page, 900);
     expect(await page.evaluate('__daroon.S.view')).toBe('archive');
     expect(await month()).not.toBe(before);
+  });
+
+  test('an entry swiped to the left shows its actions; delete removes it and the tab stays', async ({ page }) => {
+    await open(page);
+    await page.click('[data-act=loginSkip]');
+    await settle(page, 1200);
+    const id = await page.evaluate('__daroon.DB.entries.find(e => e.demo && e.day === __daroon.todayKey())?.id');
+    test.skip(!id, 'no sample entry today');
+    await page.evaluate("__daroon.S.arch.mode = 'week'; __daroon.go('archive', { push: false })");
+    await settle(page, 1500);
+    const card = `.ent[data-id="${id}"] .ent-card`;
+    await page.$eval(card, (c) => c.scrollIntoView({ block: 'center' }));
+    await settle(page, 400);
+    const box = (await page.$eval(card, (c) => {
+      const r = c.getBoundingClientRect();
+      return { x: r.right - 40, y: r.y + r.height / 2 };
+    })) as { x: number; y: number };
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x, y: box.y }] });
+    for (let i = 1; i <= 10; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x - 19 * i, y: box.y }] });
+      await page.waitForTimeout(25);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await settle(page, 700);
+    expect(await page.evaluate('__daroon.S.view')).toBe('archive');
+    expect(await page.$eval(`.ent[data-id="${id}"]`, (e) => e.classList.contains('open'))).toBe(true);
+    await page.tap(`.ent[data-id="${id}"] .sw-del`);
+    await settle(page, 700);
+    expect(await page.evaluate(`!!__daroon.DB.entries.find(e => e.id === '${id}').deletedAt`)).toBe(true);
   });
 });

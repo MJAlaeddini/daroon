@@ -204,28 +204,33 @@ export function ctxLine(c) {
 export const entryColor = (e) =>
   e.emotions.length ? palFor(e.emotions[0].key, e.emotions[0].color)[1] : NEUTRAL_PAL[1];
 /**
- * One check-in: its shape on the day's thread, then when (and with whom), the words once, the note. Editing and
- * deleting wait behind one quiet «⋯», so a day of several entries isn't a column of icons.
+ * One check-in as a card: its shape, when and with whom, its feelings as soft capsules in their own colours, the
+ * note. On a phone the card is swiped to the left to show its actions underneath (delete at the outer edge, as in a
+ * mail app); with a mouse or a keyboard the same actions open from a quiet «⋯».
  */
 export function entryHTML(e, next?) {
   const t = fa(e.time),
     scenes = (e.scenes || []).filter(isScene).map((s) => SCENES[s]);
-  const words = e.emotions.length
-    ? e.emotions
-        .map((x) => `<span style="--c1:${palFor(x.key, x.color)[1]}">${esc(labelOf(x.key))}</span>`)
-        .join('<i>، </i>')
-    : 'حالی بی‌نام';
-  return `<li class="ent ${next ? 'has-next' : ''}" data-id="${e.id}" style="--ec:${entryColor(e)};--en:${next ? entryColor(next) : 'transparent'}">
-    <div class="ent-mark ${e.emotions.length ? '' : 'un'}">${traceImg(entrySpec(e))}</div>
-    <div class="ent-body">
-      <p class="ent-when"><span class="num">${t}</span>${scenes.length ? `<span>${scenes.join('، ')}</span>` : ''}${e.demo ? '<span class="ent-demo">نمونه</span>' : ''}</p>
-      <p class="ent-words ${e.emotions.length ? '' : 'un'}">${words}</p>
-      ${ctxLine(e.context)}
-      ${e.note ? `<p class="ent-note">${esc(e.note)}</p>` : ''}
+  const feels = e.emotions.length
+    ? e.emotions.map((x) => `<span style="--c1:${palFor(x.key, x.color)[1]}">${esc(labelOf(x.key))}</span>`).join('')
+    : '<span class="un">حالی بی‌نام</span>';
+  return `<li class="ent ${next ? 'has-next' : ''}" data-id="${e.id}" style="--ec:${entryColor(e)}">
+    <div class="ent-swipe" aria-hidden="true">
+      <button class="sw-del" data-act="delYes" data-id="${e.id}" tabindex="-1">${IC.trash}<span>حذف</span></button>
+      <button class="sw-edit" data-act="edit" data-id="${e.id}" tabindex="-1">${IC.edit}<span>ویرایش</span></button>
     </div>
-    <div class="ent-tools">
-      <button class="tool more" data-act="entMore" data-id="${e.id}" aria-expanded="false" aria-label="ویرایش یا حذف ردپای ساعت ${t}">${IC.more}</button>
-      <span class="ent-acts"><button class="tool" data-act="edit" data-id="${e.id}" aria-label="ویرایش ردپای ساعت ${t}" title="ویرایش">${IC.edit}</button><button class="tool danger del" data-act="askDel" data-id="${e.id}" aria-label="حذف ردپای ساعت ${t}" title="حذف">${IC.trash}<span class="del-t" aria-hidden="true">حذف؟</span></button></span>
+    <div class="ent-card">
+      <div class="ent-mark ${e.emotions.length ? '' : 'un'}">${traceImg(entrySpec(e))}</div>
+      <div class="ent-body">
+        <p class="ent-when"><span class="num">${t}</span>${scenes.length ? `<span>${scenes.join('، ')}</span>` : ''}${e.demo ? '<span class="ent-demo">نمونه</span>' : ''}</p>
+        <p class="ent-feels">${feels}</p>
+        ${ctxLine(e.context)}
+        ${e.note ? `<p class="ent-note">${esc(e.note)}</p>` : ''}
+      </div>
+      <div class="ent-tools">
+        <button class="tool more" data-act="entMore" data-id="${e.id}" aria-expanded="false" aria-label="ویرایش یا حذف ردپای ساعت ${t}">${IC.more}</button>
+        <span class="ent-acts"><button class="tool" data-act="edit" data-id="${e.id}" aria-label="ویرایش ردپای ساعت ${t}" title="ویرایش">${IC.edit}</button><button class="tool danger del" data-act="askDel" data-id="${e.id}" aria-label="حذف ردپای ساعت ${t}" title="حذف">${IC.trash}<span class="del-t" aria-hidden="true">حذف؟</span></button></span>
+      </div>
     </div></li>`;
 }
 /** The day's entries (or what to say when there are none), shared by the day detail and the phone week view. */

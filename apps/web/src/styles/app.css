@@ -2389,40 +2389,79 @@ button.hw[aria-expanded='true'] {
 .dd-body {
   min-height: 0;
 }
+/* each check-in is its own card, laid over its actions; on a phone the card is swiped aside to reveal them */
 .ents {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
+  gap: 10px;
   position: relative;
 }
-/* one alignment line: the shape on the day's thread, then the text column; the «⋯» sits quietly at the far end */
 .ent {
   position: relative;
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  gap: 0 14px;
-  padding-block: 14px 18px;
+  border-radius: 22px;
   animation: rise 0.5s var(--ease) both;
 }
-.ent.has-next::after {
-  content: '';
+.ent-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 0 14px;
+  padding: 14px 16px 16px;
+  border-radius: inherit;
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    var(--glass-shadow);
+  touch-action: pan-y;
+}
+.sheet .ent-card {
+  background: color-mix(in oklab, var(--surface-2) 55%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+}
+/* what lies under the card: delete at the outer edge, edit beside it */
+.ent-swipe {
   position: absolute;
-  top: 62px;
-  bottom: -12px;
-  inset-inline-start: 21px;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, var(--ec), var(--en));
-  opacity: 0.7;
-  -webkit-mask: linear-gradient(to bottom, transparent, #000 14px, #000 calc(100% - 14px), transparent);
-  mask: linear-gradient(to bottom, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  inset: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px;
+  border-radius: inherit;
+  visibility: hidden;
+}
+.ent.swiping .ent-swipe {
+  visibility: visible;
+}
+.ent-swipe button {
+  width: 68px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  border-radius: 17px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ent-swipe .ic {
+  width: 20px;
+  height: 20px;
+}
+.sw-del {
+  color: #fff;
+  background: var(--danger);
+}
+.sw-edit {
+  color: var(--ink);
+  background: var(--surface-2);
 }
 .ent-tools {
-  position: relative;
-  align-self: start;
-  margin-block: -6px 0;
-  margin-inline-end: -10px;
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 4px;
 }
 .tool.more {
   color: var(--ink-3);
@@ -2462,6 +2501,15 @@ button.hw[aria-expanded='true'] {
 }
 .ent-tools.open .more {
   opacity: 0;
+}
+/* on a touch screen the card is swiped instead; the «⋯» shows only if reached with a keyboard */
+@media (hover: none) {
+  .ent .more:not(:focus-visible) {
+    opacity: 0;
+  }
+  .ent-tools:not(.open):not(:focus-within) {
+    pointer-events: none;
+  }
 }
 /* with a mouse the «⋯» waits for the entry to be pointed at or reached with the keyboard */
 @media (hover: hover) and (pointer: fine) {
@@ -2576,17 +2624,12 @@ button.hw[aria-expanded='true'] {
 }
 .ent-mark {
   position: relative;
-  z-index: 1;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--bg);
 }
-.sheet .ent-mark {
-  background: var(--surface);
-}
+
 .ent-mark .tr {
   width: 54px;
   height: 54px;
@@ -2609,49 +2652,40 @@ button.hw[aria-expanded='true'] {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0 10px;
+  align-items: baseline;
+  gap: 0 12px;
   font-size: 13px;
   line-height: 1.9;
   color: var(--ink-3);
 }
-.ent-when > * + *::before {
-  content: '';
-  display: inline-block;
-  width: 1px;
-  height: 10px;
-  margin-inline-end: 10px;
-  vertical-align: -1px;
-  background: currentColor;
-  opacity: 0.4;
+.ent-when .num {
+  font-weight: 650;
+  color: var(--ink-2);
 }
 .ent-demo {
   color: var(--accent);
 }
-/* the words, said once, each underlined in its own colour as on the reflect page */
-.ent-words {
-  margin: 0;
+/* the feelings as soft capsules, each tinted with its own colour; space separates them, no marks */
+.ent-feels {
+  margin: 6px 0 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ent-feels span {
+  padding: 3px 13px 4px;
+  border-radius: 999px;
   font-family: var(--f-ed);
-  font-size: 19px;
-  font-weight: 750;
-  line-height: 1.75;
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.7;
   color: var(--ink);
+  background: color-mix(in oklab, var(--c1) 22%, transparent);
 }
-.ent-words span {
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklab, var(--c1) 80%, transparent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 7px;
-  text-decoration-skip-ink: none;
-}
-.ent-words i {
-  font-style: normal;
-  color: var(--ink-3);
-}
-.ent-words.un {
-  font-size: 17px;
+.ent-feels .un {
   font-weight: 500;
   color: var(--ink-2);
+  background: var(--surface-2);
 }
 .ent-ctx {
   margin: 0;
