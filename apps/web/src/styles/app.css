@@ -1865,20 +1865,28 @@ button.hw[aria-expanded='true'] {
   background: var(--surface-2);
 }
 .seg button {
+  position: relative;
+  isolation: isolate;
   min-height: 44px;
   padding: 0 16px;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-2);
-  transition:
-    background 0.25s,
-    color 0.25s;
+  transition: color 0.25s;
+}
+/* the chosen one's surface is its ::before, so it can glide from the last choice (ui/glide.ts) */
+.seg button[aria-pressed='true']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 .seg button[aria-pressed='true'] {
-  background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 .navbtns {
   display: inline-flex;
@@ -1985,9 +1993,8 @@ button.hw[aria-expanded='true'] {
   border-radius: 16px;
   min-width: 0;
   background: none;
-  transition:
-    background 0.25s,
-    box-shadow 0.25s;
+  isolation: isolate;
+  transition: background 0.25s;
 }
 .day:hover {
   background: var(--glass);
@@ -2039,7 +2046,12 @@ button.hw[aria-expanded='true'] {
   background: none;
   padding: 0;
 }
-.day.is-sel {
+.day.is-sel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: var(--glass);
   box-shadow:
     inset 0 0 0 1px var(--glass-line),
@@ -2154,6 +2166,7 @@ button.hw[aria-expanded='true'] {
 .wpill {
   --mk: 32px;
   position: relative;
+  isolation: isolate;
   display: grid;
   justify-items: center;
   align-content: start;
@@ -2162,14 +2175,16 @@ button.hw[aria-expanded='true'] {
   border-radius: 22px;
   min-height: 104px;
   min-width: 0;
-  transition:
-    background 0.3s,
-    box-shadow 0.3s;
 }
 .wpill .trw {
   margin-top: 8px;
 }
-.wpill.is-sel {
+.wpill.is-sel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: var(--glass);
   box-shadow:
     inset 0 0 0 1px var(--glass-line),
@@ -3618,10 +3633,6 @@ body[data-view='login'] .topbar {
 .navrow:last-child {
   border-bottom: 0;
 }
-a.navrow {
-  color: inherit;
-  text-decoration: none;
-}
 .navrow b {
   display: block;
   font-size: 15px;
@@ -3670,6 +3681,7 @@ a.navrow {
 }
 .bottomnav button {
   position: relative;
+  isolation: isolate;
   display: grid;
   justify-items: center;
   gap: 0;
@@ -3679,13 +3691,18 @@ a.navrow {
   font-size: 12px;
   font-weight: 500;
   color: var(--ink-3);
-  transition:
-    color 0.25s,
-    background 0.3s;
+  transition: color 0.25s;
 }
 .bottomnav button[aria-current='page'] {
   color: var(--ink);
   font-weight: 700;
+}
+.bottomnav button[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 .bottomnav .ic {
@@ -4378,5 +4395,9 @@ body[data-flow='1'] .navfade {
   }
   .title-jump {
     font-size: clamp(28px, 8.4vw, 36px);
+    white-space: nowrap;
+  }
+  .today-btn .tb-long {
+    display: none;
   }
 }

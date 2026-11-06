@@ -78,7 +78,7 @@ export function vArchive() {
         <span></span>
         <div class="a-ctrls">
           <div class="seg" role="group" aria-label="نمای تقویم"><button data-act="mode" data-m="month" aria-pressed="${A.mode === 'month'}">ماه</button><button data-act="mode" data-m="week" aria-pressed="${A.mode === 'week'}">هفته</button></div>
-          <div class="navbtns"><button class="today-btn" data-act="goToday" ${inPeriod && A.sel === todayKey() ? 'disabled' : ''}>برگشت به امروز</button>
+          <div class="navbtns"><button class="today-btn" data-act="goToday" aria-label="برگشت به امروز" ${inPeriod && A.sel === todayKey() ? 'disabled' : ''}><span class="tb-long">برگشت به </span>امروز</button>
             <button class="ib" data-act="shift" data-d="-1" aria-label="${A.mode === 'month' ? 'ماه قبل' : 'هفته‌ی قبل'}">${IC.prev}</button>
             <button class="ib" data-act="shift" data-d="1" aria-label="${A.mode === 'month' ? 'ماه بعد' : 'هفته‌ی بعد'}">${IC.next}</button></div>
         </div>
