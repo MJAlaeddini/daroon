@@ -27,6 +27,7 @@ psql -h localhost -p 5433 -U daroon -d postgres -c "create database daroon_test"
   been redesigned screen by screen for the phone (glass cards, day tiles, a day page, a ring of words), so it is no
   longer compared with the prototype; `e2e/acceptance` guards it (no text over the sculpture, no jumps, the old page leaves before the new one arrives).
   Run them after any change under `apps/web/src`. The owner is very sensitive to choreography, clutter and typography.
+  Before touching motion (transitions, presses, entrances, loading, haptics), read `.claude/skills/daroon-motion`.
 - **User-facing text is colloquial Persian** («می‌شه»، «نمی‌دونم»). Never mention "AI" in the UI; stories are written by a language model
   (any OpenAI-compatible API, `STORY_API_URL`) but presented simply as the week's story. Code, comments, commits and docs are in English.
 - **Notes never reach the server.** Sync sends entries without `note`; a story request carries the week's notes for that one
