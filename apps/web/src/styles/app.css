@@ -1993,9 +1993,8 @@ button.hw[aria-expanded='true'] {
   border-radius: 16px;
   min-width: 0;
   background: none;
-  transition:
-    background 0.25s,
-    box-shadow 0.25s;
+  isolation: isolate;
+  transition: background 0.25s;
 }
 .day:hover {
   background: var(--glass);
@@ -2047,7 +2046,12 @@ button.hw[aria-expanded='true'] {
   background: none;
   padding: 0;
 }
-.day.is-sel {
+.day.is-sel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: var(--glass);
   box-shadow:
     inset 0 0 0 1px var(--glass-line),

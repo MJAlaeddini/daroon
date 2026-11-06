@@ -6,6 +6,7 @@ import { BLANK, TR, renderTraceNow, traceImg, traceKey } from '../sculpture/trac
 import { grow, stageEl } from '../stage/stage';
 import { S } from '../state/app';
 import { dayList } from '../state/store';
+import { haptic } from './haptics';
 
 /* completion scene: the sculpture settles in the middle, then a small seed of it flies into today's empty place
    in the week and becomes its mark there */
@@ -110,10 +111,28 @@ export function showDone(entry, shot: string | null, from?) {
     ).onfinish = () => {
       if (slotImg) slotImg.style.transition = 'opacity .22s';
       fill();
+      landed(slot.closest('.dn-day') as HTMLElement | null);
       seed.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).onfinish = () =>
         seed.remove();
     };
   }, 1250 * k);
+}
+/**
+ * The one small celebration in the app: as the seed becomes today's mark, today lifts a little and settles with a
+ * slight overshoot, and the phone ticks once.
+ */
+function landed(day: HTMLElement | null) {
+  if (!day) return;
+  haptic(14);
+  day.animate(
+    [
+      { translate: '0 0' },
+      { translate: '0 -8px', offset: 0.38 },
+      { translate: '0 0.6px', offset: 0.78 },
+      { translate: '0 0' },
+    ],
+    { duration: 620, easing: 'cubic-bezier(.3,.7,.4,1)' },
+  );
 }
 export function closeDone(then?: () => void) {
   const el = S.done;

@@ -1,7 +1,7 @@
 /**
  * The chosen one of a group glides to its new place instead of jumping there: the thumb of a segmented control, the
- * bottom nav's capsule, the chosen day's capsule in the week. On the way it stretches a little toward where it is
- * going and then settles, like a drop of liquid.
+ * bottom nav's capsule, the chosen day's capsule in the week and in the month. On the way it stretches a little toward
+ * where it is going and then settles, like a drop of liquid.
  *
  * The capsule is the chosen item's `::before`. Positions are remembered relative to the group, so the glide also
  * works when the group was rendered again (same key), not only when an attribute changed in place. Nothing moves
@@ -48,6 +48,8 @@ const GROUPS: Group[] = [
     key: (g) => 'week:' + ((g.querySelector('[data-day]') as HTMLElement | null)?.dataset.day || ''),
     then: (_, g) => arrive(g.closest('.wk2')),
   },
+  // a new month is a new control, like a new week
+  { group: '.cal-grid', item: '.is-sel', key: (g) => 'month:' + (g.getAttribute('aria-label') || '') },
 ];
 
 const spots = new Map<string, Spot>();

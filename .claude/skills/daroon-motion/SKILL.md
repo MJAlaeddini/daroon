@@ -81,8 +81,10 @@ about 400 ms in total to finish arriving.
 
 Taken from the catalog and adapted to Daroon; each has a recipe:
 
-- **Press:** `scale: 0.96` down in 90 ms, back with a settle spring. Already on many touch targets (`@media (hover:
-none)` block in `app.css`); extend it to every tappable thing, and give buttons the same on desktop.
+- **Press (built: `ui/press.ts`):** everything pressable sinks under the finger or mouse in 90 ms and settles back
+  when let go. The edges travel about 6 px whatever the size (0.96 for a small button, about 0.98 for a wide card). It
+  runs on `scale` through the Web Animations API, so it adds to a component's own transitions. Opt out with
+  `data-nopress`.
 - **Gliding choice (built: `ui/glide.ts`):** the chosen item's surface is its `::before`, and it glides from the last
   choice with a slight stretch instead of jumping. Segmented controls, the bottom nav and the week strip use it; the
   nav icon nudges and the day's entries arrive after it. A new control that should glide: style its chosen state on
@@ -90,8 +92,8 @@ none)` block in `app.css`); extend it to every tappable thing, and give buttons 
 - **Staggered reveal:** day entries, stories and insights arrive 50 ms apart, rising 12 px, once per visit.
 - **Breathing orb for waiting:** while a story is being written, a soft orb breathes (scale 0.96 ↔ 1, opacity
   0.6 ↔ 1, 2.4 s) instead of a spinner, with a line of colloquial text that changes slowly.
-- **A little celebration:** saving a check-in or answering «آره» to a pattern gets one 8 px rise with a 3–6% overshoot
-  and a 14 ms haptic. Nothing else in the app bounces.
+- **A little celebration (built: `landed()` in `ui/done.ts`):** when the saved check-in's seed becomes today's mark,
+  today lifts 8 px and settles with a slight overshoot, and the phone ticks for 14 ms. Nothing else in the app bounces.
 - **Sheet entrance:** the backdrop fades in over 200 ms while the panel rises 24 px with the settle spring. On exit
   the panel drops 12 px and fades in 220 ms; the backdrop follows in 150 ms.
 
