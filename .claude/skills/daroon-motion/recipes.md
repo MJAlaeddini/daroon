@@ -176,60 +176,28 @@ A CSS-only version: give each item `--i` and use `animation-delay: calc(min(var(
 
 The sculpture stays visible behind sheets (see `pickAnchor` in `stage/stage.ts`); don't fade it.
 
-## Liquid segmented control (week / month)
+## Gliding choice: segmented controls, the bottom nav, the week strip
 
-One pill moves under the labels. While it travels it stretches toward the target, then settles.
+Built in `ui/glide.ts`. Style the chosen state on `::before` and keep the item itself plain:
 
 ```css
-.seg {
+.seg button {
   position: relative;
+  isolation: isolate;
 }
-.seg .thumb {
+.seg button[aria-pressed='true']::before {
+  content: '';
   position: absolute;
-  inset-block: 3px;
-  inset-inline-start: 3px;
-  inline-size: calc(50% - 3px);
-  border-radius: 999px;
-  background: var(--surface-2);
-  translate: calc(var(--at, 0) * -100%) 0; /* RTL: the second option sits to the left */
-  transition: translate 340ms var(--spring-settle);
-}
-.seg .thumb.moving {
-  animation: seg-stretch 340ms var(--ease);
-}
-@keyframes seg-stretch {
-  40% {
-    scale: 1.18 0.92;
-  }
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface);
 }
 ```
 
-Set `--at` to the chosen index and add `.moving` for one run (remove it on `animationend`). Keep the labels' colour
-change at 160 ms so the text settles before the pill does.
-
-## Icon, once, when a tab becomes active
-
-```css
-.bottomnav button[aria-current='page'] svg {
-  animation: tab-nudge 420ms var(--spring-settle);
-}
-@keyframes tab-nudge {
-  0% {
-    translate: 0 0;
-  }
-  35% {
-    translate: 0 -3px;
-    scale: 1.08;
-  }
-  100% {
-    translate: 0 0;
-    scale: 1;
-  }
-}
-```
-
-For a line icon, redraw its stroke instead: put `pathLength="1"` on each path, animate `stroke-dashoffset` from 1 to 0
-over 500 ms. Either effect plays once, never loops, and is disabled by the reduced-motion block.
+Then add the control to `GROUPS` with the selector of the chosen item and a key that stays the same when the control
+is rendered again. The glide runs only when a different item is chosen in the same control (in place, or rendered
+again in the same step), never when a control first appears, and never in calm mode.
 
 ## Waiting: a breathing orb
 

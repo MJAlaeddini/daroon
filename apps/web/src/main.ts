@@ -18,6 +18,7 @@ import { applyTheme } from './ui/theme';
 import { setupPwa } from './pwa';
 import { setupChrome } from './ui/chrome';
 import { setupHaptics } from './ui/haptics';
+import { setupGlide } from './ui/glide';
 import { setupInstall } from './features/install';
 import { setupSwipe } from './ui/swipe';
 
@@ -49,6 +50,7 @@ setupInstall({ auto: !E2E });
 setupSwipe();
 setupChrome();
 setupHaptics();
+setupGlide();
 if (DB.account) pullStories();
 if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
 try {

@@ -83,10 +83,10 @@ Taken from the catalog and adapted to Daroon; each has a recipe:
 
 - **Press:** `scale: 0.96` down in 90 ms, back with a settle spring. Already on many touch targets (`@media (hover:
 none)` block in `app.css`); extend it to every tappable thing, and give buttons the same on desktop.
-- **Liquid segmented control:** the week/month toggle's thumb stretches toward the target and then settles, instead
-  of jumping. One moving pill under the labels, driven by `translate` and `scale`.
-- **Springy icons in the bottom nav:** the chosen tab's icon makes one small move (a 3 px nudge, or its line
-  redrawing) when it becomes active. Never loop.
+- **Gliding choice (built: `ui/glide.ts`):** the chosen item's surface is its `::before`, and it glides from the last
+  choice with a slight stretch instead of jumping. Segmented controls, the bottom nav and the week strip use it; the
+  nav icon nudges and the day's entries arrive after it. A new control that should glide: style its chosen state on
+  `::before` and add a line to `GROUPS`.
 - **Staggered reveal:** day entries, stories and insights arrive 50 ms apart, rising 12 px, once per visit.
 - **Breathing orb for waiting:** while a story is being written, a soft orb breathes (scale 0.96 ↔ 1, opacity
   0.6 ↔ 1, 2.4 s) instead of a spinner, with a line of colloquial text that changes slowly.
