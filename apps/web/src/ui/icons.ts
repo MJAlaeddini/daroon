@@ -5,6 +5,7 @@ export const IC = {
   next: '<svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
   down: '<svg class="ic" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
   close: '<svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  more: '<svg class="ic" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></g></svg>',
   edit: '<svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>',
   trash:
     '<svg class="ic" viewBox="0 0 24 24"><g class="lid"><path d="M4.5 7h15"/><path d="M9.5 7V5.4c0-.77.63-1.4 1.4-1.4h2.2c.77 0 1.4.63 1.4 1.4V7"/></g><path d="M6.6 7.4l.8 11.2c.07.8.74 1.4 1.54 1.4h6.12c.8 0 1.47-.6 1.54-1.4l.8-11.2"/><path d="M10.2 10.8v5.6M13.8 10.8v5.6"/></svg>',

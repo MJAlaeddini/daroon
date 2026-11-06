@@ -434,6 +434,9 @@ export const ACT = {
     S.view = 'reflect';
     renderView();
   },
+  entMore(el) {
+    toggleEntActs(el);
+  },
   askDel(el) {
     armDelete(el);
   },
@@ -589,6 +592,37 @@ export function reRenderDetail() {
 export function reRenderJump() {
   const j = $('.jump');
   if (j) j.outerHTML = jumpHTML();
+}
+
+/* an entry's «⋯» opens a small pill of its actions in place; a tap anywhere else or Escape closes it */
+function closeEntActs(box) {
+  if (!box.classList.contains('open')) return;
+  box.classList.remove('open');
+  box.querySelector('.more')?.setAttribute('aria-expanded', 'false');
+  const del = box.querySelector('.tool.del.arm');
+  if (del) disarmDelete(del);
+  document.removeEventListener('pointerdown', box._away, true);
+  document.removeEventListener('keydown', box._key, true);
+}
+function toggleEntActs(b) {
+  const box = b.closest('.ent-tools');
+  if (!box) return;
+  const opening = !box.classList.contains('open');
+  document.querySelectorAll('.ent-tools.open').forEach(closeEntActs);
+  if (!opening) return;
+  box.classList.add('open');
+  b.setAttribute('aria-expanded', 'true');
+  box._away = (ev) => {
+    if (!box.contains(ev.target)) closeEntActs(box);
+  };
+  box._key = (ev) => {
+    if (ev.key !== 'Escape') return;
+    closeEntActs(box);
+    b.focus({ preventScroll: true });
+  };
+  document.addEventListener('pointerdown', box._away, true);
+  document.addEventListener('keydown', box._key, true);
+  box.querySelector('.ent-acts .tool')?.focus({ preventScroll: true });
 }
 
 /* delete in place: the trash icon opens into a «حذف؟» pill; a second tap deletes, anything else closes it */
