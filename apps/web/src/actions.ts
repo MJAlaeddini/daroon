@@ -97,13 +97,19 @@ export const ACT = {
   },
   refine(el) {
     const i = +el.dataset.i,
-      it = S.draft.items[i],
-      k = el.dataset.key;
-    if (!it || it.key === k) return;
+      it = S.draft.items[i];
+    if (!it) return;
+    // a finer word replaces the general one; tapping the chosen finer word again goes back to the general one
+    const k = it.key === el.dataset.key && it.parent ? it.parent : el.dataset.key;
+    if (it.key === k) return;
     it.key = k;
     engine.rippleAt((lex(k).angle * Math.PI) / 180, k, true);
     refreshExplore();
-    $(`#tray [data-act="refine"][data-key="${k}"]`)?.focus({ preventScroll: true });
+    (
+      $(`#tray [data-act="refine"][data-key="${k}"]`) || $(`#tray [data-act="refine"][data-key="${el.dataset.key}"]`)
+    )?.focus({
+      preventScroll: true,
+    });
   },
   clearSel() {
     S.draft.items = [];
@@ -382,6 +388,15 @@ export const ACT = {
       ),
     );
     refreshArchive();
+    // the calendar's new shape settles in quietly instead of snapping
+    if (!reduced())
+      $('#archCal')?.animate(
+        [
+          { opacity: 0, translate: '0 8px' },
+          { opacity: 1, translate: '0 0' },
+        ],
+        { duration: 280, easing: 'cubic-bezier(.32,.72,0,1)' },
+      );
   },
   shift(el) {
     const A = S.arch,

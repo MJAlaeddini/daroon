@@ -119,8 +119,8 @@ export function monthHTML() {
     const k = keyOfJ(j.jy, j.jm, d),
       list = dayList(k),
       named = list.some((e) => e.emotions.length);
-    cells += `<button class="day ${list.length ? 'has' : ''} ${k === tk ? 'is-today' : ''} ${k === A.sel ? 'is-sel' : ''} ${k > tk ? 'is-future' : ''} ${list.length && !named ? 'is-unnamed' : ''}" data-day="${k}" aria-label="${dayLabel(k, list)}" aria-pressed="${k === A.sel}" ${k === tk ? 'aria-current="date"' : ''} tabindex="${k === A.sel || (d === 1 && !A.sel.startsWith(first.slice(0, 7))) ? 0 : -1}">
-      <span class="dn">${fa(d)}</span><span class="trw">${list.length ? traceImg(daySpec(k)) : ''}</span></button>`;
+    cells += `<button class="day ${list.length ? 'has' : ''} ${k === tk ? 'is-today' : ''} ${k === A.sel ? 'is-sel' : ''} ${k > tk ? 'is-future' : ''} ${list.length && !named ? 'is-unnamed' : ''}" data-day="${k}" aria-label="${dayLabel(k, list)}" aria-pressed="${k === A.sel}" ${k === tk ? 'aria-current="date"' : ''} tabindex="${k === A.sel || (d === 1 && !A.sel.startsWith(first.slice(0, 7))) ? 0 : -1}" style="${dayTint(k)}">
+      <span class="dn">${fa(d)}</span><span class="trw"><span class="aura" aria-hidden="true"></span>${list.length ? traceImg(daySpec(k)) : ''}</span></button>`;
   }
   return `<div class="cal-wd" aria-hidden="true">${WD_S.map((w) => `<span>${w}</span>`).join('')}</div><div class="cal-grid" id="calGrid" role="group" aria-label="روزهای ${J_MONTHS[j.jm - 1]} ${fa(j.jy)}">${cells}</div>`;
 }
@@ -134,8 +134,8 @@ export function weekHTML() {
       const j = jOfKey(k),
         list = dayList(k),
         named = list.some((e) => e.emotions.length);
-      return `<button class="wpill ${list.length ? 'has' : ''} ${k === A.sel ? 'is-sel' : ''} ${k === tk ? 'is-today' : ''} ${k > tk ? 'is-future' : ''} ${list.length && !named ? 'is-unnamed' : ''}" data-day="${k}" aria-label="${dayLabel(k, list)}" aria-pressed="${k === A.sel}" tabindex="${k === A.sel ? 0 : -1}">
-      <span class="wk-wd">${WD_S[i]}</span><span class="wk-dn num">${fa(j.jd)}</span><span class="trw">${list.length ? traceImg(daySpec(k)) : '<span class="wk-empty"></span>'}</span></button>`;
+      return `<button class="wpill ${list.length ? 'has' : ''} ${k === A.sel ? 'is-sel' : ''} ${k === tk ? 'is-today' : ''} ${k > tk ? 'is-future' : ''} ${list.length && !named ? 'is-unnamed' : ''}" data-day="${k}" aria-label="${dayLabel(k, list)}" aria-pressed="${k === A.sel}" tabindex="${k === A.sel ? 0 : -1}" style="${dayTint(k)}">
+      <span class="wk-wd">${WD_S[i]}</span><span class="wk-dn num">${fa(j.jd)}</span><span class="trw"><span class="aura" aria-hidden="true"></span>${list.length ? traceImg(daySpec(k)) : '<span class="wk-empty"></span>'}</span></button>`;
     })
     .join('');
   const all = days.flatMap(dayList),
@@ -165,13 +165,16 @@ export function weekHTML() {
 }
 /** The chosen day as one shape (the live sculpture takes this day's feelings), its words and a short count. */
 /**
- * How a day reads in one line: how many check-ins and when. Persian commas and words, no «·», which in Persian
- * digits reads as a zero.
+ * How a day reads in one line: how many check-ins. No «·», which in Persian digits reads as a zero.
  */
 export function dayMeta(list: { time: string }[]) {
-  if (!list.length) return '';
-  const t = list.map((e) => e.time).sort();
-  return `${fa(list.length)} ردپا، ${t.length > 1 ? `از <span class="num">${fa(t[0])}</span> تا <span class="num">${fa(t[t.length - 1])}</span>` : `ساعت <span class="num">${fa(t[0])}</span>`}`;
+  // each card already shows its own time; the day only says how many
+  return list.length ? `${fa(list.length)} ردپا` : '';
+}
+/** The colour of a day's first feeling, for the soft light under its stone when it is chosen. */
+function dayTint(k: string) {
+  const sp = daySpec(k);
+  return sp.items[0] ? `--dc:${palFor(sp.items[0].key, sp.items[0].color)[1]}` : '';
 }
 /**
  * The chosen day on a phone: its shape, then its date as the title and one line of when. The words live in the

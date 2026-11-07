@@ -186,7 +186,9 @@ void main(){
   col += iri2 * edge0 * (0.03 + 0.12 * spec) * alpha * dark;
   col += glc * ring * 0.35 * smoothstep(1.05, 0.8, d0);
   float hd = max(d0 - 1.0, 0.0);
-  float halo = exp(-hd * hd * 7.0) * (1.0 - in1) * uHalo * (0.08 + 0.18 * uB.z) * (1.0 + 0.6 * spec);
+  // the halo thins out well before the canvas edge, so it never ends in a visible ring or square
+  float hf = smoothstep(0.97, 0.42, length(p));
+  float halo = exp(-hd * hd * 7.0) * (1.0 - in1) * uHalo * (0.08 + 0.18 * uB.z) * (1.0 + 0.6 * spec) * hf * hf;
   vec3 hc = lab2rgb(vec3(mix(0.88, 0.70, dark), lab0.yz * mix(1.6, 1.1, dark)));
   col += hc * halo * mix(0.9, 1.2, dark);
   alpha += halo * mix(0.9, 0.5, dark) * (1.0 - alpha);

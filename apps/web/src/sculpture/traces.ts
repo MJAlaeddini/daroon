@@ -3,8 +3,10 @@ import { buildU, isDark, isSpectrum, staticState } from './engine';
 import { Ctx2DRenderer, GLRenderer } from './renderers';
 
 /* ═════════════════════════ traces: miniature sculptures for days & entries ═════════════════════════ */
+/** Marks show at up to ~60 CSS px; 192 keeps them sharp on 3× screens. */
+export const TRACE_PX = 192;
 export const miniCanvas = document.createElement('canvas');
-miniCanvas.width = miniCanvas.height = 144;
+miniCanvas.width = miniCanvas.height = TRACE_PX;
 export let mini = null;
 try {
   mini = new GLRenderer(miniCanvas, true);
@@ -43,28 +45,26 @@ export function traceImg(spec) {
   return `<img class="tr" alt="" data-tk="${k}" src="${src}" draggable="false">`;
 }
 /* Every mark is drawn at the same visual weight: a bloom spreads and a sag shrinks inside the shader, so a row of
-   raw marks looks uneven. Each one is measured (how much body it has and how far it reaches) and rescaled around its
-   own centre of mass, so they all carry the same weight and sit optically centred. */
+   raw marks looks uneven. A first pass measures the body (its area and how far it reaches around its centre of
+   mass); the second pass draws it again at the scale that gives every mark the same weight. Drawing at the right
+   size in the shader keeps the mark sharp and its halo whole (scaling a finished bitmap blurred it and cut the halo
+   at the square's edge); the only adjustment afterwards is a whole-pixel shift that centres it optically. */
 const fitCanvas = document.createElement('canvas');
-fitCanvas.width = fitCanvas.height = miniCanvas.width;
+fitCanvas.width = fitCanvas.height = TRACE_PX;
 const fitCtx = fitCanvas.getContext('2d', { willReadFrequently: true });
-/** The share of the square the body should cover, and the most of its width it may reach. */
-const BODY = 0.3,
-  REACH = 0.86,
+/** The share of the square the body should cover, how far from the centre it may reach (leaving the halo room). */
+const BODY = 0.38,
+  REACH = 0.7,
   ALPHA = 48;
-function normalize(): string {
-  const n = fitCanvas.width;
-  if (!fitCtx) return miniCanvas.toDataURL('image/png');
+function measure() {
+  const n = miniCanvas.width;
+  if (!fitCtx) return null;
   fitCtx.clearRect(0, 0, n, n);
   fitCtx.drawImage(miniCanvas, 0, 0);
   const px = fitCtx.getImageData(0, 0, n, n).data;
   let mass = 0,
     cx = 0,
-    cy = 0,
-    x0 = n,
-    y0 = n,
-    x1 = 0,
-    y1 = 0;
+    cy = 0;
   for (let y = 0; y < n; y++)
     for (let x = 0; x < n; x++) {
       const a = px[(y * n + x) * 4 + 3];
@@ -73,26 +73,28 @@ function normalize(): string {
       mass += w;
       cx += x * w;
       cy += y * w;
-      if (x < x0) x0 = x;
-      if (x > x1) x1 = x;
-      if (y < y0) y0 = y;
-      if (y > y1) y1 = y;
     }
-  if (mass < 20) return miniCanvas.toDataURL('image/png');
+  if (mass < 20) return null;
   cx /= mass;
   cy /= mass;
-  // equal area first; never so large that the farthest reach leaves the square
-  const reach = Math.max(cx - x0, x1 - cx, cy - y0, y1 - cy) + 1;
-  const s = Math.min(Math.sqrt((BODY * n * n) / mass), (REACH * n) / 2 / reach, 2.2);
-  fitCtx.clearRect(0, 0, n, n);
-  fitCtx.setTransform(s, 0, 0, s, n / 2 - cx * s, n / 2 - cy * s);
-  fitCtx.drawImage(miniCanvas, 0, 0);
-  fitCtx.setTransform(1, 0, 0, 1, 0, 0);
-  return fitCanvas.toDataURL('image/png');
+  let reach = 0;
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++)
+      if (px[(y * n + x) * 4 + 3] >= ALPHA) reach = Math.max(reach, Math.hypot(x - cx, y - cy));
+  return { mass, cx, cy, reach: reach + 1 };
 }
 export function renderTraceNow(spec) {
-  mini.draw(buildU(staticState(spec), 0.5, 0.7));
-  return normalize();
+  const st = staticState(spec),
+    n = miniCanvas.width,
+    c = n / 2;
+  mini.draw(buildU(st, 0.5, 0.7));
+  const m = measure();
+  if (!m || !fitCtx) return miniCanvas.toDataURL('image/png');
+  const s = Math.max(0.6, Math.min(1.7, Math.sqrt((BODY * n * n) / m.mass), (REACH * c) / m.reach));
+  mini.draw(buildU(st, 0.5 * s, 0.7));
+  fitCtx.clearRect(0, 0, n, n);
+  fitCtx.drawImage(miniCanvas, Math.round((c - m.cx) * s), Math.round((c - m.cy) * s));
+  return fitCanvas.toDataURL('image/png');
 }
 export function processTraces() {
   const t0 = performance.now();

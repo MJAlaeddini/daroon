@@ -6,7 +6,7 @@ import { clamp, esc, hashStr, uid } from '../core/util';
 import { NEUTRAL_PAL, palFor } from '../domain/lexicon';
 import { aggregate } from '../domain/specs';
 import { buildU, reduced, staticState } from '../sculpture/engine';
-import { BLANK, TR, mini, miniCanvas, traceKey } from '../sculpture/traces';
+import { BLANK, TRACE_PX, TR, mini, miniCanvas, traceKey } from '../sculpture/traces';
 import { stageEl } from '../stage/stage';
 import { S } from '../state/app';
 import { DB, dayList, persist } from '../state/store';
@@ -26,7 +26,7 @@ export function renderArt(spec, dk = 0, size = 360) {
     mini.draw(buildU(staticState(spec), 0.5, 0.9, dk));
     url = miniCanvas.toDataURL('image/png');
   } catch (e) {}
-  miniCanvas.width = miniCanvas.height = 144;
+  miniCanvas.width = miniCanvas.height = TRACE_PX;
   TR.set(k, url);
   return url;
 }
