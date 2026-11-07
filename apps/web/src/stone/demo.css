@@ -94,6 +94,9 @@ button {
   justify-items: center;
   gap: 8px;
 }
+.wb-still[hidden] {
+  display: none;
+}
 .wb-still img {
   width: min(100%, 240px);
   height: auto;
@@ -219,7 +222,7 @@ button {
 .wb-tile:hover {
   background: var(--surface);
 }
-.wb-tile img {
+.wb-tile canvas {
   max-width: 100%;
   height: auto;
 }

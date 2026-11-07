@@ -35,23 +35,22 @@ void masks(vec3 n, out float mu[6]) {
   vec3 o = uG0.xyz;
   vec3 p = n * 1.9 + o;
   vec3 w = normalize(n + 0.45 * vec3(tn(p), tn(p + 3.1), tn(p + 6.2)));
+  /* loops run to uCount, not 6, so compilers keep them as loops: a much smaller shader, faster to compile */
   float s = 0.0;
-  for (int i = 0; i < 6; i++) {
-    mu[i] = 0.0;
-    if (i >= uCount) continue;
+  for (int i = 0; i < 6; i++) mu[i] = 0.0;
+  for (int i = 0; i < uCount; i++) {
     mu[i] = S(i, 0).x * exp(3.2 * (dot(w, S(i, 2).xyz) - 1.0));
     s += mu[i];
   }
   s = max(s, 1e-6);
   float t = 0.0;
-  for (int i = 0; i < 6; i++) {
-    if (i >= uCount) break;
+  for (int i = 0; i < uCount; i++) {
     float wi = S(i, 0).x, q = sstep(0.0, 0.15, wi);
     mu[i] = q * mu[i] / s + (1.0 - q) * wi;
     t += mu[i];
   }
   t = max(t, 1e-6);
-  for (int i = 0; i < 6; i++) mu[i] /= t;
+  for (int i = 0; i < uCount; i++) mu[i] /= t;
 }
 
 float gpart(vec3 n, int i) {
@@ -118,14 +117,13 @@ vec3 turn(vec3 n) {
   return n * c + cross(u, n) * s + u * dot(u, n) * (1.0 - c);
 }
 
-float field(vec3 n, out float mu[6]) {
-  masks(n, mu);
+/* the field for given masks; the two nearby samples taken for the normal reuse the centre's masks */
+float fieldMu(vec3 n, float mu[6]) {
   vec3 o = uG0.xyz;
   float F = 0.055 * fbm(n * 1.1 + o);
   float s2 = 0.0;
   vec3 nk = turn(n);
-  for (int i = 0; i < 6; i++) {
-    if (i >= uCount) break;
+  for (int i = 0; i < uCount; i++) {
     float w = S(i, 0).x;
     F += uShell.z * ((0.4 * w + 0.6 * mu[i]) * gpart(n, i) + (0.15 * w + 0.85 * mu[i]) * lpart(nk, i, uShell.w));
     s2 += mu[i] * mu[i];
@@ -138,17 +136,20 @@ float field(vec3 n, out float mu[6]) {
   }
   return 0.995 + 0.275 * tanh((1.0 + F - 0.995) / 0.275);
 }
+float field(vec3 n, out float mu[6]) {
+  masks(n, mu);
+  return fieldMu(n, mu);
+}
 
 void main() {
   vec3 n = normalize(aN);
   float mu[6];
-  float dm[6];
   float R = field(n, mu);
   vec3 t1 = normalize(cross(n, abs(n.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
   vec3 t2 = cross(n, t1);
   const float e = 0.006;
   vec3 n1 = normalize(n + e * t1), n2 = normalize(n + e * t2);
-  vec3 p0 = n * R, p1 = n1 * field(n1, dm), p2 = n2 * field(n2, dm);
+  vec3 p0 = n * R, p1 = n1 * fieldMu(n1, mu), p2 = n2 * fieldMu(n2, mu);
   vec3 N = normalize(cross(p1 - p0, p2 - p0));
   if (dot(N, n) < 0.0) N = -N;
   float cy = cos(uG2.z), sy = sin(uG2.z);
@@ -208,8 +209,7 @@ void main() {
   vec3 lab = vec3(0.0);
   vec3 coreLab = vec3(0.0);
   float s = 0.0;
-  for (int i = 0; i < 6; i++) {
-    if (i >= uCount) break;
+  for (int i = 0; i < uCount; i++) {
     vec3 O = uPalO[i], M = uPalM[i], C = uPalC[i];
     vec3 role;
     if (k == 0) role = mix(C, M, 0.15 + 0.55 * f);

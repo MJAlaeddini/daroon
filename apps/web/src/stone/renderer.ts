@@ -1,7 +1,7 @@
 /* WebGL2 renderer for the emotion stone.
  *
- * One icosphere, uploaded once, is drawn eight times per frame: the back faces of the four shells from the outside
- * in, then their front faces from the inside out. That order composites nested translucent shells correctly without
+ * One icosphere, uploaded once, is drawn six times per frame: the back faces of the two outer shells from the
+ * outside in, then the front faces of all four from the inside out. That order composites nested translucent shells correctly without
  * sorting triangles or a depth buffer; blending is premultiplied alpha, never additive, so the stone also sits well
  * on a light page. Nothing about a change of feelings touches the geometry: the shape comes from uniforms alone. */
 import { oklabToCss, oklabToLinear, type Lab } from './color';
@@ -22,10 +22,12 @@ const DIST = 4.25;
 const EYE: V3 = [0, 0.85, DIST];
 
 /* ── geometry ─────────────────────────────────────────────────────────── */
-let sphere: { pos: Float32Array; idx: Uint16Array } | null = null;
-/** Unit icosphere, subdivided `level` times (5 → 10 242 vertices, smooth at any size the app uses). */
+const spheres = new Map<number, { pos: Float32Array; idx: Uint16Array }>();
+/** Unit icosphere, subdivided `level` times: 5 → 10 242 vertices (smooth when large), 4 → 2 562 (small sizes and
+    slower phones). */
 export function icosphere(level = 5): { pos: Float32Array; idx: Uint16Array } {
-  if (sphere && level === 5) return sphere;
+  const cached = spheres.get(level);
+  if (cached) return cached;
   const t = (1 + Math.sqrt(5)) / 2;
   const v: number[][] = [
     [-1, t, 0],
@@ -89,7 +91,7 @@ export function icosphere(level = 5): { pos: Float32Array; idx: Uint16Array } {
     f = nf;
   }
   const out = { pos: new Float32Array(v.flat()), idx: new Uint16Array(f.flat()) };
-  if (level === 5) sphere = out;
+  spheres.set(level, out);
   return out;
 }
 
@@ -177,6 +179,9 @@ const haloColor = (lab: Lab, dark: boolean): Lab => [
 export interface StoneRenderer {
   readonly canvas: HTMLCanvasElement;
   draw(frame: Frame, opts: DrawOptions): void;
+  /** mesh detail (icosphere level); lower is lighter */
+  detail: number;
+  setDetail(level: number): void;
   dispose(): void;
 }
 
@@ -189,10 +194,13 @@ export class GLStoneRenderer implements StoneRenderer {
   private hu: Record<string, WebGLUniformLocation | null> = {};
   private vaoStone: WebGLVertexArrayObject;
   private vaoHalo: WebGLVertexArrayObject;
-  private count: number;
+  private count = 0;
+  private vb: WebGLBuffer;
+  private ib: WebGLBuffer;
+  detail = 0;
   lost = false;
 
-  constructor(canvas: HTMLCanvasElement, preserve = false) {
+  constructor(canvas: HTMLCanvasElement, preserve = false, detail = 5) {
     this.canvas = canvas;
     const gl = canvas.getContext('webgl2', {
       alpha: true,
@@ -227,19 +235,16 @@ export class GLStoneRenderer implements StoneRenderer {
       this.u[n] = gl.getUniformLocation(this.prog, n);
     for (const n of ['uAspect', 'uColor', 'uHalo']) this.hu[n] = gl.getUniformLocation(this.halo, n);
 
-    const { pos, idx } = icosphere(5);
-    this.count = idx.length;
     this.vaoStone = gl.createVertexArray()!;
     gl.bindVertexArray(this.vaoStone);
-    const vb = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+    this.vb = gl.createBuffer()!;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vb);
     const loc = gl.getAttribLocation(this.prog, 'aN');
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
-    const ib = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+    this.ib = gl.createBuffer()!;
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ib);
+    this.setDetail(detail);
 
     this.vaoHalo = gl.createVertexArray()!;
     gl.bindVertexArray(this.vaoHalo);
@@ -304,12 +309,26 @@ export class GLStoneRenderer implements StoneRenderer {
       gl.uniform4f(u.uLook, RENDERER.shellOpacity[k], k, dark ? 1 : 0, fr.glow);
       gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
     };
+    /* back faces of the two outer veils only: those of the inner layers barely show through and cost a quarter */
     gl.cullFace(gl.FRONT);
-    for (let k = 3; k >= 0; k--) shell(k);
+    for (let k = 3; k >= 2; k--) shell(k);
     gl.cullFace(gl.BACK);
     for (let k = 0; k < 4; k++) shell(k);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(null);
+  }
+
+  setDetail(level: number): void {
+    if (level === this.detail) return;
+    const gl = this.gl,
+      { pos, idx } = icosphere(level);
+    gl.bindVertexArray(this.vaoStone);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vb);
+    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    this.count = idx.length;
+    this.detail = level;
   }
 
   dispose(): void {
@@ -375,6 +394,8 @@ export class Canvas2DStoneRenderer implements StoneRenderer {
     }
     x.globalAlpha = 1;
   }
+  detail = 0;
+  setDetail(): void {}
   dispose(): void {}
 }
 
@@ -413,9 +434,9 @@ export function silhouette(
   return out;
 }
 
-export function createRenderer(canvas: HTMLCanvasElement, preserve = false): StoneRenderer {
+export function createRenderer(canvas: HTMLCanvasElement, preserve = false, detail = 5): StoneRenderer {
   try {
-    return new GLStoneRenderer(canvas, preserve);
+    return new GLStoneRenderer(canvas, preserve, detail);
   } catch (e) {
     console.warn('emotion stone: WebGL2 unavailable, drawing in 2D', e);
     return new Canvas2DStoneRenderer(canvas);

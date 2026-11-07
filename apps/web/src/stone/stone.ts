@@ -15,6 +15,8 @@ export interface StoneOptions {
   initial?: Feeling[];
   /** follow the system's reduce-motion setting (default) or force it */
   reducedMotion?: boolean;
+  /** mesh detail to start from (5 or 4); by default 4 on touch screens, 5 elsewhere. It only ever steps down. */
+  detail?: number;
 }
 
 const mqReduce = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -28,10 +30,14 @@ export class Stone {
   private raf = 0;
   private last = 0;
   private dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-  private slow = 0;
+  private times: number[] = [];
+  private warm = 0;
+  private step = 0;
   private skip = false;
   private odd = false;
+  private onScreen = true;
   private ro: ResizeObserver;
+  private io: IntersectionObserver;
   private onVis = () => this.loop();
   private forced: boolean | undefined;
 
@@ -43,9 +49,16 @@ export class Stone {
     this.forced = o.reducedMotion;
     this.motion.reduced = this.forced ?? !!mqReduce?.matches;
     mqReduce?.addEventListener('change', () => this.setReducedMotion(this.forced));
-    this.r = createRenderer(canvas);
+    const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    this.r = createRenderer(canvas, false, o.detail ?? (coarse ? 4 : 5));
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(canvas);
+    /* nothing to animate while the stone is scrolled out of view */
+    this.io = new IntersectionObserver(([e]) => {
+      this.onScreen = e.isIntersecting;
+      this.loop();
+    });
+    this.io.observe(canvas);
     this.resize();
     document.addEventListener('visibilitychange', this.onVis);
     this.loop();
@@ -87,11 +100,12 @@ export class Stone {
 
   /** Runs while visible; with reduced motion it stops once a morph has settled, and restarts on the next change. */
   private loop(): void {
-    if (this.raf || document.hidden) return;
+    if (this.raf || document.hidden || !this.onScreen) return;
     this.last = performance.now();
+    this.warm = 0;
     const tick = (now: number) => {
       this.raf = 0;
-      if (document.hidden) return;
+      if (document.hidden || !this.onScreen) return;
       const dt = (now - this.last) / 1000;
       this.last = now;
       this.adapt(dt);
@@ -104,23 +118,33 @@ export class Stone {
     this.raf = requestAnimationFrame(tick);
   }
 
-  /** Keep 60 fps where possible: first lower the pixel ratio, then draw every other frame (30 fps). */
+  /** Keep 60 fps where possible. Every ten frames that are mostly slow take one step down: a lower pixel ratio, then
+      a lighter mesh, then every other frame (30 fps). The first frames after a start are skipped (shaders warming up). */
   private adapt(dt: number): void {
-    if (dt > 0.5) return;
-    this.slow = this.slow * 0.95 + (dt > 0.024 ? 1 : 0) * 0.05;
-    if (this.slow > 0.6) {
-      this.slow = 0;
-      if (this.dpr > 1.01) {
-        this.dpr = Math.max(1, this.dpr * 0.75);
-        this.resize();
-      } else this.skip = true;
+    if (++this.warm <= 3) return;
+    this.times.push(dt);
+    if (this.times.length < 10) return;
+    const sorted = [...this.times].sort((a, b) => a - b);
+    this.times = [];
+    if (sorted[5] < 0.024) return;
+    const steps = [
+      () => (this.dpr > 1.5 ? ((this.dpr = 1.5), true) : false),
+      () => (this.r.detail > 4 ? (this.r.setDetail(4), true) : false),
+      () => (this.dpr > 1 ? ((this.dpr = 1), true) : false),
+      () => (this.r.detail > 3 ? (this.r.setDetail(3), true) : false),
+      () => ((this.skip = true), true),
+    ];
+    while (this.step < steps.length && !steps[this.step++]()) {
+      /* that step had nothing left to give; try the next */
     }
+    this.resize();
   }
 
   destroy(): void {
     cancelAnimationFrame(this.raf);
     this.raf = 0;
     this.ro.disconnect();
+    this.io.disconnect();
     document.removeEventListener('visibilitychange', this.onVis);
     this.r.dispose();
   }
@@ -132,16 +156,23 @@ let stillR: StoneRenderer | null = null;
 const stillMotion = new StoneMotion();
 stillMotion.reduced = true;
 
-/** The canonical still of a choice (every clock at zero) as a transparent PNG data URL: for history and calendars. */
-export function stillPNG(feelings: Feeling[], size = 256, theme: Theme = 'dark', zoom = 1): string {
+/** Draw the canonical still of a choice (every clock at zero) and return the canvas it is on. Copy it out at once
+    (drawImage, toDataURL): the next still reuses the same canvas. */
+export function stillCanvasFor(feelings: Feeling[], size = 256, theme: Theme = 'dark', zoom = 1): HTMLCanvasElement {
   if (!stillCanvas) {
     stillCanvas = document.createElement('canvas');
-    stillR = createRenderer(stillCanvas, true);
+    /* stills are small: the lighter mesh is enough, except for large exports */
+    stillR = createRenderer(stillCanvas, true, 4);
   }
+  stillR!.setDetail(size > 400 ? 5 : 4);
   stillCanvas.width = stillCanvas.height = size;
   stillMotion.snap(feelings);
   stillR!.draw(stillMotion.frame(), { theme, zoom });
-  return stillCanvas.toDataURL('image/png');
+  return stillCanvas;
+}
+/** The canonical still as a transparent PNG data URL: for history and calendars. */
+export function stillPNG(feelings: Feeling[], size = 256, theme: Theme = 'dark', zoom = 1): string {
+  return stillCanvasFor(feelings, size, theme, zoom).toDataURL('image/png');
 }
 export async function stillBlob(feelings: Feeling[], size = 1024, theme: Theme = 'dark'): Promise<Blob> {
   const url = stillPNG(feelings, size, theme);

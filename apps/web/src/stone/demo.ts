@@ -3,7 +3,7 @@
 import { hexToOklab, oklabToCss } from './color';
 import { EMOTIONS, EMOTION_IDS, EXAMPLES, type EmotionId } from './presets';
 import { allSelections, describe, MAX_FEELINGS } from './resolve';
-import { Stone, stillPNG } from './stone';
+import { Stone, stillCanvasFor, stillPNG } from './stone';
 import type { Theme } from './renderer';
 
 const fa = (n: number) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
@@ -168,40 +168,69 @@ $('#save').addEventListener('click', () => {
 });
 $('#stillClose').addEventListener('click', () => ($('#still').hidden = true));
 
-/* ── contact sheets ── */
-function tile(ids: EmotionId[], size: number, caption: string, note = ''): string {
-  return `<button type="button" class="wb-tile" data-ids="${ids.join(',')}" aria-label="${describe(ids)}">
-    <img alt="" width="${size}" height="${size}" src="${stillPNG(
-      ids.map((id) => ({ id })),
-      size * 2,
+/* ── contact sheets ──
+   Tiles are canvases filled one per frame, and only once they come near the screen, so the live stone is never
+   held up by a page of stills. */
+const dpr = Math.min(2, window.devicePixelRatio || 1);
+const queue: HTMLCanvasElement[] = [];
+let pumping = false;
+function pump(): void {
+  if (pumping) return;
+  pumping = true;
+  const next = () => {
+    const c = queue.shift();
+    if (!c) {
+      pumping = false;
+      return;
+    }
+    const px = c.width;
+    const src = stillCanvasFor(
+      c.dataset.ids!.split(',').map((id) => ({ id: id as EmotionId })),
+      px,
       theme,
-    )}"><span>${caption}</span>${note ? `<small>${note}</small>` : ''}</button>`;
+    );
+    const x = c.getContext('2d');
+    x?.clearRect(0, 0, px, px);
+    x?.drawImage(src, 0, 0);
+    requestAnimationFrame(next);
+  };
+  requestAnimationFrame(next);
+}
+const seen = new IntersectionObserver(
+  (es) => {
+    for (const e of es)
+      if (e.isIntersecting) {
+        seen.unobserve(e.target);
+        queue.push(e.target as HTMLCanvasElement);
+      }
+    pump();
+  },
+  { rootMargin: '200px' },
+);
+function tile(ids: EmotionId[], size: number, caption: string, note = ''): string {
+  const px = Math.round(size * dpr);
+  return `<button type="button" class="wb-tile" data-ids="${ids.join(',')}" aria-label="${describe(ids)}">
+    <canvas data-ids="${ids.join(',')}" width="${px}" height="${px}" style="width:${size}px" aria-hidden="true"></canvas><span>${caption}</span>${note ? `<small>${note}</small>` : ''}</button>`;
+}
+function watch(box: HTMLElement): void {
+  box.querySelectorAll('canvas').forEach((c) => seen.observe(c));
 }
 const label = (ids: EmotionId[]) => ids.map((id) => EMOTIONS[id].label).join(' + ');
 function renderSheets(): void {
+  queue.length = 0;
   $('#singles').innerHTML = EMOTION_IDS.map((id) => tile([id], 112, EMOTIONS[id].label)).join('');
   $('#examples').innerHTML = EXAMPLES.map((x) => tile(x.ids, 150, label(x.ids), x.description)).join('');
+  watch($('#singles'));
+  watch($('#examples'));
   if (allShown) renderAll();
 }
 let allShown = false;
 function renderAll(): void {
-  const box = $('#all'),
-    list = allSelections();
-  box.innerHTML = '';
-  let i = 0;
-  const step = () => {
-    const end = Math.min(list.length, i + 12);
-    box.insertAdjacentHTML(
-      'beforeend',
-      list
-        .slice(i, end)
-        .map((ids) => tile(ids, 72, label(ids)))
-        .join(''),
-    );
-    i = end;
-    if (i < list.length) requestAnimationFrame(step);
-  };
-  step();
+  const box = $('#all');
+  box.innerHTML = allSelections()
+    .map((ids) => tile(ids, 72, label(ids)))
+    .join('');
+  watch(box);
 }
 $('#showAll').addEventListener('click', (e) => {
   allShown = true;
@@ -218,4 +247,5 @@ document.addEventListener('click', (e) => {
 
 paintTheme();
 apply();
-renderSheets();
+/* the live stone first; the sheets once it has had a moment to start */
+setTimeout(renderSheets, 400);
