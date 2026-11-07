@@ -3,12 +3,12 @@ import { fa, fmtDay } from '@daroon/shared';
 import { $, esc } from '../core/util';
 import { avatarHTML } from '../features/account';
 import { mqReduce, reduced } from '../sculpture/engine';
-import { pickAnchor, usingGL } from '../stage/stage';
+import { Stage, grow, pickAnchor, usingGL } from '../stage/stage';
 import { S, syncEngine } from '../state/app';
-import { DB, visible } from '../state/store';
+import { DB, dayList, visible } from '../state/store';
 import { IC } from './icons';
 import { canInstall } from '../features/install';
-import { dayDetailHTML, monthHTML, weekHTML } from '../views/archive';
+import { dayDetailHTML, entryDetailHTML, monthHTML, weekHTML } from '../views/archive';
 
 /* sheets */
 export function openSheet(kind: string, html: string, label?: string) {
@@ -40,15 +40,88 @@ export function openDaySheet(k) {
     fmtDay(k),
   );
 }
+/* one check-in in a sheet of its own; its living sculpture rises out of the mark that was tapped */
+const GRAB = '<span class="grab" aria-hidden="true"></span>';
+function flyFrom(r?: DOMRect | null) {
+  if (!r || r.width < 4 || reduced() || !Stage.anchor?.closest?.('#layer')) return;
+  const g = grow(r);
+  Stage.from = { x: g.left, y: g.top, w: g.width, h: g.height };
+  Stage.t0 = performance.now();
+  Stage.dur = 640;
+}
+export function openEntry(id: string, from?: Element | null) {
+  const e = DB.entries.find((x) => x.id === id && !x.deletedAt);
+  if (!e) return;
+  const r = from?.getBoundingClientRect() || null;
+  S.entry = id;
+  const label = `ردپای ساعت ${fa(e.time)}`;
+  if (S.sheet === 'day' && $('#layer .sheet')) {
+    // from the day's sheet: the same sheet goes one level in, with a way back to the day
+    S.entFrom = 'day';
+    S.sheet = 'entry';
+    const L = $('#layer .sheet');
+    L.setAttribute('aria-label', label);
+    L.innerHTML = GRAB + entryDetailHTML(e, true);
+    syncEngine();
+    requestAnimationFrame(() => {
+      pickAnchor();
+      flyFrom(r);
+      L.querySelector('[data-autofocus]')?.focus({ preventScroll: true });
+    });
+    return;
+  }
+  S.entFrom = null;
+  openSheet('entry', entryDetailHTML(e), label);
+  // the tapped mark has gone up into the sheet; the title takes focus, not the first arrow
+  from?.closest('.ent')?.classList.add('is-open');
+  requestAnimationFrame(() => {
+    flyFrom(r);
+    ($('#layer .ed-title') as HTMLElement | null)?.focus({ preventScroll: true });
+  });
+}
+/** Another check-in of the same day, in place: the sculpture changes shape where it stands. */
+export function stepEntry(d: number) {
+  const e = DB.entries.find((x) => x.id === S.entry && !x.deletedAt);
+  const L = $('#layer .sheet');
+  if (!e || !L) return;
+  const list = dayList(e.day);
+  const next = list[list.findIndex((x) => x.id === e.id) + d];
+  if (!next) return;
+  S.entry = next.id;
+  L.innerHTML = GRAB + entryDetailHTML(next, S.entFrom === 'day');
+  L.querySelector('.ed-info')?.classList.add('step', d > 0 ? 'fwd' : 'back');
+  syncEngine();
+  requestAnimationFrame(() => {
+    pickAnchor();
+    // keep focus on the arrow that was used, or on the title once that end of the day is reached
+    const f =
+      (L.querySelector(`[data-act=entGo][data-d="${d}"]:not([disabled])`) as HTMLElement | null) ||
+      (L.querySelector('[data-autofocus]') as HTMLElement | null);
+    f?.focus({ preventScroll: true });
+  });
+}
+/** Back from a check-in to the day's sheet it was opened from. */
+export function backToDay() {
+  S.entry = null;
+  S.entFrom = null;
+  S.sheet = 'day';
+  const L = $('#layer .sheet');
+  L?.setAttribute('aria-label', fmtDay(S.arch.sel));
+  fillDaySheet();
+  syncEngine();
+}
 export function closeSheet(instant = false) {
   if (!S.sheet) return;
   const L = $('#layer');
   S.sheet = null;
+  S.entry = null;
+  S.entFrom = null;
   S.confirmDel = null;
   const done = () => {
     L.innerHTML = '';
     L.classList.remove('out');
   };
+  document.querySelectorAll('.ent.is-open').forEach((el) => el.classList.remove('is-open'));
   if (instant || reduced()) done();
   else {
     L.classList.add('out');

@@ -116,6 +116,40 @@ test('deleting can be undone, and works without an account', async ({ page }) =>
   expect(await page.evaluate(`__daroon.DB.entries.find(e => e.id === '${id}').deletedAt`)).toBeNull();
 });
 
+test('a check-in opens in its own sheet, steps through its day, and leads to editing', async ({ page }) => {
+  await open(page);
+  await page.click('[data-act=loginSkip]');
+  await settle(page, 900);
+  // the past day with the most sample check-ins
+  const day = await page.evaluate(() => {
+    const D = (window as any).__daroon,
+      c = new Map<string, number>();
+    for (const e of D.DB.entries) if (!e.deletedAt && e.day <= D.todayKey()) c.set(e.day, (c.get(e.day) || 0) + 1);
+    return [...c.entries()].sort((a, b) => b[1] - a[1])[0];
+  });
+  test.skip(!day || day[1] < 2, 'no day with two sample entries');
+  await page.evaluate((d) => {
+    const D = (window as any).__daroon;
+    D.S.arch.mode = 'week';
+    D.S.arch.sel = d;
+    D.S.arch.cursor = d;
+    D.go('archive', { push: false });
+  }, day[0]);
+  await settle(page, 1500);
+  await page.click('.wk2-list .ent-card >> nth=0', { position: { x: 120, y: 20 } });
+  await settle(page, 900);
+  const first = await page.evaluate('__daroon.S.entry');
+  expect(await page.evaluate('__daroon.S.sheet')).toBe('entry');
+  expect(await page.locator('#layer .ed-title').count()).toBe(1);
+  await page.click('#layer [data-act=entGo][data-d="1"]');
+  await settle(page, 600);
+  expect(await page.evaluate('__daroon.S.entry')).not.toBe(first);
+  await page.click('#layer [data-act=edit]');
+  await settle(page, 900);
+  expect(await page.evaluate('__daroon.S.view')).toBe('reflect');
+  expect(await page.evaluate('__daroon.S.sheet')).toBeNull();
+});
+
 test('the email sign-in sheet validates the address before asking the server', async ({ page }) => {
   await open(page);
   await page.click('.login-acts [data-act=loginEmail]');

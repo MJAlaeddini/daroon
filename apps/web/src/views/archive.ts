@@ -205,7 +205,7 @@ export const entryColor = (e) =>
   e.emotions.length ? palFor(e.emotions[0].key, e.emotions[0].color)[1] : NEUTRAL_PAL[1];
 /**
  * One check-in as a card: its shape, when and with whom, its feelings as soft capsules in their own colours, the
- * note. On a phone the card is swiped to the left to show its actions underneath (delete at the outer edge, as in a
+ * note. A tap on the card (or its shape, for the keyboard) opens the check-in in a sheet of its own. On a phone the card is swiped to the left to show its actions underneath (delete at the outer edge, as in a
  * mail app); with a mouse or a keyboard the same actions open from a quiet «⋯».
  */
 export function entryHTML(e, next?) {
@@ -219,8 +219,8 @@ export function entryHTML(e, next?) {
       <button class="sw-del" data-act="delYes" data-id="${e.id}" tabindex="-1">${IC.trash}<span>حذف</span></button>
       <button class="sw-edit" data-act="edit" data-id="${e.id}" tabindex="-1">${IC.edit}<span>ویرایش</span></button>
     </div>
-    <div class="ent-card">
-      <div class="ent-mark ${e.emotions.length ? '' : 'un'}">${traceImg(entrySpec(e))}</div>
+    <div class="ent-card" data-act="openEnt" data-id="${e.id}">
+      <button class="ent-mark ${e.emotions.length ? '' : 'un'}" data-act="openEnt" data-id="${e.id}" aria-label="دیدن ردپای ساعت ${t}">${traceImg(entrySpec(e))}</button>
       <div class="ent-body">
         <p class="ent-when"><span class="num">${t}</span>${scenes.length ? `<span>${scenes.join('، ')}</span>` : ''}${e.demo ? '<span class="ent-demo">نمونه</span>' : ''}</p>
         <p class="ent-feels">${feels}</p>
@@ -232,6 +232,42 @@ export function entryHTML(e, next?) {
         <span class="ent-acts"><button class="tool" data-act="edit" data-id="${e.id}" aria-label="ویرایش ردپای ساعت ${t}" title="ویرایش">${IC.edit}</button><button class="tool danger del" data-act="askDel" data-id="${e.id}" aria-label="حذف ردپای ساعت ${t}" title="حذف">${IC.trash}<span class="del-t" aria-hidden="true">حذف؟</span></button></span>
       </div>
     </div></li>`;
+}
+/**
+ * One check-in opened on its own: the living sculpture of that moment, when it was, its feelings, where, the whole
+ * note, then what can be done with it. When the day has several, the top bar steps between them; opened from the
+ * day's sheet, it also leads back to the day.
+ */
+export function entryDetailHTML(e, back = false) {
+  const list = dayList(e.day),
+    i = list.findIndex((x) => x.id === e.id),
+    n = list.length,
+    t = fa(e.time),
+    j = jOfKey(e.day),
+    scenes = (e.scenes || []).filter(isScene).map((s) => SCENES[s]);
+  const feels = e.emotions.length
+    ? e.emotions.map((x) => `<span style="--c1:${palFor(x.key, x.color)[1]}">${esc(labelOf(x.key))}</span>`).join('')
+    : '<span class="un">حالی بی‌نام</span>';
+  const pager =
+    n > 1
+      ? `<span class="ed-pager"><button class="ib" data-act="entGo" data-d="-1" aria-label="ردپای قبلی" ${i <= 0 ? 'disabled' : ''}>${IC.prev}</button><span class="num" aria-live="polite">${fa(i + 1)} از ${fa(n)}</span><button class="ib" data-act="entGo" data-d="1" aria-label="ردپای بعدی" ${i >= n - 1 ? 'disabled' : ''}>${IC.next}</button></span>`
+      : '<span></span>';
+  return `<div class="sheet-top ed-top">${back ? `<button class="back" data-act="entBack">${IC.back}روز</button>` : '<span></span>'}${pager}<button class="quiet" data-act="closeSheet">بستن</button></div>
+    <div class="sheet-scroll ed">
+      <div class="ed-stage"><div class="anchor-ent" data-anchor data-over data-scale=".5"></div></div>
+      <div class="ed-info">
+        <h2 class="ed-title" tabindex="-1" data-autofocus>${WD[wdIndex(e.day)]}، ${fa(j.jd)} ${J_MONTHS[j.jm - 1]}<span class="ed-time">ساعت <span class="num">${t}</span></span></h2>
+        <p class="ent-feels ed-feels">${feels}</p>
+        ${scenes.length ? `<p class="ed-scenes">${scenes.map((s) => `<span>${s}</span>`).join('')}</p>` : ''}
+        ${ctxLine(e.context)}
+        ${e.note ? `<p class="ed-note">${esc(e.note)}</p>` : ''}
+        ${e.demo ? '<p class="ed-demo">این یه ردپای نمونه‌ست.</p>' : ''}
+      </div>
+      <div class="ed-acts">
+        <button class="ed-edit" data-act="edit" data-id="${e.id}">${IC.edit}ویرایش</button>
+        <button class="ed-del" data-act="askDel" data-id="${e.id}" aria-label="حذف این ردپا">${IC.trash}<span class="ed-del-l">حذف</span><span class="ed-del-q" aria-hidden="true">حذف؟</span></button>
+      </div>
+    </div>`;
 }
 /** The day's entries (or what to say when there are none), shared by the day detail and the phone week view. */
 export function dayEntriesHTML(k: string) {

@@ -14,7 +14,17 @@ import { installNow, openInstall } from './features/install';
 import { selectDay } from './ui/day-select';
 import { closeDone } from './ui/done';
 import { back, go, hintPath, refreshArchive, refreshExplore, renderView } from './ui/render';
-import { closeSheet, fillDaySheet, gotoSetPage, openDaySheet, openSettings, refreshSettings } from './ui/sheets';
+import {
+  backToDay,
+  closeSheet,
+  fillDaySheet,
+  gotoSetPage,
+  openDaySheet,
+  openEntry,
+  openSettings,
+  refreshSettings,
+  stepEntry,
+} from './ui/sheets';
 import { applyTheme, themeChanged } from './ui/theme';
 import { toast } from './ui/toast';
 import { dayDetailHTML, jumpHTML } from './views/archive';
@@ -434,6 +444,17 @@ export const ACT = {
     S.view = 'reflect';
     renderView();
   },
+  /* a check-in opens in a sheet of its own; its sculpture rises out of the tapped card's mark */
+  openEnt(el) {
+    const mark = el.closest('.ent')?.querySelector('.ent-mark');
+    openEntry(el.dataset.id, mark);
+  },
+  entGo(el) {
+    stepEntry(+el.dataset.d);
+  },
+  entBack() {
+    backToDay();
+  },
   entMore(el) {
     toggleEntActs(el);
   },
@@ -445,6 +466,12 @@ export const ACT = {
     const e = DB.entries.find((x) => x.id === el.dataset.id && !x.deletedAt);
     if (!e) return;
     disarmDelete(el);
+    // from a check-in's own sheet: the sheet goes down first, then the check-in is gone (with an undo)
+    if (el.closest('#layer')) {
+      closeSheet();
+      deleteEntry(e);
+      return;
+    }
     const row = el.closest('.ent');
     if (row && !reduced()) {
       // the row folds away before the list is redrawn without it
