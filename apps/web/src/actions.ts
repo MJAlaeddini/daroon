@@ -14,7 +14,17 @@ import { installNow, openInstall } from './features/install';
 import { selectDay } from './ui/day-select';
 import { closeDone } from './ui/done';
 import { back, go, hintPath, refreshArchive, refreshExplore, renderView } from './ui/render';
-import { closeSheet, fillDaySheet, gotoSetPage, openDaySheet, openSettings, refreshSettings } from './ui/sheets';
+import {
+  backToDay,
+  closeSheet,
+  fillDaySheet,
+  gotoSetPage,
+  openDaySheet,
+  openEntry,
+  openSettings,
+  refreshSettings,
+  stepEntry,
+} from './ui/sheets';
 import { applyTheme, themeChanged } from './ui/theme';
 import { toast } from './ui/toast';
 import { dayDetailHTML, jumpHTML } from './views/archive';
@@ -434,6 +444,20 @@ export const ACT = {
     S.view = 'reflect';
     renderView();
   },
+  /* a check-in opens in a sheet of its own; its sculpture rises out of the tapped card's mark */
+  openEnt(el) {
+    const mark = el.closest('.ent')?.querySelector('.ent-mark');
+    openEntry(el.dataset.id, mark);
+  },
+  entGo(el) {
+    stepEntry(+el.dataset.d);
+  },
+  entBack() {
+    backToDay();
+  },
+  entMore(el) {
+    toggleEntActs(el);
+  },
   askDel(el) {
     armDelete(el);
   },
@@ -442,6 +466,12 @@ export const ACT = {
     const e = DB.entries.find((x) => x.id === el.dataset.id && !x.deletedAt);
     if (!e) return;
     disarmDelete(el);
+    // from a check-in's own sheet: the sheet goes down first, then the check-in is gone (with an undo)
+    if (el.closest('#layer')) {
+      closeSheet();
+      deleteEntry(e);
+      return;
+    }
     const row = el.closest('.ent');
     if (row && !reduced()) {
       // the row folds away before the list is redrawn without it
@@ -589,6 +619,37 @@ export function reRenderDetail() {
 export function reRenderJump() {
   const j = $('.jump');
   if (j) j.outerHTML = jumpHTML();
+}
+
+/* an entry's «⋯» opens a small pill of its actions in place; a tap anywhere else or Escape closes it */
+function closeEntActs(box) {
+  if (!box.classList.contains('open')) return;
+  box.classList.remove('open');
+  box.querySelector('.more')?.setAttribute('aria-expanded', 'false');
+  const del = box.querySelector('.tool.del.arm');
+  if (del) disarmDelete(del);
+  document.removeEventListener('pointerdown', box._away, true);
+  document.removeEventListener('keydown', box._key, true);
+}
+function toggleEntActs(b) {
+  const box = b.closest('.ent-tools');
+  if (!box) return;
+  const opening = !box.classList.contains('open');
+  document.querySelectorAll('.ent-tools.open').forEach(closeEntActs);
+  if (!opening) return;
+  box.classList.add('open');
+  b.setAttribute('aria-expanded', 'true');
+  box._away = (ev) => {
+    if (!box.contains(ev.target)) closeEntActs(box);
+  };
+  box._key = (ev) => {
+    if (ev.key !== 'Escape') return;
+    closeEntActs(box);
+    b.focus({ preventScroll: true });
+  };
+  document.addEventListener('pointerdown', box._away, true);
+  document.addEventListener('keydown', box._key, true);
+  box.querySelector('.ent-acts .tool')?.focus({ preventScroll: true });
 }
 
 /* delete in place: the trash icon opens into a «حذف؟» pill; a second tap deletes, anything else closes it */

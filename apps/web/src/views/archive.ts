@@ -22,7 +22,6 @@ import { traceImg } from '../sculpture/traces';
 import { S, isWide } from '../state/app';
 import { DB, dayList } from '../state/store';
 import { IC } from '../ui/icons';
-import { wordWithGlyph } from './common';
 
 /* archive */
 export function archTitle() {
@@ -162,34 +161,33 @@ export function weekHTML() {
       ${all.length >= 2 ? `<button class="storybtn" data-act="weekStory" data-w="${s0}"><span class="ring" style="--rg:${ringGrad(days)}"></span>${story ? 'داستان این هفته' : 'ساختن داستان این هفته'}</button>` : ''}</div>`;
   const strip = `<div class="wribbon" id="calGrid" role="group" aria-label="روزهای هفته">${ribbon}</div>`;
   if (isWide()) return strip + summary;
-  return `<div class="wk2">${strip}${dayHeroHTML(A.sel)}<div class="wk2-list">${dayEntriesHTML(A.sel, true)}</div>${summary}</div>`;
+  return `<div class="wk2">${strip}${dayHeroHTML(A.sel)}<div class="wk2-list">${dayEntriesHTML(A.sel)}</div>${summary}</div>`;
 }
 /** The chosen day as one shape (the live sculpture takes this day's feelings), its words and a short count. */
+/**
+ * How a day reads in one line: how many check-ins and when. Persian commas and words, no «·», which in Persian
+ * digits reads as a zero.
+ */
+export function dayMeta(list: { time: string }[]) {
+  if (!list.length) return '';
+  const t = list.map((e) => e.time).sort();
+  return `${fa(list.length)} ردپا، ${t.length > 1 ? `از <span class="num">${fa(t[0])}</span> تا <span class="num">${fa(t[t.length - 1])}</span>` : `ساعت <span class="num">${fa(t[0])}</span>`}`;
+}
+/**
+ * The chosen day on a phone: its shape, then its date as the title and one line of when. The words live in the
+ * entries below, said once.
+ */
 export function dayHeroHTML(k: string) {
   const list = dayList(k),
     tk = todayKey(),
-    sp = daySpec(k);
-  const words = sp.items.length
-    ? sp.items.map((it) => `<span style="${cvarsFor(it)}">${esc(labelOf(it.key))}</span>`).join('<i>، </i>')
-    : list.length
-      ? 'حالی بی‌نام'
-      : k > tk
-        ? 'این روز هنوز نیومده'
-        : 'ردپایی نداره';
-  const times = list.map((e) => e.time).sort();
-  const meta = list.length
-    ? `${fa(list.length)} ردپا · ${times.length > 1 ? `${fa(times[0])} تا ${fa(times[times.length - 1])}` : `ساعت ${fa(times[0])}`}`
-    : '';
-  const j = jOfKey(k),
+    j = jOfKey(k),
     rel = k === tk ? 'امروز' : k === keyAdd(tk, -1) ? 'دیروز' : '';
-  return `<section class="wk2-day" aria-label="${fmtDay(k)}"><p class="wk2-date" aria-live="polite">${WD[wdIndex(k)]}، ${fa(j.jd)} ${J_MONTHS[j.jm - 1]}${rel ? ` · ${rel}` : ''}</p>
+  const meta = dayMeta(list) || (k > tk ? 'این روز هنوز نیومده.' : 'ردپایی نداره.');
+  return `<section class="wk2-day" aria-label="${fmtDay(k)}">
     <div class="wk2-stage"><div class="anchor-day" data-anchor data-scale=".5"></div></div>
-    <p class="wk2-words ${list.length ? '' : 'empty'}">${words}</p>${meta ? `<p class="wk2-meta num">${meta}</p>` : ''}</section>`;
+    <h2 class="wk2-title" aria-live="polite">${WD[wdIndex(k)]}، ${fa(j.jd)} ${J_MONTHS[j.jm - 1]}${rel ? `<span class="rel">${rel}</span>` : ''}</h2>
+    <p class="wk2-meta">${meta}</p></section>`;
 }
-const cvarsFor = (it) => {
-  const p = palFor(it.key, it.color);
-  return `--c1:${p[1]}`;
-};
 export function ringGrad(days) {
   const cs = days
     .map((k) => {
@@ -200,36 +198,83 @@ export function ringGrad(days) {
   if (!cs.length) return 'var(--line-2)';
   return `conic-gradient(${cs.concat(cs[0]).join(',')})`;
 }
-/** «خانواده، بیرون» after the time, when the check-in says who or what was around. */
-export function sceneLine(scenes?: string[]) {
-  const l = (scenes || []).filter(isScene).map((s) => SCENES[s]);
-  return l.length ? `<span class="ent-sc">${l.join('، ')}</span>` : '';
-}
 export function ctxLine(c) {
   return c ? `<p class="ent-ctx"><span>${c.name}:</span> ${esc(c.value)}</p>` : '';
 }
 export const entryColor = (e) =>
   e.emotions.length ? palFor(e.emotions[0].key, e.emotions[0].color)[1] : NEUTRAL_PAL[1];
-export function entryHTML(e, next?, bare = false) {
-  return `<li class="ent ${next ? 'has-next' : ''}" data-id="${e.id}" style="--ec:${entryColor(e)};--en:${next ? entryColor(next) : 'transparent'}">
-    <div class="ent-mark ${e.emotions.length ? '' : 'un'}">${traceImg(entrySpec(e))}</div>
-    <div class="ent-body">
-      <div class="ent-meta"><span class="num">${fa(e.time)}</span>${sceneLine(e.scenes)}${e.demo ? '<span class="tag">نمونه</span>' : ''}
-        <span class="ent-tools"><button class="tool" data-act="edit" data-id="${e.id}" aria-label="ویرایش ردپای ساعت ${fa(e.time)}" title="ویرایش">${IC.edit}</button><button class="tool danger del" data-act="askDel" data-id="${e.id}" aria-label="حذف ردپای ساعت ${fa(e.time)}" title="حذف">${IC.trash}<span class="del-t" aria-hidden="true">حذف؟</span></button></span></div>
-      ${bare ? '' : e.emotions.length ? `<p class="ent-words">${e.emotions.map((x) => wordWithGlyph(x.key, x.color)).join('')}</p>` : `<p class="ent-words un">حالی بی‌نام</p>`}
-      ${ctxLine(e.context)}
-      ${e.note ? `<p class="ent-note">${esc(e.note)}</p>` : ''}
+/**
+ * One check-in as a card: its shape, when and with whom, its feelings as soft capsules in their own colours, the
+ * note. A tap on the card (or its shape, for the keyboard) opens the check-in in a sheet of its own. On a phone the card is swiped to the left to show its actions underneath (delete at the outer edge, as in a
+ * mail app); with a mouse or a keyboard the same actions open from a quiet «⋯».
+ */
+export function entryHTML(e, next?) {
+  const t = fa(e.time),
+    scenes = (e.scenes || []).filter(isScene).map((s) => SCENES[s]);
+  const feels = e.emotions.length
+    ? e.emotions.map((x) => `<span style="--c1:${palFor(x.key, x.color)[1]}">${esc(labelOf(x.key))}</span>`).join('')
+    : '<span class="un">حالی بی‌نام</span>';
+  return `<li class="ent ${next ? 'has-next' : ''}" data-id="${e.id}" style="--ec:${entryColor(e)}">
+    <div class="ent-swipe" aria-hidden="true">
+      <button class="sw-del" data-act="delYes" data-id="${e.id}" tabindex="-1">${IC.trash}<span>حذف</span></button>
+      <button class="sw-edit" data-act="edit" data-id="${e.id}" tabindex="-1">${IC.edit}<span>ویرایش</span></button>
+    </div>
+    <div class="ent-card" data-act="openEnt" data-id="${e.id}">
+      <button class="ent-mark ${e.emotions.length ? '' : 'un'}" data-act="openEnt" data-id="${e.id}" aria-label="دیدن ردپای ساعت ${t}">${traceImg(entrySpec(e))}</button>
+      <div class="ent-body">
+        <p class="ent-when"><span class="num">${t}</span>${scenes.length ? `<span>${scenes.join('، ')}</span>` : ''}${e.demo ? '<span class="ent-demo">نمونه</span>' : ''}</p>
+        <p class="ent-feels">${feels}</p>
+        ${ctxLine(e.context)}
+        ${e.note ? `<p class="ent-note">${esc(e.note)}</p>` : ''}
+      </div>
+      <div class="ent-tools">
+        <button class="tool more" data-act="entMore" data-id="${e.id}" aria-expanded="false" aria-label="ویرایش یا حذف ردپای ساعت ${t}">${IC.more}</button>
+        <span class="ent-acts"><button class="tool" data-act="edit" data-id="${e.id}" aria-label="ویرایش ردپای ساعت ${t}" title="ویرایش">${IC.edit}</button><button class="tool danger del" data-act="askDel" data-id="${e.id}" aria-label="حذف ردپای ساعت ${t}" title="حذف">${IC.trash}<span class="del-t" aria-hidden="true">حذف؟</span></button></span>
+      </div>
     </div></li>`;
 }
 /**
- * The day's entries (or what to say when there are none), shared by the day detail and the phone week view. Under
- * the phone's day (`underDay`), a lone entry doesn't repeat the words the day above already shows.
+ * One check-in opened on its own: the living sculpture of that moment, when it was, its feelings, where, the whole
+ * note, then what can be done with it. When the day has several, the top bar steps between them; opened from the
+ * day's sheet, it also leads back to the day.
  */
-export function dayEntriesHTML(k: string, underDay = false) {
+export function entryDetailHTML(e, back = false) {
+  const list = dayList(e.day),
+    i = list.findIndex((x) => x.id === e.id),
+    n = list.length,
+    t = fa(e.time),
+    j = jOfKey(e.day),
+    scenes = (e.scenes || []).filter(isScene).map((s) => SCENES[s]);
+  const feels = e.emotions.length
+    ? e.emotions.map((x) => `<span style="--c1:${palFor(x.key, x.color)[1]}">${esc(labelOf(x.key))}</span>`).join('')
+    : '<span class="un">حالی بی‌نام</span>';
+  const pager =
+    n > 1
+      ? `<span class="ed-pager"><button class="ib" data-act="entGo" data-d="-1" aria-label="ردپای قبلی" ${i <= 0 ? 'disabled' : ''}>${IC.prev}</button><span class="num" aria-live="polite">${fa(i + 1)} از ${fa(n)}</span><button class="ib" data-act="entGo" data-d="1" aria-label="ردپای بعدی" ${i >= n - 1 ? 'disabled' : ''}>${IC.next}</button></span>`
+      : '<span></span>';
+  return `<div class="sheet-top ed-top">${back ? `<button class="back" data-act="entBack">${IC.back}روز</button>` : '<span></span>'}${pager}<button class="quiet" data-act="closeSheet">بستن</button></div>
+    <div class="sheet-scroll ed">
+      <div class="ed-stage"><div class="anchor-ent" data-anchor data-over data-scale=".5"></div></div>
+      <div class="ed-info">
+        <h2 class="ed-title" tabindex="-1" data-autofocus>${WD[wdIndex(e.day)]}، ${fa(j.jd)} ${J_MONTHS[j.jm - 1]}<span class="ed-time">ساعت <span class="num">${t}</span></span></h2>
+        <p class="ent-feels ed-feels">${feels}</p>
+        ${scenes.length ? `<p class="ed-scenes">${scenes.map((s) => `<span>${s}</span>`).join('')}</p>` : ''}
+        ${ctxLine(e.context)}
+        ${e.note ? `<p class="ed-note">${esc(e.note)}</p>` : ''}
+        ${e.demo ? '<p class="ed-demo">این یه ردپای نمونه‌ست.</p>' : ''}
+      </div>
+      <div class="ed-acts">
+        <button class="ed-edit" data-act="edit" data-id="${e.id}">${IC.edit}ویرایش</button>
+        <button class="ed-del" data-act="askDel" data-id="${e.id}" aria-label="حذف این ردپا">${IC.trash}<span class="ed-del-l">حذف</span><span class="ed-del-q" aria-hidden="true">حذف؟</span></button>
+      </div>
+    </div>`;
+}
+/** The day's entries (or what to say when there are none), shared by the day detail and the phone week view. */
+export function dayEntriesHTML(k: string) {
   const list = dayList(k),
     tk = todayKey();
   return list.length
-    ? `<ol class="ents">${list.map((e, i) => entryHTML(e, list[i + 1], underDay && list.length === 1)).join('')}</ol>${k === tk ? '<div class="dd-empty"><button class="link" data-act="newToday">ردپای تازه برای امروز</button></div>' : ''}`
+    ? `<ol class="ents">${list.map((e, i) => entryHTML(e, list[i + 1])).join('')}</ol>${k === tk ? '<div class="dd-empty"><button class="link" data-act="newToday">ردپای تازه برای امروز</button></div>' : ''}`
     : `<div class="dd-empty">${k > tk ? '' : k === tk ? '<button class="primary" data-act="newToday">ثبت ردپای امروز</button>' : '<p>لازم نیست همه‌ی روزها ثبت بشن.</p>'}</div>`;
 }
 export function dayDetailHTML(k: string, inSheet?: boolean): any {
@@ -237,8 +282,8 @@ export function dayDetailHTML(k: string, inSheet?: boolean): any {
     j = jOfKey(k),
     tk = todayKey();
   const head = `<div class="dd-head">
-    <div class="dd-title"><p class="eyebrow">${WD[wdIndex(k)]}${k === tk ? ' · امروز' : ''}</p><h2 class="ed" tabindex="-1" id="ddTitle">${fa(j.jd)} ${J_MONTHS[j.jm - 1]} ${fa(j.jy)}</h2>
-      <p class="dd-meta">${list.length ? `${fa(list.length)} ردپا` : ''}</p></div></div>`;
+    <div class="dd-title"><p class="eyebrow">${WD[wdIndex(k)]}${k === tk ? '، امروز' : ''}</p><h2 class="ed" tabindex="-1" id="ddTitle">${fa(j.jd)} ${J_MONTHS[j.jm - 1]} ${fa(j.jy)}</h2>
+      <p class="dd-meta">${dayMeta(list)}</p></div></div>`;
   const body = list.length
     ? dayEntriesHTML(k)
     : `<div class="dd-empty">${k > tk ? '<p>این روز هنوز نیومده.</p>' : k === tk ? '<p>امروز هنوز ردپایی نداره.</p><button class="primary" data-act="newToday">ثبت ردپای امروز</button>' : '<p>این روز ردپایی نداره. لازم نیست همه‌ی روزها ثبت بشن.</p>'}</div>`;

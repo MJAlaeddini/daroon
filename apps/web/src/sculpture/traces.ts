@@ -42,9 +42,57 @@ export function traceImg(spec) {
   }
   return `<img class="tr" alt="" data-tk="${k}" src="${src}" draggable="false">`;
 }
+/* Every mark is drawn at the same visual weight: a bloom spreads and a sag shrinks inside the shader, so a row of
+   raw marks looks uneven. Each one is measured (how much body it has and how far it reaches) and rescaled around its
+   own centre of mass, so they all carry the same weight and sit optically centred. */
+const fitCanvas = document.createElement('canvas');
+fitCanvas.width = fitCanvas.height = miniCanvas.width;
+const fitCtx = fitCanvas.getContext('2d', { willReadFrequently: true });
+/** The share of the square the body should cover, and the most of its width it may reach. */
+const BODY = 0.3,
+  REACH = 0.86,
+  ALPHA = 48;
+function normalize(): string {
+  const n = fitCanvas.width;
+  if (!fitCtx) return miniCanvas.toDataURL('image/png');
+  fitCtx.clearRect(0, 0, n, n);
+  fitCtx.drawImage(miniCanvas, 0, 0);
+  const px = fitCtx.getImageData(0, 0, n, n).data;
+  let mass = 0,
+    cx = 0,
+    cy = 0,
+    x0 = n,
+    y0 = n,
+    x1 = 0,
+    y1 = 0;
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      const a = px[(y * n + x) * 4 + 3];
+      if (a < ALPHA) continue;
+      const w = a / 255;
+      mass += w;
+      cx += x * w;
+      cy += y * w;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+  if (mass < 20) return miniCanvas.toDataURL('image/png');
+  cx /= mass;
+  cy /= mass;
+  // equal area first; never so large that the farthest reach leaves the square
+  const reach = Math.max(cx - x0, x1 - cx, cy - y0, y1 - cy) + 1;
+  const s = Math.min(Math.sqrt((BODY * n * n) / mass), (REACH * n) / 2 / reach, 2.2);
+  fitCtx.clearRect(0, 0, n, n);
+  fitCtx.setTransform(s, 0, 0, s, n / 2 - cx * s, n / 2 - cy * s);
+  fitCtx.drawImage(miniCanvas, 0, 0);
+  fitCtx.setTransform(1, 0, 0, 1, 0, 0);
+  return fitCanvas.toDataURL('image/png');
+}
 export function renderTraceNow(spec) {
   mini.draw(buildU(staticState(spec), 0.5, 0.7));
-  return miniCanvas.toDataURL('image/png');
+  return normalize();
 }
 export function processTraces() {
   const t0 = performance.now();

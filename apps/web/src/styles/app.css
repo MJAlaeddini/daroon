@@ -2270,14 +2270,7 @@ button.hw[aria-expanded='true'] {
   display: grid;
   gap: 12px;
 }
-.wk2-date {
-  margin: 6px 0 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-3);
-  animation: fade 0.45s var(--ease);
-}
-/* the chosen day stands free on the page, like the home screen: date, its shape, its words */
+/* the chosen day stands free on the page, like the home screen: its shape, then its date and when */
 .wk2-day {
   display: grid;
   justify-items: center;
@@ -2294,42 +2287,26 @@ button.hw[aria-expanded='true'] {
   width: min(62vw, 230px);
   aspect-ratio: 1;
 }
-.wk2-words {
-  margin: 0;
+.wk2-title {
+  margin: 6px 0 0;
   font-family: var(--f-ed);
   font-size: 22px;
-  font-weight: 750;
-  line-height: 1.6;
+  font-weight: 800;
+  line-height: 1.5;
   animation: fade 0.45s var(--ease);
 }
-.wk2-words span {
-  color: var(--ink);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklab, var(--c1) 80%, transparent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 8px;
-  text-decoration-skip-ink: none;
-}
-.wk2-words i {
-  font-style: normal;
-  color: var(--ink-3);
-}
-.wk2-words.empty {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--ink-3);
+.wk2-title .rel {
+  margin-inline-start: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  vertical-align: 3px;
 }
 .wk2-meta {
   margin: 0;
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: fade 0.45s var(--ease);
-}
-.wk2-meta {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-3);
+  animation: fade 0.45s var(--ease);
 }
 .wk2-list .ents {
   margin-top: 4px;
@@ -2412,40 +2389,161 @@ button.hw[aria-expanded='true'] {
 .dd-body {
   min-height: 0;
 }
+/* each check-in is its own card, laid over its actions; on a phone the card is swiped aside to reveal them */
 .ents {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
+  gap: 10px;
   position: relative;
 }
 .ent {
   position: relative;
-  display: grid;
-  grid-template-columns: 50px minmax(0, 1fr);
-  gap: 14px;
-  padding-block: 12px 16px;
+  border-radius: 22px;
   animation: rise 0.5s var(--ease) both;
 }
-.ent.has-next::after {
-  content: '';
+.ent-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 0 14px;
+  padding: 14px 16px 16px;
+  border-radius: inherit;
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    var(--glass-shadow);
+  touch-action: pan-y;
+}
+.sheet .ent-card {
+  background: color-mix(in oklab, var(--surface-2) 55%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+}
+.ent-card[data-act] {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* while its sheet is open, the card's mark has gone up into it */
+.ent-mark .tr {
+  transition: opacity 0.2s;
+}
+.ent.is-open .ent-mark .tr {
+  opacity: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ent-card[data-act] {
+    transition: box-shadow 0.25s var(--ease);
+  }
+  .ent-card[data-act]:hover {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--ec) 45%, var(--glass-line)),
+      var(--glass-shadow);
+  }
+}
+/* what lies under the card: delete at the outer edge, edit beside it */
+.ent-swipe {
   position: absolute;
-  top: 66px;
-  bottom: -10px;
-  inset-inline-start: 24px;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, var(--ec), var(--en));
-  opacity: 0.7;
-  -webkit-mask: linear-gradient(to bottom, transparent, #000 14px, #000 calc(100% - 14px), transparent);
-  mask: linear-gradient(to bottom, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  inset: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px;
+  border-radius: inherit;
+  visibility: hidden;
+}
+.ent.swiping .ent-swipe {
+  visibility: visible;
+}
+.ent-swipe button {
+  width: 68px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  border-radius: 17px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ent-swipe .ic {
+  width: 20px;
+  height: 20px;
+}
+.sw-del {
+  color: #fff;
+  background: var(--danger);
+}
+.sw-edit {
+  color: var(--ink);
+  background: var(--surface-2);
 }
 .ent-tools {
-  margin-inline-start: auto;
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 4px;
+}
+.tool.more {
+  color: var(--ink-3);
+  transition:
+    opacity 0.14s,
+    color 0.2s;
+}
+/* the actions open from the «⋯» as a small floating pill over the row, so nothing below moves */
+.ent-acts {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  z-index: 2;
   display: inline-flex;
-  gap: 0;
-  margin-block: -10px;
-  margin-inline-end: -8px;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow:
+    0 10px 28px -12px rgba(30, 20, 50, 0.35),
+    inset 0 0 0 1px var(--line);
+  transform-origin: left center;
+  opacity: 0;
+  scale: 0.86;
+  visibility: hidden;
+  transition:
+    opacity 0.12s,
+    scale 0.14s var(--ease-in),
+    visibility 0s 0.14s;
+}
+.ent-tools.open .ent-acts {
+  opacity: 1;
+  scale: 1;
+  visibility: visible;
+  transition:
+    opacity 0.16s,
+    scale 0.28s var(--ease),
+    visibility 0s;
+}
+.ent-tools.open .more {
+  opacity: 0;
+}
+/* on a touch screen the card is swiped instead; the «⋯» shows only if reached with a keyboard */
+@media (hover: none) {
+  .ent .more:not(:focus-visible) {
+    opacity: 0;
+  }
+  .ent-tools:not(.open):not(:focus-within) {
+    pointer-events: none;
+  }
+}
+/* with a mouse the «⋯» waits for the entry to be pointed at or reached with the keyboard */
+@media (hover: hover) and (pointer: fine) {
+  .ent .more {
+    opacity: 0;
+  }
+  .ent:hover .more,
+  .ent:focus-within .more {
+    opacity: 1;
+  }
+  .ent-tools.open .more {
+    opacity: 0;
+  }
 }
 .tool {
   position: relative;
@@ -2542,26 +2640,20 @@ button.hw[aria-expanded='true'] {
 .tool.del:active::before {
   transform: scale(0.96);
 }
-.ent-tools.arming .tool:not(.del) {
-  opacity: 0;
-  pointer-events: none;
+.ent-tools.arming .tool:not(.del, .more) {
+  display: none;
 }
 .ent-mark {
   position: relative;
-  z-index: 1;
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--bg);
 }
-.sheet .ent-mark {
-  background: var(--surface);
-}
+
 .ent-mark .tr {
-  width: 58px;
-  height: 58px;
+  width: 54px;
+  height: 54px;
   max-width: none;
 }
 .ent-mark.un::after {
@@ -2573,53 +2665,48 @@ button.hw[aria-expanded='true'] {
 }
 .ent-body {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
-.ent-meta {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--ink-3);
-  min-height: 28px;
-}
-.ent-sc::before {
-  content: '·';
-  margin-inline-end: 8px;
-}
-.tag {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 1px 8px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  color: var(--ink-2);
-  line-height: 1.8;
-}
-.ent-words {
+/* when, and with whom: a hairline between parts instead of «·», which in Persian digits reads as a zero */
+.ent-when {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 14px;
-  font-family: var(--f-ed);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.6;
+  align-items: baseline;
+  gap: 0 12px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--ink-3);
 }
-.ent-words .w {
-  display: inline-flex;
-  align-items: center;
+.ent-when .num {
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.ent-demo {
+  color: var(--accent);
+}
+/* the feelings as soft capsules, each tinted with its own colour; space separates them, no marks */
+.ent-feels {
+  margin: 6px 0 2px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
-.ent-words .glyph {
-  width: 16px;
-  height: 16px;
+.ent-feels span {
+  padding: 3px 13px 4px;
+  border-radius: 999px;
+  font-family: var(--f-ed);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink);
+  background: color-mix(in oklab, var(--c1) 22%, transparent);
 }
-.ent-words.un {
-  color: var(--ink-2);
+.ent-feels .un {
   font-weight: 500;
+  color: var(--ink-2);
+  background: var(--surface-2);
 }
 .ent-ctx {
   margin: 0;
@@ -2632,13 +2719,11 @@ button.hw[aria-expanded='true'] {
   font-weight: 500;
 }
 .ent-note {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-family: var(--f-ed);
   font-size: 15px;
   line-height: 1.95;
   color: var(--ink-2);
-  padding-inline-start: 12px;
-  border-inline-start: 2px solid var(--line-2);
   overflow-wrap: anywhere;
 }
 .dd-empty {
@@ -4400,4 +4485,169 @@ body[data-flow='1'] .navfade {
   .today-btn .tb-long {
     display: none;
   }
+}
+
+/* ───────── one check-in on its own: its living shape, when, its feelings, where, the whole note, what to do ───────── */
+.ed-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+.ed-top > :last-child {
+  justify-self: end;
+}
+.ed-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.ed-pager .ib:disabled {
+  opacity: 0.3;
+}
+.ed {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  padding-bottom: 6px;
+}
+.ed-stage {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  padding-block: 4px 2px;
+}
+.anchor-ent {
+  width: min(52vw, 200px);
+  aspect-ratio: 1;
+}
+.ed-info {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+}
+/* stepping to the day's next or previous check-in: the text slides in from the side it comes from */
+.ed-info.step {
+  animation: edStep 0.36s var(--ease) both;
+}
+.ed-info.step.back {
+  --from: 18px;
+}
+.ed-info.step.fwd {
+  --from: -18px;
+}
+@keyframes edStep {
+  from {
+    opacity: 0;
+    translate: var(--from, 0) 0;
+  }
+}
+.ed-title {
+  margin: 0;
+  font-family: var(--f-ed);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.ed-time {
+  display: block;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.ed-time .num {
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.ed-feels {
+  justify-content: center;
+  margin: 4px 0 0;
+}
+.ed-feels span {
+  padding: 5px 16px 6px;
+  font-size: 17px;
+}
+.ed-scenes {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.ed-scenes span {
+  padding: 2px 11px 3px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.ed .ent-ctx {
+  max-width: 34em;
+}
+.ed-note {
+  justify-self: stretch;
+  margin: 8px 0 0;
+  padding: 14px 18px 16px;
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--surface-2) 70%, var(--surface));
+  font-family: var(--f-ed);
+  font-size: 16px;
+  line-height: 2;
+  color: var(--ink);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.ed-demo {
+  margin: 0;
+  font-size: 12px;
+  color: var(--accent);
+}
+.ed-acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 18px;
+}
+.ed-acts button {
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  transition:
+    background 0.25s var(--ease),
+    color 0.25s var(--ease);
+}
+.ed-acts .ic {
+  width: 18px;
+  height: 18px;
+}
+.ed-edit {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+/* delete asks once in place: the button fills red and says so; a second tap deletes */
+.ed-del {
+  color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 10%, transparent);
+}
+.ed-del-q {
+  display: none;
+}
+.ed-del.arm {
+  color: #fff;
+  background: var(--danger);
+}
+.ed-del.arm .ed-del-l {
+  display: none;
+}
+.ed-del.arm .ed-del-q {
+  display: inline;
 }

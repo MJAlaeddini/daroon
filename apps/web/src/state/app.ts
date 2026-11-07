@@ -1,9 +1,9 @@
 import { jMonthLen, jOfKey, keyOfJ, todayKey, type SceneId } from '@daroon/shared';
 import { guideMods } from '../domain/guide';
 import { HOME_LABS, NEU_LABS } from '../domain/lexicon';
-import { aggregate, daySpec } from '../domain/specs';
+import { aggregate, daySpec, entrySpec } from '../domain/specs';
 import { engine } from '../stage/stage';
-import { dayList } from './store';
+import { DB, dayList } from './store';
 import { patternData } from '../views/patterns';
 
 /* ═════════════════════════ app state ═════════════════════════ */
@@ -32,6 +32,9 @@ export interface AppState {
   done: any;
   sheet: string | null;
   sheetReturn?: any;
+  /** The check-in open in its own sheet, and whether it was opened from the day's sheet. */
+  entry?: string | null;
+  entFrom?: 'day' | null;
   setPage?: string;
   confirmDel: string | null;
   lastDel: any;
@@ -77,7 +80,9 @@ export const FLOW = new Set(['explore', 'guide', 'reflect', 'login']);
 export function syncEngine() {
   const v = S.view;
   let spec;
-  if (v === 'archive') {
+  const open = S.sheet === 'entry' ? DB.entries.find((e) => e.id === S.entry && !e.deletedAt) : null;
+  if (open) spec = entrySpec(open);
+  else if (v === 'archive') {
     if (isWide() || S.sheet === 'day' || S.arch.mode === 'week')
       spec = dayList(S.arch.sel).length ? daySpec(S.arch.sel) : { items: [], neutral: 1 };
     else {

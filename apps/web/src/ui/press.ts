@@ -8,7 +8,7 @@
  */
 import { reduced } from '../sculpture/engine';
 
-const PRESSABLE = 'button, [role="button"], a.link, a.navrow, .chip, label.chip';
+const PRESSABLE = 'button, [role="button"], a.link, a.navrow, .chip, label.chip, .ent-card[data-act]';
 /** Opt out: something that already moves under the finger in its own way. */
 const OWN = '[data-nopress]';
 /** damping 25 / stiffness 250, sampled: arrives with 1.7 % overshoot (see .claude/skills/daroon-motion). */
