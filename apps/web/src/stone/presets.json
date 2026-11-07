@@ -1,0 +1,354 @@
+{
+  "project": "Daroon / درون — emotion stone procedural visual system",
+  "version": "0.1 design handoff",
+  "units": "normalized 0..1 except uplift -1..+1, frequency Hz, colors hex",
+  "renderer": {
+    "background": "#100E1B",
+    "shellCount": 4,
+    "radii": [0.58, 0.78, 0.94, 1.06],
+    "shellOpacity": [0.82, 0.43, 0.31, 0.25],
+    "roughness": 0.34,
+    "metalness": 0.0,
+    "ior": 1.23,
+    "environmentIntensity": 0.45,
+    "bloomStrength": 0.17,
+    "highlightStrength": 0.42,
+    "particleDensity": 0,
+    "motionTransitionSeconds": 1.3,
+    "motionTransitionEase": "smoothstep",
+    "reducedMotion": "disable oscillation but keep morph and shape"
+  },
+  "maxSelectedEmotions": 3,
+  "defaultBlendWeight": "equal, normalize provided intensities if present",
+  "orderIndependent": true,
+  "mixingRules": {
+    "geometry": "single unified base mesh, shape field uses weighted sum of distinct harmonic features; preserve emotion-specific peaks via nonlinear soft-max instead of averaging full meshes",
+    "color": "spatially distribute emotion colors in soft overlapping bands / sectors of the SAME shell; do not flat-average RGB or place separate stones beside each other",
+    "animation": "interpolate source weights to target weights for continuous geometry/material morph; compose pulse and tremor without adding all frequencies at full amplitude",
+    "determinism": "same unordered emotion IDs plus intensities produce same unique target form and palette. Seed = hash(sorted IDs)"
+  },
+  "emotions": {
+    "joy": {
+      "label_fa": "خوشحالی",
+      "palette": {
+        "outer": "#F3B4C6",
+        "middle": "#F4A979",
+        "core": "#FFE0AB"
+      },
+      "shape": {
+        "lobes": 5,
+        "asymmetry": 0.45,
+        "sharpness": 0.05,
+        "uplift": 0.65,
+        "compression": 0.04,
+        "turbulence": 0.14
+      },
+      "motion": {
+        "drift": 0.1,
+        "tremor": 0.04,
+        "breathHz": 0.2,
+        "pulseHz": 0.19
+      },
+      "light": {
+        "glow": 0.03
+      }
+    },
+    "hope": {
+      "label_fa": "امید",
+      "palette": {
+        "outer": "#A5BCEB",
+        "middle": "#C8B5DF",
+        "core": "#F5DCAB"
+      },
+      "shape": {
+        "lobes": 4,
+        "asymmetry": 0.36,
+        "sharpness": 0.02,
+        "uplift": 0.84,
+        "compression": 0.07,
+        "turbulence": 0.12
+      },
+      "motion": {
+        "drift": 0.09,
+        "tremor": 0.02,
+        "breathHz": 0.13,
+        "pulseHz": 0.17
+      },
+      "light": {
+        "glow": 0.01
+      }
+    },
+    "calm": {
+      "label_fa": "آرامش",
+      "palette": {
+        "outer": "#87B8D8",
+        "middle": "#92CBCD",
+        "core": "#D9D9D9"
+      },
+      "shape": {
+        "lobes": 3,
+        "asymmetry": 0.22,
+        "sharpness": 0.01,
+        "uplift": 0.15,
+        "compression": 0.02,
+        "turbulence": 0.03
+      },
+      "motion": {
+        "drift": 0.07,
+        "tremor": 0.01,
+        "breathHz": 0.1,
+        "pulseHz": 0.1
+      },
+      "light": {
+        "glow": 0.01
+      }
+    },
+    "longing": {
+      "label_fa": "اشتیاق",
+      "palette": {
+        "outer": "#BE6297",
+        "middle": "#E8938A",
+        "core": "#FFD09B"
+      },
+      "shape": {
+        "lobes": 4,
+        "asymmetry": 0.61,
+        "sharpness": 0.24,
+        "uplift": 0.67,
+        "compression": 0.16,
+        "turbulence": 0.23
+      },
+      "motion": {
+        "drift": 0.2,
+        "tremor": 0.07,
+        "breathHz": 0.19,
+        "pulseHz": 0.24
+      },
+      "light": {
+        "glow": 0.07
+      }
+    },
+    "intimacy": {
+      "label_fa": "صمیمیت",
+      "palette": {
+        "outer": "#D59BAB",
+        "middle": "#E7B5A2",
+        "core": "#F0D5BD"
+      },
+      "shape": {
+        "lobes": 5,
+        "asymmetry": 0.3,
+        "sharpness": 0.02,
+        "uplift": 0.24,
+        "compression": 0.05,
+        "turbulence": 0.05
+      },
+      "motion": {
+        "drift": 0.08,
+        "tremor": 0.01,
+        "breathHz": 0.12,
+        "pulseHz": 0.15
+      },
+      "light": {
+        "glow": 0.01
+      }
+    },
+    "missing": {
+      "label_fa": "دلتنگی",
+      "palette": {
+        "outer": "#727BAD",
+        "middle": "#9B77A8",
+        "core": "#E3A3B6"
+      },
+      "shape": {
+        "lobes": 4,
+        "asymmetry": 0.5,
+        "sharpness": 0.02,
+        "uplift": -0.25,
+        "compression": 0.2,
+        "turbulence": 0.12
+      },
+      "motion": {
+        "drift": 0.09,
+        "tremor": 0.01,
+        "breathHz": 0.1,
+        "pulseHz": 0.1
+      },
+      "light": {
+        "glow": 0.01
+      }
+    },
+    "sadness": {
+      "label_fa": "غم",
+      "palette": {
+        "outer": "#52789E",
+        "middle": "#7383B6",
+        "core": "#AAA6C9"
+      },
+      "shape": {
+        "lobes": 3,
+        "asymmetry": 0.3,
+        "sharpness": 0.01,
+        "uplift": -0.75,
+        "compression": 0.29,
+        "turbulence": 0.06
+      },
+      "motion": {
+        "drift": 0.07,
+        "tremor": 0.01,
+        "breathHz": 0.07,
+        "pulseHz": 0.08
+      },
+      "light": {
+        "glow": 0.01
+      }
+    },
+    "hurt": {
+      "label_fa": "دلخوری",
+      "palette": {
+        "outer": "#7A4579",
+        "middle": "#AC6D9E",
+        "core": "#D796A7"
+      },
+      "shape": {
+        "lobes": 6,
+        "asymmetry": 0.45,
+        "sharpness": 0.11,
+        "uplift": -0.3,
+        "compression": 0.42,
+        "turbulence": 0.1
+      },
+      "motion": {
+        "drift": 0.09,
+        "tremor": 0.02,
+        "breathHz": 0.07,
+        "pulseHz": 0.11
+      },
+      "light": {
+        "glow": 0.03
+      }
+    },
+    "fear": {
+      "label_fa": "ترس",
+      "palette": {
+        "outer": "#578FAE",
+        "middle": "#7D9FC5",
+        "core": "#B6C8E2"
+      },
+      "shape": {
+        "lobes": 5,
+        "asymmetry": 0.55,
+        "sharpness": 0.14,
+        "uplift": -0.26,
+        "compression": 0.65,
+        "turbulence": 0.2
+      },
+      "motion": {
+        "drift": 0.13,
+        "tremor": 0.22,
+        "breathHz": 0.11,
+        "pulseHz": 0.12
+      },
+      "light": {
+        "glow": 0.04
+      }
+    },
+    "anxiety": {
+      "label_fa": "نگرانی",
+      "palette": {
+        "outer": "#8F80B6",
+        "middle": "#B499CF",
+        "core": "#E3BFDC"
+      },
+      "shape": {
+        "lobes": 8,
+        "asymmetry": 0.49,
+        "sharpness": 0.09,
+        "uplift": -0.15,
+        "compression": 0.45,
+        "turbulence": 0.36
+      },
+      "motion": {
+        "drift": 0.12,
+        "tremor": 0.18,
+        "breathHz": 0.14,
+        "pulseHz": 0.14
+      },
+      "light": {
+        "glow": 0.05
+      }
+    },
+    "confusion": {
+      "label_fa": "سردرگمی",
+      "palette": {
+        "outer": "#847FAE",
+        "middle": "#AA91C3",
+        "core": "#DBB6CC"
+      },
+      "shape": {
+        "lobes": 7,
+        "asymmetry": 0.68,
+        "sharpness": 0.05,
+        "uplift": -0.05,
+        "compression": 0.12,
+        "turbulence": 0.4
+      },
+      "motion": {
+        "drift": 0.13,
+        "tremor": 0.12,
+        "breathHz": 0.12,
+        "pulseHz": 0.13
+      },
+      "light": {
+        "glow": 0.03
+      }
+    },
+    "anger": {
+      "label_fa": "خشم",
+      "palette": {
+        "outer": "#A63C68",
+        "middle": "#CE674F",
+        "core": "#EDAE73"
+      },
+      "shape": {
+        "lobes": 9,
+        "asymmetry": 0.83,
+        "sharpness": 0.61,
+        "uplift": 0.35,
+        "compression": 0.23,
+        "turbulence": 0.27
+      },
+      "motion": {
+        "drift": 0.26,
+        "tremor": 0.13,
+        "breathHz": 0.35,
+        "pulseHz": 0.25
+      },
+      "light": {
+        "glow": 0.08
+      }
+    }
+  },
+  "exampleStates": [
+    {
+      "ids": ["anger", "sadness"],
+      "description": "سنگ سنگین آبی با کشش و شکاف نارنجی محبوس؛ نه برخورد دو سنگ"
+    },
+    {
+      "ids": ["calm", "joy"],
+      "description": "حجم گردتر با موج های آرام فیروزه ای و صورتی هلوئی"
+    },
+    {
+      "ids": ["anger", "sadness", "hope"],
+      "description": "پوسته سنگین سرد، کشش گرم داخلی و روزنه نور رو به بالا"
+    },
+    {
+      "ids": ["fear", "anxiety", "confusion"],
+      "description": "سنگ منقبض نامتقارن، چین های ریز با ریتم نامنظم، بدون نور چشم زن"
+    },
+    {
+      "ids": ["joy", "longing", "hope"],
+      "description": "فرم رو به بالا، باز و سبک؛ انرژی گرم و حرکت نرم"
+    }
+  ]
+}
