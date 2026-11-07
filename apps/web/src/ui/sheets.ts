@@ -62,6 +62,10 @@ export function openEntry(id: string, from?: Element | null) {
     const L = $('#layer .sheet');
     L.setAttribute('aria-label', label);
     L.innerHTML = GRAB + entryDetailHTML(e, true);
+    if (!reduced()) {
+      L.classList.add('drill-in');
+      setTimeout(() => L.classList.remove('drill-in'), 420);
+    }
     syncEngine();
     requestAnimationFrame(() => {
       pickAnchor();
@@ -89,6 +93,8 @@ export function stepEntry(d: number) {
   if (!next) return;
   S.entry = next.id;
   L.innerHTML = GRAB + entryDetailHTML(next, S.entFrom === 'day');
+  // stepping: only the words slide over from their side; nothing else replays its entrance
+  L.querySelector('.ed')?.classList.add('calm');
   L.querySelector('.ed-info')?.classList.add('step', d > 0 ? 'fwd' : 'back');
   syncEngine();
   requestAnimationFrame(() => {
@@ -109,6 +115,18 @@ export function backToDay() {
   L?.setAttribute('aria-label', fmtDay(S.arch.sel));
   fillDaySheet();
   syncEngine();
+  // back out to the day: it returns from the right, the way it was left
+  if (L && !reduced())
+    L.querySelectorAll('.dd-head, .sheet-scroll').forEach((el) =>
+      el.animate(
+        [
+          { opacity: 0, translate: '28px 0' },
+          { opacity: 1, translate: '0 0' },
+        ],
+        { duration: 380, easing: 'cubic-bezier(.32,.72,0,1)' },
+      ),
+    );
+  requestAnimationFrame(() => ($('#layer #ddTitle') as HTMLElement | null)?.focus({ preventScroll: true }));
 }
 export function closeSheet(instant = false) {
   if (!S.sheet) return;

@@ -21,6 +21,7 @@ import { cvars, palFor } from '../domain/lexicon';
 import { daySpec } from '../domain/specs';
 import { S, isWide } from '../state/app';
 import { DB, dayList, visible } from '../state/store';
+import { traceImg } from '../sculpture/traces';
 import { glyph } from '../ui/glyph';
 import { IC } from '../ui/icons';
 import { ringGrad } from './archive';
@@ -156,11 +157,13 @@ export function insightHTML(p: Pattern) {
     pct = (a: number, b: number) => `${Math.max(4, (a / b) * 100).toFixed(1)}%`,
     v = DB.insights?.[p.id]?.verdict,
     miss = p.group - p.hits;
+  // the feeling's own stone, its colour washing the corner; the word as a capsule; the evidence as two soft bars
   return `<li class="ins" data-id="${esc(p.id)}" style="${cvars(p.key)}">
-    <p class="ins-say">وقتی ${SCENE_WHEN[p.scene]}، <span class="ins-w">${glyph(p.key)}${label}</span> بیشتر اومده.</p>
+    <div class="ins-top"><span class="ins-art" aria-hidden="true">${traceImg({ items: [{ key: p.key, color: null }], neutral: 0, seed: 0.37 })}</span>
+      <p class="ins-say">وقتی <b>${SCENE_WHEN[p.scene]}</b>، <span class="ins-w">${label}</span> بیشتر اومده.</p></div>
     <div class="ins-ev">
-      <span class="ins-l">${SCENES[p.scene]}</span><span class="filament" aria-hidden="true"><i style="--p:${pct(p.hits, p.group)}"></i></span><span class="n num">${fa(p.hits)} از ${fa(p.group)}</span>
-      <span class="ins-l">بقیه‌ی وقتا</span><span class="filament dim" aria-hidden="true"><i style="--p:${pct(p.elsewhere, p.others)}"></i></span><span class="n num">${fa(p.elsewhere)} از ${fa(p.others)}</span>
+      <div class="ins-row"><span class="ins-l">${SCENES[p.scene]}</span><span class="n num">${fa(p.hits)} از ${fa(p.group)}</span><span class="ins-bar" aria-hidden="true"><i style="--p:${pct(p.hits, p.group)}"></i></span></div>
+      <div class="ins-row dim"><span class="ins-l">بقیه‌ی وقتا</span><span class="n num">${fa(p.elsewhere)} از ${fa(p.others)}</span><span class="ins-bar" aria-hidden="true"><i style="--p:${pct(p.elsewhere, p.others)}"></i></span></div>
     </div>
     <p class="fine">${miss ? `${fa(miss)} بار هم ${SCENE_WHEN[p.scene]} و ${label} نبود. ` : ''}فقط شمردن ردپاهاست، نه دلیل.</p>
     <div class="ins-ask" role="group" aria-label="با تجربه‌ات جوره؟"><span>با تجربه‌ات جوره؟</span><span class="seg">${VERDICTS.map(

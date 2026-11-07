@@ -1,6 +1,6 @@
 /**
  * The chosen one of a group glides to its new place instead of jumping there: the thumb of a segmented control, the
- * bottom nav's capsule, the chosen day's capsule in the week and in the month. On the way it stretches a little toward
+ * bottom nav's capsule, the light under the chosen day's stone in the week and in the month. On the way it stretches a little toward
  * where it is going and then settles, like a drop of liquid.
  *
  * The capsule is the chosen item's `::before`. Positions are remembered relative to the group, so the glide also
@@ -43,13 +43,13 @@ const GROUPS: Group[] = [
   { group: '.bn-in', item: '[aria-current="page"]', key: () => 'nav', then: nudgeIcon },
   {
     group: '.wribbon',
-    item: '.is-sel',
+    item: '.is-sel .aura',
     // a new week is a new control: changing week has its own swipe
     key: (g) => 'week:' + ((g.querySelector('[data-day]') as HTMLElement | null)?.dataset.day || ''),
     then: (_, g) => arrive(g.closest('.wk2')),
   },
   // a new month is a new control, like a new week
-  { group: '.cal-grid', item: '.is-sel', key: (g) => 'month:' + (g.getAttribute('aria-label') || '') },
+  { group: '.cal-grid', item: '.is-sel .aura', key: (g) => 'month:' + (g.getAttribute('aria-label') || '') },
 ];
 
 const spots = new Map<string, Spot>();
@@ -59,7 +59,14 @@ function spot(g: Element, it: Element): Spot | null {
   const a = g.getBoundingClientRect(),
     b = it.getBoundingClientRect();
   if (!b.width || !a.width) return null;
-  return { el: g, at: [...g.children].indexOf(it), x: b.left - a.left, y: b.top - a.top, w: b.width, h: b.height };
+  return {
+    el: g,
+    at: [...g.children].findIndex((ch) => ch.contains(it)),
+    x: b.left - a.left,
+    y: b.top - a.top,
+    w: b.width,
+    h: b.height,
+  };
 }
 
 function visit(G: Group, g: Element, quiet: boolean, replaced: Set<string>) {

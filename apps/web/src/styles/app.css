@@ -510,35 +510,24 @@ body[data-flow='1'] #views {
   gap: 10px;
   min-height: 54px;
   padding: 0 30px;
-  border-radius: 16px;
-  background: var(--cta-bg);
+  border-radius: 999px;
+  /* a capsule like the rest of the app, with a soft sheen across its top instead of a coloured blob */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 55%), var(--cta-bg);
   color: var(--cta-fg);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.07) inset,
-    0 12px 26px -16px var(--cta-bg);
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 14px 28px -18px var(--cta-bg);
   transition:
     transform 0.2s var(--ease),
     background 0.3s,
     box-shadow 0.3s,
     opacity 0.3s;
 }
-.primary::after {
-  content: '';
-  position: absolute;
-  inset: -40% 30% 40% 0;
-  background: radial-gradient(closest-side, var(--nav-c), transparent);
-  opacity: 0.28;
-  pointer-events: none;
-  transition: opacity 0.4s;
-}
 .primary:hover {
-  background: var(--cta-hover);
-}
-.primary:hover::after {
-  opacity: 0.4;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 55%), var(--cta-hover);
 }
 .primary:active {
   transform: scale(0.98);
@@ -549,13 +538,12 @@ body[data-flow='1'] #views {
   box-shadow: none;
   cursor: not-allowed;
 }
-.primary:disabled::after {
-  opacity: 0;
-}
 .primary small {
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.7;
+  padding: 2px 9px 3px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: color-mix(in oklab, var(--cta-fg) 14%, transparent);
 }
 .quiet {
   display: inline-flex;
@@ -1230,15 +1218,6 @@ body[data-flow='1'] #views {
 }
 .rf[aria-pressed='true'] .glyph {
   opacity: 1;
-}
-.rf.keep {
-  font-family: var(--f-ui);
-  font-size: 13px;
-}
-.rf.keep[aria-pressed='true'] {
-  background: var(--surface-2);
-  border-color: var(--line-2);
-  color: var(--ink);
 }
 .empty-note {
   margin: 0;
@@ -2020,6 +1999,30 @@ button.hw[aria-expanded='true'] {
   display: grid;
   place-items: center;
 }
+/* the chosen day: a soft light in its own colour under its stone, instead of a box around it. It glides from the
+   last chosen day (ui/glide.ts) */
+.trw .aura {
+  position: absolute;
+  inset: -34%;
+  pointer-events: none;
+}
+.is-sel .trw .aura::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--dc, var(--ink-3)) 44%, transparent),
+    color-mix(in oklab, var(--dc, var(--ink-3)) 16%, transparent) 62%,
+    transparent
+  );
+}
+.wpill.is-sel .wk-dn,
+.day.is-sel .dn {
+  color: var(--ink);
+  font-weight: 800;
+}
 .trw .tr,
 .wk-tr .tr {
   /* larger than its box, so centre it explicitly: grid alignment pins an overflowing item to one corner */
@@ -2045,17 +2048,6 @@ button.hw[aria-expanded='true'] {
   color: var(--accent);
   background: none;
   padding: 0;
-}
-.day.is-sel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--glass);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    var(--glass-shadow);
 }
 .day.is-future {
   opacity: 0.3;
@@ -2179,18 +2171,6 @@ button.hw[aria-expanded='true'] {
 .wpill .trw {
   margin-top: 8px;
 }
-.wpill.is-sel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--glass);
-  box-shadow:
-    inset 0 0 0 1px var(--glass-line),
-    inset 0 1px 0 var(--glass-hi),
-    var(--glass-shadow);
-}
 .wpill.is-future {
   opacity: 0.35;
 }
@@ -2230,40 +2210,36 @@ button.hw[aria-expanded='true'] {
   justify-self: start;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-height: 44px;
   padding-block: 0;
-  padding-inline-start: 4px;
-  padding-inline-end: 12px;
-  margin-inline-start: -4px;
-  border-radius: 22px;
+  padding-inline: 6px 16px;
+  border-radius: 999px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink);
-  transition:
-    background 0.2s,
-    transform 0.2s;
+  background: color-mix(in oklab, var(--ink) 6%, transparent);
+  transition: background 0.2s;
 }
 .storybtn:hover {
-  background: var(--surface);
+  background: color-mix(in oklab, var(--ink) 10%, transparent);
 }
-.storybtn:active {
-  transform: scale(0.97);
-}
+/* the week's colours as a small lit orb, not an empty ring */
 .ring {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: var(--rg);
   position: relative;
   flex: none;
+  box-shadow: 0 2px 8px -2px rgba(40, 20, 60, 0.35);
 }
 .ring::after {
   content: '';
   position: absolute;
-  inset: 3px;
+  inset: 0;
   border-radius: 50%;
-  background: var(--surface-2);
+  background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 58%);
 }
 /* phone week view: day nav, the week strip, then the chosen day */
 .wk2 {
@@ -2407,7 +2383,7 @@ button.hw[aria-expanded='true'] {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-columns: 50px minmax(0, 1fr);
   gap: 0 14px;
   padding: 14px 16px 16px;
   border-radius: inherit;
@@ -2645,15 +2621,15 @@ button.hw[aria-expanded='true'] {
 }
 .ent-mark {
   position: relative;
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   display: grid;
   place-items: center;
 }
 
 .ent-mark .tr {
-  width: 54px;
-  height: 54px;
+  width: 66px;
+  height: 66px;
   max-width: none;
 }
 .ent-mark.un::after {
@@ -2895,93 +2871,147 @@ button.hw[aria-expanded='true'] {
   color: var(--ink-3);
   white-space: nowrap;
 }
-/* patterns that came up more often in one setting */
+/* patterns that came up more often in one setting: each its own soft panel, coloured by its feeling. The section
+   itself is no card, so the panels are not boxes inside a box */
+.p-ins.card {
+  padding: 4px 0 0;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+.p-ins .p-sec-h {
+  padding-inline: 4px;
+}
 .ins-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
+  gap: 12px;
 }
 .ins {
   display: grid;
+  gap: 14px;
+  padding: 16px 18px 14px;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, var(--c1) 22%, transparent), transparent 62%),
+    color-mix(in oklab, var(--surface-2) 40%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--c1) 16%, var(--line));
+}
+.ins-top {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
   gap: 12px;
-  padding-block: 16px;
-  border-top: 1px solid var(--line);
+  align-items: center;
 }
-.ins:first-child {
-  border-top: 0;
-  padding-top: 2px;
+.ins-art {
+  position: relative;
+  width: 56px;
+  height: 56px;
 }
-.ins:last-child {
-  padding-bottom: 0;
+.ins-art .tr {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 76px;
+  height: 76px;
+  max-width: none;
+  translate: -50% -50%;
 }
 .ins-say {
   margin: 0;
   font-family: var(--f-ed);
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+.ins-say b {
+  color: var(--ink);
+  font-weight: 700;
 }
 .ins-w {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  vertical-align: bottom;
-}
-.ins-w .glyph {
-  width: 18px;
-  height: 18px;
+  padding: 2px 11px 3px;
+  border-radius: 999px;
+  font-weight: 750;
+  color: var(--ink);
+  white-space: nowrap;
+  background: color-mix(in oklab, var(--c1) 28%, transparent);
 }
 .ins-ev {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px 14px;
+  gap: 10px;
+}
+.ins-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
   font-size: 13px;
   color: var(--ink-2);
 }
-.ins-ev .n {
-  font-size: 13px;
+.ins-row .n {
   color: var(--ink-3);
   white-space: nowrap;
 }
-.filament.dim i {
-  background: var(--ink-3);
-  opacity: 0.5;
+.ins-bar {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
 }
-.filament.dim i::after {
-  background: var(--ink-3);
+.ins-bar i {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--p);
+  border-radius: inherit;
+  background: linear-gradient(to left, var(--c1), var(--c2));
+}
+.ins-row.dim .ins-bar i {
+  background: color-mix(in oklab, var(--ink-3) 50%, transparent);
 }
 .ins .fine {
   margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
 }
+/* the answer: three light capsules; the chosen one fills with the feeling's colour */
 .ins-ask {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px 12px;
   font-size: 14px;
   color: var(--ink-2);
 }
+.ins-ask .seg {
+  gap: 6px;
+  padding: 0;
+  background: none;
+}
 .ins-ask .seg button {
-  min-width: 52px;
-  padding: 0 14px;
+  min-width: 0;
+  padding: 0 15px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 11%, transparent);
+}
+.ins-ask .seg button[aria-pressed='true'] {
+  box-shadow: none;
+}
+.ins-ask .seg button[aria-pressed='true']::before {
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--c1) 34%, var(--surface));
+  box-shadow: none;
 }
 @media (min-width: 1000px) {
   /* two patterns sit side by side rather than stretching across the page */
   .ins-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 48px;
-  }
-  .ins,
-  .ins:first-child {
-    border-top: 0;
-    padding-block: 2px 0;
-  }
-  .ins + .ins {
-    padding-inline-start: 48px;
-    margin-inline-start: -48px;
-    border-inline-start: 1px solid var(--line);
   }
 }
 .pairs {
@@ -4459,16 +4489,17 @@ body[data-flow='1'] .navfade {
   }
 }
 
-/* ───────── archive on a phone: one header row; the calendar itself is swiped to change week or month ───────── */
+/* ───────── archive on a phone: date, then controls; the calendar itself is swiped to change week or month ───────── */
 @media (max-width: 699px) {
+  /* the date has a row of its own, the controls sit under it: nothing collides, whatever the month's name */
   .a-head {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
   }
   .a-ctrls {
-    grid-row: 1;
-    grid-column: 2;
-    justify-content: flex-end;
+    grid-row: 2;
+    grid-column: 1;
+    justify-content: space-between;
     gap: 4px;
   }
   .a-ctrls [data-act='shift'] {
@@ -4479,7 +4510,7 @@ body[data-flow='1'] .navfade {
     font-size: 13px;
   }
   .title-jump {
-    font-size: clamp(28px, 8.4vw, 36px);
+    font-size: clamp(28px, 8.4vw, 34px);
     white-space: nowrap;
   }
   .today-btn .tb-long {
@@ -4605,38 +4636,38 @@ body[data-flow='1'] .navfade {
   color: var(--accent);
 }
 .ed-acts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  justify-content: center;
   gap: 10px;
-  width: 100%;
-  max-width: 420px;
-  margin-top: 18px;
+  margin-top: 22px;
 }
 .ed-acts button {
-  min-height: 50px;
+  min-height: 46px;
+  padding-inline: 20px 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 16px;
-  font-size: 15px;
-  font-weight: 700;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 650;
   transition:
     background 0.25s var(--ease),
-    color 0.25s var(--ease);
+    color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
 }
 .ed-acts .ic {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 .ed-edit {
-  background: var(--surface-2);
   color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
 }
 /* delete asks once in place: the button fills red and says so; a second tap deletes */
 .ed-del {
   color: var(--danger);
-  background: color-mix(in oklab, var(--danger) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--danger) 32%, transparent);
 }
 .ed-del-q {
   display: none;
@@ -4644,10 +4675,49 @@ body[data-flow='1'] .navfade {
 .ed-del.arm {
   color: #fff;
   background: var(--danger);
+  box-shadow: none;
 }
 .ed-del.arm .ed-del-l {
   display: none;
 }
 .ed-del.arm .ed-del-q {
   display: inline;
+}
+
+/* opening a check-in: the sculpture flies in first, then its words arrive one after another (not when stepping) */
+.ed:not(.calm) .ed-info > *,
+.ed:not(.calm) .ed-acts {
+  animation: edIn 0.44s var(--ease) both;
+}
+.ed:not(.calm) .ed-info > :nth-child(1) {
+  animation-delay: 0.2s;
+}
+.ed:not(.calm) .ed-info > :nth-child(2) {
+  animation-delay: 0.25s;
+}
+.ed:not(.calm) .ed-info > :nth-child(3) {
+  animation-delay: 0.3s;
+}
+.ed:not(.calm) .ed-info > :nth-child(n + 4) {
+  animation-delay: 0.35s;
+}
+.ed:not(.calm) .ed-acts {
+  animation-delay: 0.42s;
+}
+@keyframes edIn {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+/* going one level in from a day's sheet: right to left reading, so what comes next arrives from the left */
+.sheet.drill-in .ed-top,
+.sheet.drill-in .ed {
+  animation: drillIn 0.38s var(--ease) both;
+}
+@keyframes drillIn {
+  from {
+    opacity: 0;
+    translate: -28px 0;
+  }
 }

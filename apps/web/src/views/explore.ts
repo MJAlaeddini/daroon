@@ -33,8 +33,7 @@ export function trayHTML() {
     par = it && it.parent && REFINE[it.parent] ? it.parent : null;
   const refine = par
     ? `<div class="refine"><p class="refine-q">«${par}» رو دقیق‌تر بگی؟</p><div class="refine-opts">
-        ${REFINE[par].map((r) => `<button class="rf" data-act="refine" data-i="${d.focus}" data-key="${r}" aria-pressed="${it.key === r}" style="${cvars(r)}">${glyph(r)}${r}</button>`).join('')}
-        <button class="rf keep" data-act="refine" data-i="${d.focus}" data-key="${par}" aria-pressed="${it.key === par}">همین خوبه</button></div></div>`
+        ${REFINE[par].map((r) => `<button class="rf" data-act="refine" data-i="${d.focus}" data-key="${r}" aria-pressed="${it.key === r}" style="${cvars(r)}">${glyph(r)}${r}</button>`).join('')}</div></div>`
     : '';
   const own = d.items
     .map((x, i) => [x, i] as const)
