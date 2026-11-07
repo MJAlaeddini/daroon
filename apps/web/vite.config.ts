@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -6,7 +7,14 @@ const api = { '/api': { target: process.env.API_URL ?? 'http://localhost:8787', 
 export default defineConfig({
   server: { port: 5173, proxy: api },
   preview: { port: 4173, proxy: api },
-  build: { target: 'es2022', sourcemap: true },
+  build: {
+    target: 'es2022',
+    sourcemap: true,
+    // stone.html is the emotion stone's workbench (src/stone/demo.ts), served at /stone.html
+    rollupOptions: {
+      input: { main: resolve(import.meta.dirname, 'index.html'), stone: resolve(import.meta.dirname, 'stone.html') },
+    },
+  },
   plugins: [
     VitePWA({
       // the app asks before reloading, so an update never interrupts someone mid-entry
@@ -36,7 +44,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/fiqh(\/|$)/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/fiqh(\/|$)/, /^\/stone/],
         cleanupOutdatedCaches: true,
       },
     }),
