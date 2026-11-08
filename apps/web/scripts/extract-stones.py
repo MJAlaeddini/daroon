@@ -5,14 +5,14 @@ For every 1024² concept image:
   2. estimate the background under it from the pixels around it (normalized Gaussian convolution);
   3. light = image − background, faded out softly beyond the stone and its glow;
   4. outline: the stone's radius in 256 directions from its centre of light.
-Writes <id>.png (light on black, 768²) and stones.json (centre and outline per stone, in units of half the image).
+Writes <id>.png and <id>.webp (light on black, 1024²) and stones.json (centre and outline per stone, in units of half the image).
 """
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 SRC = Path(sys.argv[1])
 OUT = Path(sys.argv[2])
@@ -101,8 +101,11 @@ for src, eid in NAMES.items():
         'center': [round((cx - N / 2) / (N / 2), 4), round(-(cy - N / 2) / (N / 2), 4)],
         'outline': [round(r / (N / 2), 4) for r in prof],
     }
-    out = Image.fromarray((np.clip(light, 0, 1) * 255).round().astype(np.uint8)).resize((768, 768), Image.LANCZOS)
+    # full resolution (the art is only 1024² to begin with) and a light unsharp mask for the thin veil edges
+    out = Image.fromarray((np.clip(light, 0, 1) * 255).round().astype(np.uint8))
+    out = out.filter(ImageFilter.UnsharpMask(radius=1.4, percent=55, threshold=2))
     out.save(OUT / f'{eid}.png')
+    out.save(OUT / f'{eid}.webp', 'WEBP', quality=92, method=6)
     print(eid, 'centre', meta[eid]['center'], 'radius', round(float(prof.mean()) / (N / 2), 3), 'max light', round(float(light.max()), 3))
 
 (OUT / 'stones.json').write_text(json.dumps(meta))
