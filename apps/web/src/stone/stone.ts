@@ -1,6 +1,6 @@
 /* The emotion stone, ready to use: put it on a canvas, tell it which feelings were chosen, and it lives.
  *
- *   await stoneReady();                                 // the twelve stones' art (about 180 KB, once)
+ *   await stoneReady();                                 // the twelve stones' art (about 520 KB, once)
  *   const stone = new Stone(canvas, { theme: 'light' });
  *   stone.set([{ id: 'sadness' }, { id: 'hope' }]);     // order does not matter
  *   const png = stillPNG([{ id: 'anger' }], 256);        // the same stone, every time
@@ -31,7 +31,7 @@ export class Stone {
   private r: StoneRenderer;
   private raf = 0;
   private last = 0;
-  private dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+  private dpr = Math.min(3, globalThis.devicePixelRatio || 1);
   private times: number[] = [];
   private warm = 0;
   private skip = false;

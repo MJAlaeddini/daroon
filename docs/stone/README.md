@@ -39,7 +39,7 @@ stone.ts     Stone (canvas loop, pauses when hidden or off screen, adapts its re
 import { Stone, stillPNG, stoneReady } from './stone/stone';
 import { ID_BY_LABEL } from './stone/presets';
 
-await stoneReady(); // the twelve stones' art, about 180 KB, once
+await stoneReady(); // the twelve stones’ art, about 520 KB, once
 const stone = new Stone(canvas, { theme: 'light' });
 stone.set([{ id: 'sadness' }, { id: 'hope' }]); // 0..3 feelings; order does not matter
 stone.set([{ id: ID_BY_LABEL['خشم'], intensity: 0.4 }, { id: 'calm' }]); // optional intensities, 0..1
