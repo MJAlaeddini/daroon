@@ -7,6 +7,7 @@ import { Stage, grow, pickAnchor, usingGL } from '../stage/stage';
 import { S, syncEngine } from '../state/app';
 import { DB, dayList, visible } from '../state/store';
 import { IC } from './icons';
+import { buildLabel } from '../build';
 import { canInstall } from '../features/install';
 import { dayDetailHTML, entryDetailHTML, monthHTML, weekHTML } from '../views/archive';
 
@@ -222,7 +223,8 @@ export function settingsHTML() {
     <section class="set-sec about">
       <p>واژه‌های درون با الهام از پژوهش‌هایی درباره‌ی واژگان احساس در زبان فارسی انتخاب شده‌اند؛ از جمله کشکولی (${fa(2014)}) درباره‌ی ساختار واژگان احساس فارسی، محجوب‌نواز و همکاران (${fa(2024)}) درباره‌ی هنجارهای عاطفی واژه‌ها، و نعمتی و همکاران (${fa(2026)}). این منابع به انتخاب واژه‌ها جهت می‌دهند، اما شکل‌ها، رنگ‌ها و پیشنهادهای این برنامه را تأیید علمی نمی‌کنند.</p>
       <p>شکل درون یک استعاره‌ی بصریه که با انتخاب‌های خودت ساخته می‌شه. چیزی رو اندازه نمی‌گیره و تشخیص نمی‌ده. پیشنهادهای مسیر راهنمایی از قبل نوشته شده‌اند. داستان‌های هفته فقط از روی ردپاها و یادداشت‌های همون هفته نوشته می‌شن؛ یادداشت‌ها فقط برای نوشتن همون داستان فرستاده می‌شن و جایی نگه داشته نمی‌شن. بدون حساب، یه خلاصه‌ی ساده روی همین دستگاه نوشته می‌شه.</p>
-      ${usingGL ? '' : '<p>مرورگرت WebGL2 نداره؛ نسخه‌ی ساده‌تر شکل نمایش داده می‌شه.</p>'}</section>
+      ${usingGL ? '' : '<p>مرورگرت WebGL2 نداره؛ نسخه‌ی ساده‌تر شکل نمایش داده می‌شه.</p>'}
+      <p class="fine">${buildLabel()}</p></section>
   </div>`;
   return `${head('تنظیمات و ظاهر')}<div class="sheet-scroll set">
     <section class="set-sec"><h3 class="sec">حال‌وهوای بصری</h3><div class="dirs" role="radiogroup" aria-label="حال‌وهوای بصری">${dirs.map(([id, t, sub, bg, sd, gl]) => `<button class="dir" role="radio" data-act="dir" data-d="${id}" aria-checked="${s.direction === id}"><span class="pv" style="background:${bg};--pvs:${sd};--pvg:${gl}"></span><span><b>${t}</b><small>${sub}</small></span></button>`).join('')}</div></section>

@@ -4,6 +4,7 @@ import { EMOTIONS, EMOTION_IDS, EXAMPLES, type EmotionId } from './presets';
 import { allSelections, describe, MAX_FEELINGS } from './resolve';
 import { Stone, stillCanvasFor, stillPNG, stoneReady } from './stone';
 import type { Theme } from './renderer';
+import { buildLabel } from '../build';
 
 const fa = (n: number) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
@@ -24,6 +25,7 @@ let theme: Theme = effective();
 document.body.innerHTML = `
 <main class="wb">
   <header class="wb-head">
+    <p class="wb-ver">${buildLabel()}</p>
     <h1>سنگ‌های درون</h1>
     <p>دوازده احساس، هر کدوم یه سنگ. دو یا سه تا رو با هم انتخاب کن تا یه سنگ تازه ساخته بشه.</p>
   </header>

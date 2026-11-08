@@ -128,6 +128,7 @@ fi
 
 # ── 5. Build and start ──────────────────────────────────────────────────────
 say "Building and starting (the first build takes a few minutes)…"
+export BUILD_ID="$(git log -1 --format='%h %cs' 2>/dev/null || true)"
 "${COMPOSE[@]}" up -d --build
 
 # ── 6. Firewall ─────────────────────────────────────────────────────────────

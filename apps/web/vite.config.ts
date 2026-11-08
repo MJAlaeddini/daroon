@@ -1,10 +1,24 @@
+import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/* which build this is: "<short hash> <commit date>", from deploy/update.sh (the server builds without .git) or git */
+function buildId(): string {
+  if (process.env.BUILD_ID) return process.env.BUILD_ID;
+  try {
+    return execSync("git log -1 --format='%h %cs'", { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+  } catch {
+    return '';
+  }
+}
+
 const api = { '/api': { target: process.env.API_URL ?? 'http://localhost:8787', changeOrigin: false } };
 
 export default defineConfig({
+  define: { __BUILD__: JSON.stringify(buildId()) },
   server: { port: 5173, proxy: api },
   preview: { port: 4173, proxy: api },
   build: {

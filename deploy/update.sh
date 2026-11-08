@@ -8,6 +8,8 @@ docker info >/dev/null 2>&1 || SUDO=sudo
 COMPOSE=($SUDO docker compose -f deploy/docker-compose.yml --env-file deploy/.env)
 
 git pull --ff-only
+# the version the app shows: the commit just pulled and its date
+export BUILD_ID="$(git log -1 --format='%h %cs')"
 "${COMPOSE[@]}" up -d --build
 $SUDO docker image prune -f >/dev/null
 

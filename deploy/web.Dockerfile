@@ -10,6 +10,9 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN pnpm install --frozen-lockfile --filter @daroon/web...
 COPY packages/shared packages/shared
 COPY apps/web apps/web
+# the commit being built ("<short hash> <date>"), shown as the version; .git is not in the build context
+ARG BUILD_ID=
+ENV BUILD_ID=$BUILD_ID
 RUN pnpm --filter @daroon/web build
 
 # the reasoning tree at /fiqh/: a separate app with no dependency on Daroon, built on its own

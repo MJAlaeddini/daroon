@@ -39,7 +39,7 @@ services:
       STORIES_PER_DAY: ${STORIES_PER_DAY:-12}
 
   web:
-    build: { context: .., dockerfile: deploy/web.Dockerfile }
+    build: { context: .., dockerfile: deploy/web.Dockerfile, args: { BUILD_ID: '${BUILD_ID:-}' } }
     restart: unless-stopped
     depends_on: [api]
     # HTTP_BIND / HTTPS_BIND choose the host ports. Defaults take 80 and 443; port mode moves them aside.
