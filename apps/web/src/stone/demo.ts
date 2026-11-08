@@ -1,9 +1,8 @@
 /* /stone.html: a workbench for the emotion stone. Pick up to three feelings and watch one stone become another;
  * below, the twelve base stones, the five reference mixes from the brief, and all 298 states as canonical stills. */
-import { hexToOklab, oklabToCss } from './color';
 import { EMOTIONS, EMOTION_IDS, EXAMPLES, type EmotionId } from './presets';
 import { allSelections, describe, MAX_FEELINGS } from './resolve';
-import { Stone, stillCanvasFor, stillPNG } from './stone';
+import { Stone, stillCanvasFor, stillPNG, stoneReady } from './stone';
 import type { Theme } from './renderer';
 
 const fa = (n: number) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
@@ -67,27 +66,15 @@ const canvas = $<HTMLCanvasElement>('#stone');
 const stone = new Stone(canvas, { theme });
 let chosen: EmotionId[] = [];
 
-const dot = (id: EmotionId) => oklabToCss(hexToOklab(EMOTIONS[id].palette.middle));
+const dot = (id: EmotionId) => EMOTIONS[id].palette.middle;
 const chips = $('.wb-chips');
 chips.innerHTML = EMOTION_IDS.map(
   (id) =>
     `<button type="button" class="wb-chip" data-id="${id}" aria-pressed="false"><i style="background:${dot(id)}"></i>${EMOTIONS[id].label}</button>`,
 ).join('');
 
-function apply(from?: HTMLElement): void {
-  let touch: [number, number, number] | undefined;
-  if (from) {
-    const a = canvas.getBoundingClientRect(),
-      b = from.getBoundingClientRect();
-    const dx = b.left + b.width / 2 - (a.left + a.width / 2),
-      dy = b.top + b.height / 2 - (a.top + a.height / 2);
-    const l = Math.hypot(dx, dy, a.width * 0.6) || 1;
-    touch = [dx / l, -dy / l, (a.width * 0.6) / l];
-  }
-  stone.set(
-    chosen.map((id) => ({ id })),
-    touch,
-  );
+function apply(): void {
+  stone.set(chosen.map((id) => ({ id })));
   chips.querySelectorAll<HTMLButtonElement>('.wb-chip').forEach((c) => {
     const on = chosen.includes(c.dataset.id as EmotionId);
     c.setAttribute('aria-pressed', String(on));
@@ -112,7 +99,7 @@ chips.addEventListener('click', (e) => {
     return;
   } else chosen = [...chosen, id];
   cap.textContent = '';
-  apply(b);
+  apply();
 });
 $('#clear').addEventListener('click', () => {
   chosen = [];
@@ -191,7 +178,7 @@ function pump(): void {
     );
     const x = c.getContext('2d');
     x?.clearRect(0, 0, px, px);
-    x?.drawImage(src, 0, 0);
+    if (src) x?.drawImage(src, 0, 0);
     requestAnimationFrame(next);
   };
   requestAnimationFrame(next);
@@ -248,4 +235,4 @@ document.addEventListener('click', (e) => {
 paintTheme();
 apply();
 /* the live stone first; the sheets once it has had a moment to start */
-setTimeout(renderSheets, 400);
+void stoneReady().then(() => setTimeout(renderSheets, 300));

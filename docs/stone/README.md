@@ -1,58 +1,68 @@
 # Emotion stone
 
-A real-time, parameter-driven stone for Daroon's check-in: twelve base feelings, and any two or three of them combine
-into one new stone (12 + 66 + 220 = 298 deterministic states). The design handoff is in [`brief.md`](./brief.md);
-its tokens are `apps/web/src/stone/presets.json`, kept exactly as delivered. The reference images are in
-`references/` (concepts only, not textures).
+The stone in Daroon's check-in: twelve base stones, and any two or three of them combine into one new stone
+(12 + 66 + 220 = 298 deterministic states). The design handoff is in [`brief.md`](./brief.md) and its tokens in
+`apps/web/src/stone/presets.json`; the twelve stones themselves are the owner's designs in [`base/`](./base).
 
 Try it at `/stone.html` (`pnpm --filter @daroon/web dev`, then open http://localhost:5173/stone.html).
 
-## Architecture
+## How it works
 
-The app is vanilla TypeScript with its own WebGL2 renderer, so the stone is too: no Three.js or React. The whole
-engine is about 40 KB minified, it is one program and one mesh, and premultiplied compositing stays under our control.
+The stones are not re-created procedurally: the owner's art is the material, and a shader moves and combines it.
 
 ```
-presets.json ─┐
-presets.ts ───┴─► resolve.ts ──► motion.ts ──► renderer.ts ──► <canvas>
- tokens +        set → target    time, morph,   WebGL2: 4 shells × (back, front)
- SCULPT          (deterministic) clocks         Canvas 2D fallback
-                                    │
-                         field.ts ◄─┘  (CPU reference of the shape; glsl.ts is its port)
-                                    │
-                         stone.ts:  Stone (canvas + RAF loop), stillPNG (export)
+docs/stone/base/*.jpg ──(scripts/extract-stones.py)──► src/stone/art/<id>.webp   the stone's light on black
+                                                       src/stone/art/outlines.json centre + outline in 256 directions
+
+resolve.ts   choice → target: weights, which feeling forms the envelope / the middle / the core, a turn per feeling
+choreo.ts    how each stone moves: hand-timed curves over a few motion primitives
+compose.ts   time: 1.3 s smoothstep morphs between targets, a clock that never restarts
+glsl.ts      one full-screen pass: motion → shared outline → each stone fitted into it → layers → dark or light ground
+renderer.ts  WebGL2 (and a plain 2D fallback that shows the strongest stone)
+stone.ts     Stone (canvas loop, pauses when hidden or off screen, adapts its resolution) and stills
 ```
 
-| File          | Role                                                                                                                                                                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `presets.ts`  | Loads the JSON and adds `SCULPT`: small extra tokens for each feeling's sculptural signature (a crescent hollow for _missing_, a pinched body for _fear_, counter-currents for _confusion_…), plus the neutral resting stone.                                                         |
-| `resolve.ts`  | `resolveState(feelings)`: sorts the ids, hashes them (FNV-1a) to a seed and derives weights, each feeling's region on the surface, lobe phases, pose and tension. Same set → same target, in any order, on any device.                                                                |
-| `field.ts`    | The radial field `R(n)`, documented in the file. Each feeling adds a broad silhouette `G_i` and a surface character `L_i`, weighted partly by its weight and partly by a soft spatial mask, so a mix keeps every feeling's features in its own region instead of averaging them away. |
-| `motion.ts`   | Tracks for every feeling; a 1.3 s smoothstep from wherever the stone is to the new target (interruptible); breath, pulse, drift and tremor integrated as phases so frequencies never jump; reduced motion freezes the clocks but keeps the morph.                                     |
-| `glsl.ts`     | Vertex shader = `field.ts` on the GPU (shape and normals from uniforms only); fragment shader = palettes mixed in OKLab by region, a softly lit core, translucent veils with thin rims and silk lines; a small halo.                                                                  |
-| `renderer.ts` | One icosphere (10 242 vertices) drawn 8 times: back faces outer → inner, then front faces inner → outer. No depth buffer, no sorting, no additive blending, so it works on the light page too. Canvas 2D fallback traces the same field.                                              |
-| `stone.ts`    | `Stone` binds a canvas: RAF loop that pauses when hidden, pixel ratio 1–2 lowered under load, then 30 fps. `stillPNG()` renders the canonical still (all clocks at zero) for history and calendar marks.                                                                              |
+- **A single stone** is drawn exactly as designed: its art, its outline, no turn.
+- **A mix** gets one new outline: a soft maximum of the stones' outlines, (Σ wᵢ·rᵢ(θ)³)^⅓, so points and tips survive.
+  Each stone's art is fitted into that outline at the same relative depth. The heaviest feeling (lowest uplift) forms
+  the envelope and the lightest the core, the way the brief describes its examples: «a heavy blue envelope, a crimson
+  fold inside, an amber core».
+- **Motion** is designed per feeling in `choreo.ts`. Examples: the flames of longing sway upward every 3.2 s; anger
+  beats every 2.6 s; hurt draws in, holds and lets go; fear recoils now and then. A mix blends the motions by weight.
+  Reduced motion holds the stone still but keeps the morph.
+- **Ground:** on a dark ground the light is added as it is. On a light ground it becomes tinted glass: the bright
+  edges turn into the deepest colour and the pale core stays clear.
 
 ## Using it
 
 ```ts
-import { Stone, stillPNG } from './stone/stone';
+import { Stone, stillPNG, stoneReady } from './stone/stone';
 import { ID_BY_LABEL } from './stone/presets';
 
-const stone = new Stone(canvas, { theme: 'light' }); // follows prefers-reduced-motion unless told otherwise
+await stoneReady(); // the twelve stones' art, about 180 KB, once
+const stone = new Stone(canvas, { theme: 'light' });
 stone.set([{ id: 'sadness' }, { id: 'hope' }]); // 0..3 feelings; order does not matter
 stone.set([{ id: ID_BY_LABEL['خشم'], intensity: 0.4 }, { id: 'calm' }]); // optional intensities, 0..1
-const png = stillPNG([{ id: 'anger' }], 192, 'light'); // data URL, transparent
+const png = stillPNG([{ id: 'anger' }], 192, 'light'); // transparent data URL
 ```
 
 The canvas gets an `aria-label` such as «سنگ ترکیبی: غم، خشم، امید».
 
-## Tuning
+## Changing a stone
 
-Everything that shapes a stone is in two tables: `presets.json` (the handoff) and `SCULPT` in `presets.ts`. A change to
-the field must be made in both `field.ts` and `glsl.ts`. `pnpm --filter @daroon/web test` checks the 298 states (counts,
-order independence, uniqueness), bounds (`0.72 ≤ R ≤ 1.27`), that every single and the brief's triple have their own
-silhouette, that each feeling in a mix owns a region, and that a morph never moves the surface more than 0.02 per frame.
+- **Its look:** replace its image in `docs/stone/base/` (1024², dark ground), then run
+  `python3 apps/web/scripts/extract-stones.py <folder of the 1024² PNGs> <out>` and copy the WebPs and
+  `outlines.json` into `src/stone/art/`.
+- **Its motion:** edit its line in `choreo.ts`.
+
+`pnpm --filter @daroon/web test` checks the following:
+
+- the 298 states (counts, order independence, uniqueness)
+- that a single stone is drawn untouched
+- the envelope-to-core order
+- that mixes keep points
+- that morphs never jump
+- that motion stays small and starts at rest
 
 ## Not yet in the app
 
