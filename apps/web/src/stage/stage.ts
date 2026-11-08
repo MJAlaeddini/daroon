@@ -43,10 +43,11 @@ export function sizeCanvas(w, h) {
   Stage.cssH = h;
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5) * Stage.q;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2) * Stage.q;
   let pw = Math.round(w * dpr),
     ph = Math.round(h * dpr);
-  const max = 1280 * 1280;
+  /* enough for a sharp stone on a phone; on a large screen the canvas is capped so every frame of a flight stays cheap */
+  const max = 960 * 960;
   if (pw * ph > max) {
     const s = Math.sqrt(max / (pw * ph));
     pw = Math.round(pw * s);
@@ -185,7 +186,8 @@ export function frame(now) {
       lastDraw = now;
     } catch (e) {}
   }
-  if (now > traceHold) processTraces();
+  /* marks are drawn only while the sculpture is not flying: a first still can take a moment, never mid-flight */
+  if (now > traceHold && Stage.settled) processTraces();
   if (now - tintT > 250) {
     tintT = now;
     const hx = engine.dominantHex();

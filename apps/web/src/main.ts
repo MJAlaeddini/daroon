@@ -7,6 +7,7 @@ import { loadAuthConfig, pullStories, refreshAvatar, sessionExpired } from './fe
 import { onSessionExpired, onSynced, startSync } from './features/sync';
 import { renderTraceNow } from './sculpture/traces';
 import { loadArt } from './stone/art';
+import { warmStills } from './stone/stone';
 import { frame } from './stage/stage';
 import { S } from './state/app';
 import { DB, load, reindex } from './state/store';
@@ -57,9 +58,11 @@ setupPress();
 setupEntrySwipe();
 if (DB.account) pullStories();
 if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
-/* load the stones' art and compile the still shader before the first calendar needs them */
+/* load the stones' art, then get the still renderer ready (shader and every stone's texture) in idle moments, before
+   the first calendar needs it */
 void loadArt().then(() => {
   try {
     renderTraceNow({ items: [] }, 16);
   } catch (e) {}
+  warmStills();
 });

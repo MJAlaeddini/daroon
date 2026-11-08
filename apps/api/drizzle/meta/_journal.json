@@ -15,6 +15,13 @@
       "when": 1793661445543,
       "tag": "0001_scenes_feedback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794170110575,
+      "tag": "0002_intensity_meaning",
+      "breakpoints": true
     }
   ]
 }

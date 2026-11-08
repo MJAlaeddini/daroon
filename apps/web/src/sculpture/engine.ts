@@ -56,6 +56,7 @@ export class Engine {
   ptT = [0, 0];
 
   setSpec(spec): void {
+    this.motion.strength = spec?.intensity ?? 2;
     const f = toFeelings(spec),
       k = f.map((x) => x.id).join('|');
     if (k === this.key) return;

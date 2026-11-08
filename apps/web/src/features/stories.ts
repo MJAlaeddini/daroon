@@ -113,6 +113,8 @@ export async function weekStory(ws, regen = false) {
         })),
         context: e.context ?? null,
         scenes: e.scenes || [],
+        intensity: e.intensity ?? null,
+        meaning: e.meaning ?? null,
         note: (e.note || '').slice(0, 2000),
       }));
       const { story } = await api.writeStory({ week: ws, entries, weekKeys: wk }, ctl.signal);

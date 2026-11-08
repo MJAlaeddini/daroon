@@ -1,5 +1,5 @@
 import { jOfKey, keyAdd, wdIndex, weekStart } from '@daroon/shared';
-import { ACT, reRenderReflect } from './actions';
+import { ACT, reRenderReflect, setIntensity } from './actions';
 import { $ } from './core/util';
 import { submitCode, submitEmail } from './features/account';
 import { addCustom, swapGuide } from './features/draft';
@@ -91,7 +91,7 @@ document.addEventListener('input', (e: any) => {
     if (S.discardArm) {
       S.discardArm = false;
       const b = $('[data-act="discard"]');
-      if (b) b.textContent = 'بیرون رفتن بدون ثبت';
+      if (b) b.textContent = 'بستن';
     }
   }
 });
@@ -184,3 +184,30 @@ document.addEventListener(
   },
   true,
 );
+
+/* «how strong was it?»: holding the stone raises it through a little, medium, a lot (a small tick at each), and
+   letting go keeps where it reached; a short tap does nothing, so scrolling past it never changes the answer */
+let hold: { t0: number; id: number; timer: ReturnType<typeof setInterval> } | null = null;
+const endHold = () => {
+  if (hold) clearInterval(hold.timer);
+  hold = null;
+};
+document.addEventListener('pointerdown', (e: PointerEvent) => {
+  const a = (e.target as HTMLElement).closest?.('.r-grid[data-step="strength"] .anchor-reflect');
+  if (!a || !e.isPrimary) return;
+  endHold();
+  const t0 = performance.now();
+  hold = {
+    t0,
+    id: e.pointerId,
+    timer: setInterval(() => {
+      const held = performance.now() - t0;
+      if (held >= 220) setIntensity(held < 700 ? 1 : held < 1200 ? 2 : 3);
+      if (held >= 1200) endHold();
+    }, 50),
+  };
+});
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave', 'blur'] as const)
+  addEventListener(ev, (e: Event) => {
+    if (hold && (!(e instanceof PointerEvent) || e.pointerId === hold.id)) endHold();
+  });

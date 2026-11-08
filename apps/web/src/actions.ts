@@ -30,7 +30,47 @@ import { toast } from './ui/toast';
 import { dayDetailHTML, jumpHTML } from './views/archive';
 import { trayHTML } from './views/explore';
 import { monthsPage, shownPatterns } from './views/patterns';
-import { vReflect } from './views/reflect';
+import { STEPS, reflectBody, reflectProgress, vReflect } from './views/reflect';
+import { haptic } from './ui/haptics';
+
+/** Move to a step of the check-in: only its body is swapped, so the header and the stone stay where they are. */
+export function goStep(n: number) {
+  const d = S.draft;
+  d.note = $('#noteInput')?.value ?? d.note;
+  d.step = Math.max(0, Math.min(STEPS.length - 1, n));
+  S.discardArm = false;
+  const body = $('#rbody'),
+    grid = $('.r-grid');
+  if (!body || !grid) return renderView({ quiet: true });
+  grid.setAttribute('data-step', STEPS[d.step]);
+  body.classList.remove('swap');
+  void body.offsetWidth;
+  body.innerHTML = reflectBody();
+  body.classList.add('swap');
+  const prog = $('.r-prog');
+  if (prog) prog.outerHTML = reflectProgress();
+  const backBtn = $('[data-act="rBack"]');
+  if (backBtn && backBtn.lastChild) backBtn.lastChild.textContent = d.step ? 'قبلی' : 'کلمه‌ها';
+  syncEngine();
+  requestAnimationFrame(() =>
+    (body.querySelector('[data-autofocus]') as HTMLElement | null)?.focus({ preventScroll: true }),
+  );
+  if (!isWide()) window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+}
+/** How strong it was: the buttons follow, the stone answers. */
+export function setIntensity(n: number) {
+  n = Math.max(1, Math.min(3, Math.round(n)));
+  if (S.draft.intensity === n) return;
+  S.draft.intensity = n;
+  $$('[data-act="rIntensity"]').forEach((b) => {
+    const on = String(+b.dataset.n === n);
+    b.setAttribute('aria-checked', on);
+    b.setAttribute('aria-pressed', on);
+  });
+  haptic(6 + 4 * n);
+  syncEngine();
+  engine.pulse(0.25 * n);
+}
 
 export const ACT = {
   startA() {
@@ -294,6 +334,29 @@ export const ACT = {
       { duration: 340, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' },
     ).onfinish = () => renderView({ quiet: true });
   },
+  /* ── the check-in, step by step (views/reflect.ts) ── */
+  rIntensity(el) {
+    setIntensity(+el.dataset.n);
+  },
+  rNext() {
+    goStep(S.draft.step + 1);
+  },
+  rBack() {
+    if (S.draft.step > 0) goStep(S.draft.step - 1);
+    else back();
+  },
+  /* one touch answers, and the next step follows on its own */
+  rAnswer(el) {
+    S.draft.meaning = { q: el.dataset.q, a: el.dataset.a };
+    $$('[data-act="rAnswer"]').forEach((b) => b.setAttribute('aria-checked', String(b === el)));
+    haptic(8);
+    engine.pulse(0.5);
+    setTimeout(() => S.view === 'reflect' && STEPS[S.draft.step] === 'ask' && goStep(S.draft.step + 1), 280);
+  },
+  rSkip() {
+    S.draft.meaning = null;
+    goStep(S.draft.step + 1);
+  },
   scene(el) {
     const id = el.dataset.s,
       on = S.draft.scenes;
@@ -316,13 +379,14 @@ export const ACT = {
   save() {
     saveDraft();
   },
+  /* closing loses the check-in; with something written in it, the first touch asks */
   discard() {
-    const v = $('#noteInput')?.value.trim();
+    const v = ($('#noteInput')?.value ?? S.draft.note).trim();
     if (v && !S.discardArm) {
       S.discardArm = true;
-      S.draft.note = $('#noteInput').value;
+      S.draft.note = $('#noteInput')?.value ?? S.draft.note;
       const b = $('[data-act="discard"]');
-      b.textContent = 'یادداشت پاک می‌شه؛ مطمئنی؟';
+      if (b) b.textContent = 'پاک بشه؟';
       return;
     }
     exitFlow('چیزی ثبت نشد.');

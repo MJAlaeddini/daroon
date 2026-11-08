@@ -51,6 +51,7 @@ export function swapGuide() {
 }
 export function toReflect() {
   S.draft.palette = -1;
+  S.draft.step = 0;
   go('reflect');
   engine.pulse(-0.4, 600);
 }
@@ -76,6 +77,9 @@ export function draftFromEntry(e) {
     note: e.note || '',
     focus: -1,
     palette: -1,
+    step: 0,
+    intensity: [1, 2, 3].includes(e.intensity) ? e.intensity : 2,
+    meaning: e.meaning || null,
   };
 }
 
@@ -95,6 +99,8 @@ export async function saveDraft() {
       Object.assign(e, {
         emotions,
         scenes: [...d.scenes],
+        intensity: d.intensity,
+        meaning: d.meaning,
         unnamed: !emotions.length,
         note: d.note.trim(),
         updatedAt: new Date().toISOString(),
@@ -125,6 +131,8 @@ export async function saveDraft() {
     suggested: (d.suggested || []).filter((k) => !emotions.some((x) => x.key === k)),
     context: d.context || null,
     scenes: [...d.scenes],
+    intensity: d.intensity,
+    meaning: d.meaning,
     unnamed: !emotions.length,
     note: d.note.trim(),
     path: d.path || 'explore',

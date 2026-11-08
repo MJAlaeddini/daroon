@@ -35,8 +35,15 @@ test('an entry travels between two devices without its note, and so does its del
   await phone.click('.word[data-key="امید"]');
   await phone.click('#xbar .primary');
   await settle(phone, 1400);
+  await phone.click('[data-act=rIntensity][data-n="1"]');
+  await phone.click('[data-act=rNext]');
+  await settle(phone, 700);
+  await phone.click('[data-act=rNext]');
+  await settle(phone, 700);
+  await phone.click('[data-act=rAnswer][data-a=some]');
+  await settle(phone, 900);
   await phone.fill('#noteInput', 'فقط برای همین گوشی');
-  await phone.click('[data-act=save]');
+  await phone.click('.r-acts .primary');
   await expect
     .poll(() => phone.evaluate('__daroon.DB.entries.filter(e => !e.demo && e.syncedAt === e.updatedAt).length'), {
       timeout: 15_000,
@@ -51,6 +58,9 @@ test('an entry travels between two devices without its note, and so does its del
   const got: any = await tablet.evaluate('__daroon.DB.entries.find(e => !e.demo)');
   expect(got.emotions[0].key).toBe('امید');
   expect(got.note).toBe('');
+  // strength and the small question travel with the entry; the note does not
+  expect(got.intensity).toBe(1);
+  expect(got.meaning).toEqual({ q: 'control', a: 'some' });
   expect(await tablet.evaluate('__daroon.DB.account.name')).toBe('سارا');
 
   await tablet.evaluate("__daroon.go('archive')");
