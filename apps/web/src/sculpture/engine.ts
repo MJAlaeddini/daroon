@@ -1,26 +1,13 @@
-import { labToHex } from '../core/color';
-import { clamp, lerp } from '../core/util';
-import { NEUTRAL_PAL, NEU_LABS, NO_MOTIF, P0, PK, labsFor, lex, palFor } from '../domain/lexicon';
+import { clamp } from '../core/util';
+import { NEU_LABS, lex } from '../domain/lexicon';
 import { DB } from '../state/store';
+import { StoneMotion, type Frame } from '../stone/compose';
+import { EMOTIONS, EMOTION_IDS, ID_BY_LABEL, type EmotionId } from '../stone/presets';
+import type { Feeling } from '../stone/resolve';
 
-/* ═════════════════════════ engine: springs, slots, phases ═════════════════════════ */
-export const STIFF = {
-  coh: 2.4,
-  reg: 3.4,
-  exp: 3.6,
-  asym: 3.2,
-  sharp: 3.2,
-  turb: 2.9,
-  tens: 2.9,
-  energy: 2.5,
-  freq: 2.5,
-  lum: 5,
-  diff: 4,
-  sep: 2.3,
-  dx: 3,
-  dy: 3,
-};
-export const SHAPEY = new Set(['exp', 'asym', 'reg', 'sharp']);
+/* ═════════════════════════ engine: the emotion stone behind the app's sculpture ═════════════════════════
+   The look and motion live in src/stone (the owner's twelve stones, combined and moved in a shader); this class keeps
+   the small surface the rest of the app talks to: setSpec, rippleAt, pulse, update, dominantHex. */
 export const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
 export const reduced = () => DB.settings.motion === 'calm' || (DB.settings.motion === 'system' && mqReduce.matches);
 export const habit = () => clamp((DB.visits - 1) / 8); // motion quiets with repeated use
@@ -32,277 +19,74 @@ export function isDark() {
 }
 export const isSpectrum = () => document.documentElement.dataset.direction === 'spectrum';
 
+/** A word's core feeling: itself, the core it refines, or (for a word of the person's own) the nearest core on the ring. */
+const CORE_ANGLE = EMOTION_IDS.map((id) => [id, lex(EMOTIONS[id].label).angle] as const);
+export function coreOf(key: string): EmotionId | null {
+  if (ID_BY_LABEL[key]) return ID_BY_LABEL[key];
+  const L = lex(key);
+  if (L.parent && ID_BY_LABEL[L.parent]) return ID_BY_LABEL[L.parent];
+  if (!L.custom) return null;
+  let best: EmotionId | null = null,
+    gap = 1e9;
+  for (const [id, a] of CORE_ANGLE) {
+    const d = Math.abs(((L.angle - a + 540) % 360) - 180);
+    if (d < gap) ((gap = d), (best = id));
+  }
+  return best;
+}
+/** A spec (the words of an entry, a day or a pattern) as the stone's feelings: up to three distinct cores. */
+export function toFeelings(spec: { items?: { key: string }[] } | null | undefined): Feeling[] {
+  const ids: EmotionId[] = [];
+  for (const it of spec?.items || []) {
+    const id = coreOf(it.key);
+    if (id && !ids.includes(id)) ids.push(id);
+    if (ids.length === 3) break;
+  }
+  return ids.map((id) => ({ id }));
+}
+
 export class Engine {
-  P: Record<string, number>;
-  V: Record<string, number>;
-  slots: {
-    key: string | null;
-    angle: number;
-    w: number;
-    v: number;
-    wT: number;
-    lab: number[][];
-    labT: number[][] | null;
-    lexp: number;
-    ltens: number;
-  }[];
-  neutral: number;
-  nv: number;
-  neutralT: number;
-  mod: Record<string, number>;
-  hintMod: Record<string, number>;
-  open: number;
-  openV: number;
-  openT: number;
-  ph: number[];
-  ripple: { x: number; y: number; age: number; str: number; k: number; sp: number; dec: number };
-  pt: number[];
-  ptT: number[];
-  seed: number;
-  _pt: ReturnType<typeof setTimeout> | undefined;
-  /** colours of the neutral (unnamed) part of the form, easing toward neuT */
-  neu: number[][];
-  neuT: number[][];
-  constructor() {
-    this.P = { ...P0 };
-    this.V = {};
-    PK.forEach((k) => (this.V[k] = 0));
-    this.slots = [0, 1, 2].map(() => ({
-      key: null,
-      angle: 0,
-      w: 0,
-      v: 0,
-      wT: 0,
-      lab: NEU_LABS.map((a) => a.slice()),
-      labT: null,
-      lexp: 0,
-      ltens: 0,
-    }));
-    this.neutral = 1;
-    this.nv = 0;
-    this.neutralT = 1;
-    this.mod = {};
-    this.hintMod = {};
-    this.open = 0;
-    this.openV = 0;
-    this.openT = 0;
-    this.ph = [Math.random() * 40, Math.random() * 40, 0, 0];
-    this.ripple = { x: 0, y: 0, age: 9, str: 0, k: 24, sp: 8, dec: 1.6 };
-    this.pt = [0, 0];
-    this.ptT = [0, 0];
-    this.seed = Math.random();
-    this.neu = NEU_LABS.map((a) => a.slice());
-    this.neuT = NEU_LABS;
+  readonly motion = new StoneMotion();
+  private key = '';
+  /* kept for the screens that still set them; the stone's look comes from its art, so they have no effect */
+  mod: Record<string, number> = {};
+  hintMod: Record<string, number> = {};
+  neuT = NEU_LABS;
+  pt = [0, 0];
+  ptT = [0, 0];
+
+  setSpec(spec): void {
+    const f = toFeelings(spec),
+      k = f.map((x) => x.id).join('|');
+    if (k === this.key) return;
+    this.key = k;
+    this.motion.reduced = reduced();
+    this.motion.set(f);
   }
-  setSpec(spec) {
-    const items = (spec.items || []).slice(0, 3),
-      keys = items.map((i) => i.key);
-    for (const s of this.slots) if (s.key && !keys.includes(s.key)) s.wT = 0;
-    for (const it of items) {
-      let s = this.slots.find((x) => x.key === it.key);
-      if (!s) {
-        s =
-          this.slots.find((x) => !x.key) ||
-          this.slots.find((x) => x.wT === 0 && x.w < 0.02) ||
-          this.slots.filter((x) => x.wT === 0).sort((a, b) => a.w - b.w)[0];
-        if (!s) continue;
-        s.key = it.key;
-        s.w = 0;
-        s.v = 0;
-        s.lab = labsFor(it.key, it.color).map((a) => a.slice());
-      }
-      const L = lex(it.key);
-      s.wT = 1;
-      s.labT = labsFor(it.key, it.color);
-      s.angle = L.angle;
-      s.lexp = (L.P.exp - 0.5) * 1.6;
-      s.ltens = L.P.tens;
-    }
-    this.neutralT = items.length ? spec.neutral || 0 : 1;
-  }
-  pulse(v = 1, hold = 380) {
-    this.openT = v;
-    clearTimeout(this._pt);
-    this._pt = setTimeout(() => (this.openT = 0), hold);
-  }
-  rippleAt(angleRad, key, out = true) {
+  /** a word was touched: the stone answers (out = added, swells; otherwise removed, draws in a little) */
+  rippleAt(_angle?: number, _key?: string, out = true): void {
     if (reduced()) return;
-    const P = key ? lex(key).P : P0;
-    this.ripple = {
-      x: Math.cos(angleRad) * 0.5,
-      y: Math.sin(angleRad) * 0.5,
-      age: 0,
-      str: (out ? 1 : -0.55) * (1 - 0.35 * habit()),
-      k: 16 + 26 * P.freq,
-      sp: 5 + 9 * P.energy,
-      dec: 0.9 + 1.6 * (1 - P.energy) * 0.6 + P.tens * 0.6,
-    };
+    this.motion.touch(out ? 1 - 0.35 * habit() : -0.55);
   }
-  update(dt) {
-    const rm = reduced(),
-      ms = rm ? 0.12 : 1 - 0.2 * habit();
-    const kmul = rm ? 2.2 : 1;
-    for (const s of this.slots) {
-      const k = 7 * kmul;
-      s.v += (k * k * (s.wT - s.w) - 2 * 0.95 * k * s.v) * dt;
-      s.w = clamp(s.w + s.v * dt, 0, 1.15);
-      if (s.labT) {
-        const a = 1 - Math.exp(-dt * 5);
-        for (let i = 0; i < 3; i++) for (let c = 0; c < 3; c++) s.lab[i][c] = lerp(s.lab[i][c], s.labT[i][c], a);
-      }
-      if (s.wT === 0 && s.w < 0.004) {
-        s.key = null;
-        s.w = 0;
-        s.v = 0;
-      }
-    }
-    {
-      const a = 1 - Math.exp(-dt * 2.5);
-      for (let i = 0; i < 3; i++) for (let c = 0; c < 3; c++) this.neu[i][c] = lerp(this.neu[i][c], this.neuT[i][c], a);
-    }
-    {
-      const k = 4 * kmul;
-      this.nv += (k * k * (this.neutralT - this.neutral) - 2 * k * this.nv) * dt;
-      this.neutral = clamp(this.neutral + this.nv * dt);
-    }
-    const T = {};
-    let ws = this.neutral;
-    PK.forEach((k) => (T[k] = P0[k] * this.neutral));
-    for (const s of this.slots) {
-      if (!s.key || s.w <= 0) continue;
-      const P = lex(s.key).P;
-      ws += s.w;
-      PK.forEach((k) => (T[k] += P[k] * s.w));
-    }
-    PK.forEach((k) => {
-      T[k] = ws > 1e-4 ? T[k] / ws : P0[k];
-      T[k] += (this.mod[k] || 0) + (this.hintMod[k] || 0);
-      T[k] = k === 'dx' || k === 'dy' ? clamp(T[k], -1, 1) : clamp(T[k]);
-    });
-    PK.forEach((k) => {
-      const st = STIFF[k] * kmul,
-        z = SHAPEY.has(k) && !rm ? 0.78 : 1;
-      this.V[k] += (st * st * (T[k] - this.P[k]) - 2 * z * st * this.V[k]) * dt;
-      this.P[k] += this.V[k] * dt;
-    });
-    {
-      const k = 5.5;
-      this.openV += (k * k * (this.openT - this.open) - 2 * 0.7 * k * this.openV) * dt;
-      this.open += this.openV * dt;
-    }
-    const P = this.P;
-    this.ph[0] += dt * (0.16 + 0.85 * P.energy) * ms;
-    this.ph[1] += dt * (0.14 + 1.05 * P.freq) * ms;
-    this.ph[2] += dt * (0.12 + 0.7 * P.energy + 0.3 * P.tens) * ms;
-    this.ph[3] += dt * ms;
-    this.ripple.age += dt;
-    const a = 1 - Math.exp(-dt * 3);
-    this.pt[0] = lerp(this.pt[0], this.ptT[0], a);
-    this.pt[1] = lerp(this.pt[1], this.ptT[1], a);
+  pulse(v = 1, _hold?: number): void {
+    if (reduced()) return;
+    this.motion.touch(0.6 * v);
   }
-  dominantHex() {
+  update(dt: number): void {
+    this.motion.reduced = reduced();
+    this.motion.update(dt);
+  }
+  frame(): Frame {
+    return this.motion.frame();
+  }
+  /** something is changing (a morph or a touch), so the stage draws every frame */
+  busy(): boolean {
+    return this.motion.morphing || this.motion.touching;
+  }
+  /** the colour of the strongest feeling, for the tab bar and the spectrum tint */
+  dominantHex(): string | null {
     let best = null;
-    for (const s of this.slots) if (s.key && (!best || s.w > best.w)) best = s;
-    return best && best.w > 0.2 ? labToHex(best.lab[1]) : null;
+    for (const s of this.motion.frame().slots) if (s.id !== 'neutral' && (!best || s.w > best.w)) best = s;
+    return best && best.w > 0.2 ? EMOTIONS[best.id as EmotionId].palette.middle : null;
   }
-}
-export function buildU(st, scale: number, halo: number, dk?: number) {
-  const S = new Float32Array(12),
-    M = new Float32Array(12),
-    M2 = new Float32Array(12),
-    Mg = [0, 0, 0, 0],
-    M2g = [0, 0, 0, 0],
-    K = new Float32Array(27),
-    N = new Float32Array(9),
-    P = st.P;
-  st.slots.forEach((s, i) => {
-    S[i * 4] = (s.angle * Math.PI) / 180;
-    S[i * 4 + 1] = s.key ? s.w : 0;
-    S[i * 4 + 2] = s.lexp;
-    S[i * 4 + 3] = s.ltens;
-    for (let j = 0; j < 3; j++) for (let c = 0; c < 3; c++) K[i * 9 + j * 3 + c] = s.lab[j][c];
-    // gestures add up rather than average out, so each chosen feeling stays visible in the mix
-    const m = s.key ? lex(s.key).M : NO_MOTIF,
-      w = s.key ? clamp(s.w, 0, 1.1) : 0;
-    for (let j = 0; j < 4; j++) {
-      M[i * 4 + j] = m[j] * w;
-      M2[i * 4 + j] = m[j + 4] * w;
-      Mg[j] += m[j] * w;
-      M2g[j] += m[j + 4] * w;
-    }
-  });
-  for (let j = 0; j < 4; j++) {
-    Mg[j] = Math.min(Mg[j], 1.25);
-    M2g[j] = Math.min(M2g[j], 1.25);
-  }
-  (st.neu || NEU_LABS).forEach((l, j) => {
-    N[j * 3] = l[0];
-    N[j * 3 + 1] = l[1];
-    N[j * 3 + 2] = l[2];
-  });
-  const r = st.ripple;
-  let main = null,
-    mw = 0;
-  st.slots.forEach((s) => {
-    if (s.key && s.w > mw) {
-      mw = s.w;
-      main = s;
-    }
-  });
-  return {
-    ph: st.ph,
-    A: [P.exp, P.reg, P.asym, P.sharp],
-    B: [P.turb, P.tens, P.lum, P.coh],
-    C: [P.diff, P.sep, P.dx, P.dy],
-    D: [st.open, dk != null ? dk : isDark() ? 1 : 0, dk != null ? 0 : isSpectrum() ? 1 : 0, st.neutral],
-    S,
-    M,
-    M2,
-    Mg,
-    M2g,
-    K,
-    N,
-    R: [r.x, r.y, r.age, r.str],
-    R2: [r.k, r.sp, r.dec, 0],
-    pt: st.pt,
-    seed: st.seed || 0,
-    scale,
-    halo,
-    P,
-    mainPal: main ? palFor(main.key, null) : NEUTRAL_PAL,
-  };
-}
-export function staticState(spec) {
-  const items = (spec.items || []).slice(0, 3),
-    n = items.length ? spec.neutral || 0 : 1,
-    P = {};
-  let ws = n;
-  PK.forEach((k) => (P[k] = P0[k] * n));
-  const slots = [0, 1, 2].map((i) => {
-    const it = items[i];
-    if (!it) return { key: null, w: 0, angle: 0, lab: NEU_LABS, lexp: 0, ltens: 0 };
-    const L = lex(it.key);
-    PK.forEach((k) => (P[k] += L.P[k]));
-    ws += 1;
-    return {
-      key: it.key,
-      w: 1,
-      angle: L.angle,
-      lab: labsFor(it.key, it.color),
-      lexp: (L.P.exp - 0.5) * 1.6,
-      ltens: L.P.tens,
-    };
-  });
-  PK.forEach((k) => (P[k] /= Math.max(ws, 1e-4)));
-  const s = spec.seed || 0;
-  return {
-    P,
-    slots,
-    neutral: n,
-    open: 0,
-    ph: [s * 97, s * 61, s * 37, s * 13],
-    ripple: { x: 0, y: 0, age: 9, str: 0, k: 20, sp: 8, dec: 2 },
-    pt: [0, 0],
-    seed: s,
-  };
 }

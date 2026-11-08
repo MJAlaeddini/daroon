@@ -56,6 +56,8 @@ export class StoneMotion {
   private wob = { cur: 0, from: 0, to: 0 };
   private t0 = -10;
   private dur = RENDERER.motionTransitionSeconds;
+  private touchAt = -10;
+  private touchV = 0;
 
   constructor(initial: Feeling[] = []) {
     this.state = resolveState(initial);
@@ -93,6 +95,17 @@ export class StoneMotion {
     this.dur = this.reduced ? 0.6 : RENDERER.motionTransitionSeconds;
   }
 
+  /** A touch: the stone swells a little and its light lifts, then settles (negative draws it in, for a removal). */
+  touch(v = 1): void {
+    if (this.reduced) return;
+    this.touchAt = this.clock;
+    this.touchV = v;
+  }
+  /** whether a touch is still settling */
+  get touching(): boolean {
+    return this.clock - this.touchAt < 1.4;
+  }
+
   /** Jump straight to a choice, clock at zero and nothing moving: the canonical still of that stone. */
   snap(feelings: Feeling[]): void {
     this.state = resolveState(feelings);
@@ -102,6 +115,7 @@ export class StoneMotion {
     this.wob = { cur: this.state.wobble, from: this.state.wobble, to: this.state.wobble };
     this.clock = 0;
     this.t0 = -10;
+    this.touchAt = -10;
   }
 
   get morphing(): boolean {
@@ -130,6 +144,20 @@ export class StoneMotion {
       .sort((a, b) => a.i - b.i);
     const sum = live.reduce((s, x) => s + x.c.w, 0) || 1;
     const still = this.reduced || this.clock === 0;
+    const age = this.clock - this.touchAt;
+    const env =
+      this.touching && !still
+        ? this.touchV * (age < 0.12 ? smoothstep(age / 0.12) : Math.exp(-(age - 0.12) / 0.35))
+        : 0;
+    const movesOf = (id: StoneId): Moves => {
+      if (still) return STILL;
+      const m = movesAt(id, this.clock);
+      if (env) {
+        m.scale += 0.022 * env;
+        m.glow += 0.16 * env;
+      }
+      return m;
+    };
     return {
       wobble: this.wob.cur,
       slots: live.map(({ c, i }) => {
@@ -143,8 +171,8 @@ export class StoneMotion {
           band: c.band,
           turn: c.turn,
           center: ART[art].center,
-          desat: id === 'neutral' ? 0.75 : 0,
-          moves: still ? STILL : movesAt(id, this.clock),
+          desat: id === 'neutral' ? 0.45 : 0,
+          moves: movesOf(id),
         };
       }),
     };

@@ -14,7 +14,8 @@ The single-file prototype (`docs/prototype/daroon.html`) was split into modules 
 | ------------------------- | --------------------------------------------------------------------------------------------------- |
 | `core/`                   | Small utilities and colour (OKLab)                                                                  |
 | `domain/`                 | Vocabulary and each emotion's form parameters, guided-path questions, a day's emotional composition |
-| `sculpture/`              | WebGL2 shader, Canvas2D fallback renderer, spring-driven sculpture engine, calendar thumbnails      |
+| `stone/`                  | The emotion stone: the owner's twelve stones (art), how they combine and move, WebGL2 renderer      |
+| `sculpture/`              | The app's side of the stone: the engine the screens talk to, feelings from words, day/entry marks   |
 | `stage/`                  | The single sculpture that travels between views, and the motion choreography                        |
 | `state/`                  | App state (`S`) and local storage (`DB` in localStorage)                                            |
 | `views/`                  | Screens; each builds its own HTML                                                                   |

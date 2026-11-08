@@ -5,8 +5,8 @@ import './styles/auth.css';
 import './events';
 import { loadAuthConfig, pullStories, refreshAvatar, sessionExpired } from './features/account';
 import { onSessionExpired, onSynced, startSync } from './features/sync';
-import { buildU, staticState } from './sculpture/engine';
-import { mini } from './sculpture/traces';
+import { renderTraceNow } from './sculpture/traces';
+import { loadArt } from './stone/art';
 import { frame } from './stage/stage';
 import { S } from './state/app';
 import { DB, load, reindex } from './state/store';
@@ -57,6 +57,9 @@ setupPress();
 setupEntrySwipe();
 if (DB.account) pullStories();
 if (E2E) (window as any).__daroon = { S, DB, engine, go, ACT, todayKey };
-try {
-  mini.draw(buildU(staticState({ items: [], neutral: 1, seed: 0 }), 0.5, 0.7));
-} catch (e) {} /* compile the trace shader before the first calendar needs it */
+/* load the stones' art and compile the still shader before the first calendar needs them */
+void loadArt().then(() => {
+  try {
+    renderTraceNow({ items: [] }, 16);
+  } catch (e) {}
+});

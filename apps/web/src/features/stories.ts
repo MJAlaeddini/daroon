@@ -5,8 +5,8 @@ import { hexToLab, labRot, labToHex } from '../core/color';
 import { clamp, esc, hashStr, uid } from '../core/util';
 import { NEUTRAL_PAL, palFor } from '../domain/lexicon';
 import { aggregate } from '../domain/specs';
-import { buildU, reduced, staticState } from '../sculpture/engine';
-import { BLANK, TRACE_PX, TR, mini, miniCanvas, traceKey } from '../sculpture/traces';
+import { reduced } from '../sculpture/engine';
+import { BLANK, TR, renderTraceNow, traceKey } from '../sculpture/traces';
 import { stageEl } from '../stage/stage';
 import { S } from '../state/app';
 import { DB, dayList, persist } from '../state/store';
@@ -20,13 +20,11 @@ import { toast } from '../ui/toast';
 export function renderArt(spec, dk = 0, size = 360) {
   const k = 'A' + dk + traceKey(spec);
   if (TR.has(k)) return TR.get(k);
-  let url = BLANK;
+  let url: string | null = null;
   try {
-    miniCanvas.width = miniCanvas.height = size;
-    mini.draw(buildU(staticState(spec), 0.5, 0.9, dk));
-    url = miniCanvas.toDataURL('image/png');
+    url = renderTraceNow(spec, size, 0.5, !!dk);
   } catch (e) {}
-  miniCanvas.width = miniCanvas.height = TRACE_PX;
+  if (!url) return BLANK; /* the art is still loading; the next render of the page draws it */
   TR.set(k, url);
   return url;
 }
