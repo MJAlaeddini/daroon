@@ -64,7 +64,10 @@ The canvas gets an `aria-label` such as «سنگ ترکیبی: غم، خشم، �
 - that morphs never jump
 - that motion stays small and starts at rest
 
-## Not yet in the app
+## In the app
 
-The check-in still uses `src/sculpture`. Moving it over is a separate step: the stage flights and the trace marks
-would call `Stone` and `stillPNG` instead of the old engine.
+`src/sculpture/engine.ts` is the app's side: the screens still call `engine.setSpec`, `rippleAt` and `pulse`, and the
+engine turns words into feelings. A refined word counts as its core feeling, and a word of the person's own counts as
+the nearest core on the ring. The stage (`src/stage/stage.ts`) draws it on the travelling canvas, and
+`src/sculpture/traces.ts` makes the day and entry marks as canonical stills, each at the same visual weight. Stories
+use the same stills on their dark pages.

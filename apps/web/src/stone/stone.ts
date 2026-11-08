@@ -6,7 +6,7 @@
  *   const png = stillPNG([{ id: 'anger' }], 256);        // the same stone, every time
  */
 import { loadArt } from './art';
-import { StoneMotion } from './compose';
+import { outlineOf, StoneMotion } from './compose';
 import { createRenderer, type StoneRenderer, type Theme } from './renderer';
 import { describe as describeIds, type Feeling } from './resolve';
 
@@ -167,6 +167,20 @@ export function stillCanvasFor(
   stillCanvas.width = stillCanvas.height = size;
   stillMotion.snap(feelings);
   return stillR!.draw(stillMotion.frame(), { theme, zoom }) ? stillCanvas : null;
+}
+/** The zoom at which a choice's body fills `fill` of a still's half-width by its average reach, so stills of different
+    stones carry the same visual weight; never so close that its farthest point leaves the frame. */
+export function stillZoom(feelings: Feeling[], fill = 0.6): number {
+  stillMotion.snap(feelings);
+  const fr = stillMotion.frame();
+  let mean = 0,
+    max = 0;
+  for (let i = 0; i < 64; i++) {
+    const r = outlineOf(fr, (i / 64) * Math.PI * 2);
+    mean += r / 64;
+    max = Math.max(max, r);
+  }
+  return Math.min(fill / mean, 0.92 / max);
 }
 /** The canonical still as a transparent PNG data URL (empty while the art is loading). */
 export function stillPNG(feelings: Feeling[], size = 256, theme: Theme = 'dark', zoom = 1): string {

@@ -19,7 +19,8 @@ export function showDone(entry, shot: string | null, from?) {
     key = traceKey(spec);
   if (!TR.has(key)) {
     try {
-      TR.set(key, renderTraceNow(spec));
+      const url = renderTraceNow(spec);
+      if (url) TR.set(key, url);
     } catch (e) {}
   }
   const cells = [...Array(7)]

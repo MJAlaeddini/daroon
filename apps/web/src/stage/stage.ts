@@ -1,22 +1,17 @@
 import { $, $$, clamp, lerp } from '../core/util';
-import { PK } from '../domain/lexicon';
-import { Engine, buildU, habit, isSpectrum, reduced } from '../sculpture/engine';
-import { Ctx2DRenderer, GLRenderer } from '../sculpture/renderers';
+import { Engine, habit, isDark, isSpectrum, reduced } from '../sculpture/engine';
 import { processTraces } from '../sculpture/traces';
+import { loadArt } from '../stone/art';
+import { createRenderer, GLStoneRenderer } from '../stone/renderer';
 import { S } from '../state/app';
 
 /* ═════════════════════════ stage: one sculpture that travels between anchors ═════════════════════════ */
 export const engine = new Engine();
 export const stageEl = $('#stage'),
   canvas = $('#sculpt');
-export let renderer,
-  usingGL = true;
-try {
-  renderer = new GLRenderer(canvas);
-} catch (e) {
-  usingGL = false;
-  renderer = new Ctx2DRenderer(canvas);
-}
+export const renderer = createRenderer(canvas, true);
+export const usingGL = renderer instanceof GLStoneRenderer;
+void loadArt();
 export const BLEED = 1.4; /* the canvas extends past its anchor so the halo can fade out completely */
 export const grow = (r) => ({
   left: r.left - (r.width * (BLEED - 1)) / 2,
@@ -24,6 +19,12 @@ export const grow = (r) => ({
   width: r.width * BLEED,
   height: r.height * BLEED,
 });
+/* the stone's art is a square whose body fills about 62% of it; ZOOM sizes it so the body fills the anchor the way the
+   anchor's data-scale asks */
+const ZOOM = 1 / 0.62;
+export function drawStage() {
+  renderer.draw(engine.frame(), { theme: isDark() ? 'dark' : 'light', zoom: (ZOOM * Stage.scale) / BLEED });
+}
 export const Stage: any = {
   anchor: null,
   from: null,
@@ -42,10 +43,10 @@ export function sizeCanvas(w, h) {
   Stage.cssH = h;
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.6) * Stage.q;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5) * Stage.q;
   let pw = Math.round(w * dpr),
     ph = Math.round(h * dpr);
-  const max = 860 * 860;
+  const max = 1280 * 1280;
   if (pw * ph > max) {
     const s = Math.sqrt(max / (pw * ph));
     pw = Math.round(pw * s);
@@ -95,7 +96,7 @@ export function pickAnchor() {
     positionStage(now, true);
     if (Stage.shown && Stage.cssW && !S.done && !S.story) {
       try {
-        renderer.draw(buildU(engine, Stage.scale / BLEED, 1));
+        drawStage();
       } catch (e) {}
     }
   }
@@ -160,15 +161,7 @@ export function holdTraces(ms: number) {
   traceHold = performance.now() + ms;
 }
 export function busy() {
-  let v = Math.abs(engine.openV) + Math.abs(engine.nv);
-  PK.forEach((k) => (v += Math.abs(engine.V[k])));
-  engine.slots.forEach((s) => (v += Math.abs(s.v)));
-  return (
-    !Stage.settled ||
-    engine.ripple.age < 2.5 ||
-    v > 0.02 ||
-    Math.abs(engine.pt[0] - engine.ptT[0]) + Math.abs(engine.pt[1] - engine.ptT[1]) > 0.01
-  );
+  return !Stage.settled || engine.busy();
 }
 export function frame(now) {
   const dt = Math.min(0.05, (now - lastT) / 1000);
@@ -187,7 +180,7 @@ export function frame(now) {
     frameN % every === 0
   ) {
     try {
-      renderer.draw(buildU(engine, Stage.scale / BLEED, 1));
+      drawStage();
       if (lastDraw && now - lastDraw < 500) perfWatch((now - lastDraw) / 1000 / every);
       lastDraw = now;
     } catch (e) {}
@@ -204,7 +197,7 @@ export function frame(now) {
 }
 export function snapshot() {
   try {
-    renderer.draw(buildU(engine, Stage.scale / BLEED, 1));
+    drawStage();
     return canvas.toDataURL('image/png');
   } catch (e) {
     return null;
