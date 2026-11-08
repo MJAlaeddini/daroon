@@ -112,9 +112,12 @@ void main() {
   } else {
     vec3 hue = light / max(lum, 1e-4);
     float white = min(min(hue.r, hue.g), hue.b);
-    /* tinted glass: the art's bright edges become the densest, deepest colour; its pale core stays clear */
-    float a = pow(smoothstep(0.035, 0.8, lum), 0.65) * (1.0 - 0.42 * white) * 0.92;
-    vec3 col = pow(hue, vec3(1.5)) * (0.66 + 0.16 * lum);
+    /* tinted glass: the art's bright edges become the densest, deepest colour; its faint halo turns to a clear,
+       whitish light (it must never grey the page or the words around the stone) and is gone just past the body */
+    float deep = smoothstep(0.06, 0.6, lum);
+    float a = pow(smoothstep(0.03, 0.8, lum), 0.65) * (1.0 - 0.42 * white) * 0.92;
+    a *= smoothstep(1.4, 1.02, rho);
+    vec3 col = mix(vec3(0.99, 0.985, 1.0), pow(hue, vec3(1.5)) * (0.66 + 0.16 * lum), deep);
     outColor = vec4(col * a, a);
   }
 }`;

@@ -6,6 +6,7 @@
  *   const png = stillPNG([{ id: 'anger' }], 256);        // the same stone, every time
  */
 import { loadArt } from './art';
+import { EMOTION_IDS, type EmotionId } from './presets';
 import { outlineOf, StoneMotion } from './compose';
 import { createRenderer, type StoneRenderer, type Theme } from './renderer';
 import { describe as describeIds, type Feeling } from './resolve';
@@ -167,6 +168,24 @@ export function stillCanvasFor(
   stillCanvas.width = stillCanvas.height = size;
   stillMotion.snap(feelings);
   return stillR!.draw(stillMotion.frame(), { theme, zoom }) ? stillCanvas : null;
+}
+/** Upload every stone's art to the still renderer in idle moments, one per moment, so the first marks on a page never
+    pause it (a texture upload at full size can take a noticeable moment on a slow phone). */
+export function warmStills(): void {
+  const ids: EmotionId[] = [...EMOTION_IDS];
+  const idle = (f: () => void) =>
+    'requestIdleCallback' in globalThis ? requestIdleCallback(f, { timeout: 1500 }) : setTimeout(f, 60);
+  const next = () => {
+    const id = ids.shift();
+    if (!id) return;
+    try {
+      stillCanvasFor([{ id }], 8);
+    } catch {
+      /* nothing to warm without WebGL2 */
+    }
+    idle(next);
+  };
+  void loadArt().then(() => idle(next));
 }
 /** The zoom at which a choice's body fills `fill` of a still's half-width by its average reach, so stills of different
     stones carry the same visual weight; never so close that its farthest point leaves the frame. */

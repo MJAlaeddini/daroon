@@ -48,8 +48,15 @@ test('a saved entry with a note survives a reload; three words at most', async (
   expect(await page.evaluate('__daroon.S.draft.items.length')).toBe(3);
   await page.click('#xbar .primary');
   await settle(page, 1500);
+  // strength, where, the small question (skipped), then the line of one's own
+  await page.click('[data-act=rNext]');
+  await settle(page, 700);
+  await page.click('[data-act=rNext]');
+  await settle(page, 700);
+  await page.click('[data-act=rSkip]');
+  await settle(page, 700);
   await page.fill('#noteInput', 'یه روز معمولی');
-  await page.click('[data-act=save]');
+  await page.click('.r-acts .primary');
   await settle(page, 2800);
   await page.reload();
   await settle(page, 1200);
@@ -57,6 +64,43 @@ test('a saved entry with a note survives a reload; three words at most', async (
     '__daroon.DB.entries.filter(e => !e.demo).map(e => ({ n: e.emotions.length, note: e.note, u: !!e.updatedAt }))',
   );
   expect(own).toEqual([{ n: 3, note: 'یه روز معمولی', u: true }]);
+});
+
+test('a check-in goes step by step: strength, where, one small question, a line; it can save at any step', async ({
+  page,
+}) => {
+  await open(page);
+  await page.click('[data-act=loginSkip]');
+  await settle(page, 900);
+  await page.click('[data-act=startA]');
+  await settle(page, 1300);
+  await tap(page, '.word[data-key="دلتنگی"]');
+  await page.click('#xbar .primary');
+  await settle(page, 1500);
+  expect(await page.getAttribute('.r-grid', 'data-step')).toBe('strength');
+  await tap(page, '[data-act=rIntensity][data-n="3"]');
+  await page.click('[data-act=rNext]');
+  await settle(page, 700);
+  expect(await page.getAttribute('.r-grid', 'data-step')).toBe('where');
+  await tap(page, '[data-act=scene][data-s=friends]');
+  await page.click('[data-act=rNext]');
+  await settle(page, 700);
+  // with friends around, the question is whether one was heard; one touch answers and moves on
+  expect(await page.getAttribute('[data-act=rAnswer][data-a=no]', 'data-q')).toBe('heard');
+  await tap(page, '[data-act=rAnswer][data-a=no]');
+  await settle(page, 900);
+  expect(await page.getAttribute('.r-grid', 'data-step')).toBe('note');
+  // back goes one step back and keeps the answer
+  await page.click('[data-act=rBack]');
+  await settle(page, 700);
+  expect(await page.getAttribute('[data-act=rAnswer][data-a=no]', 'aria-checked')).toBe('true');
+  await page.click('.r-acts [data-act=save]');
+  await settle(page, 2800);
+  expect(
+    await page.evaluate(
+      '__daroon.DB.entries.filter(e => !e.demo).map(e => ({ i: e.intensity, m: e.meaning, s: e.scenes }))',
+    ),
+  ).toEqual([{ i: 3, m: { q: 'heard', a: 'no' }, s: ['friends'] }]);
 });
 
 test('a check-in can say who or what was around (two at most), and patterns take a yes or a no', async ({ page }) => {
@@ -68,6 +112,8 @@ test('a check-in can say who or what was around (two at most), and patterns take
   await tap(page, '.word[data-key="امید"]');
   await page.click('#xbar .primary');
   await settle(page, 1500);
+  await page.click('[data-act=rNext]');
+  await settle(page, 700);
   // a third choice replaces the oldest
   for (const s of ['family', 'out', 'work']) await tap(page, `[data-act=scene][data-s=${s}]`);
   const pressed = () => page.$$eval('[data-act=scene][aria-pressed=true]', (b) => b.map((x) => x.dataset.s).sort());

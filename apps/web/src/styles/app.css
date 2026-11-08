@@ -928,6 +928,56 @@ body[data-flow='1'] #views {
 .dn-day.is-future {
   opacity: 0.4;
 }
+/* «یه چیز کوچیک»: a sentence from the check-ins themselves, and the way to the first pattern */
+.done-small {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 18px 16px;
+  border-radius: 22px;
+  text-align: start;
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 62%),
+    var(--surface);
+  box-shadow: var(--shadow);
+  animation: rise 0.7s 1.05s var(--ease) both;
+}
+.done-sk {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.done-st {
+  margin: 4px 0 0;
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.done-prog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.done-bar {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 8%, transparent);
+}
+.done-bar i {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: 3px;
+  background: var(--accent);
+}
 .done-acts {
   display: flex;
   flex-wrap: wrap;
@@ -1741,6 +1791,187 @@ button.hw[aria-expanded='true'] {
   width: 14px;
   height: 14px;
 }
+/* ───────── CHECK-IN, STEP BY STEP (views/reflect.ts) ───────── */
+.flow-head .r-prog {
+  display: flex;
+  gap: 5px;
+  width: min(132px, 34vw);
+}
+.r-prog i {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ink) 12%, transparent);
+  transition: background 0.4s var(--ease);
+}
+.r-prog i.past {
+  background: color-mix(in oklab, var(--ink) 78%, transparent);
+}
+.r-prog i.now {
+  background: var(--accent);
+}
+.r-close-pad {
+  width: 44px;
+}
+.r-head .r-close {
+  min-height: 44px;
+  padding-inline: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+/* the stone is largest where it is the answer (strength) and steps back as the questions take over */
+.r-grid .anchor-reflect {
+  transition: width 0.55s var(--ease);
+}
+.r-grid[data-step='strength'] .anchor-reflect {
+  width: min(64vw, 260px);
+  touch-action: none;
+  cursor: pointer;
+}
+.r-grid[data-step='where'] .anchor-reflect {
+  width: min(48vw, 200px);
+}
+.r-grid[data-step='ask'] .anchor-reflect,
+.r-grid[data-step='note'] .anchor-reflect {
+  width: min(40vw, 160px);
+}
+.r-body {
+  justify-items: center;
+  text-align: center;
+}
+.r-body.swap > * {
+  animation: rise 0.6s var(--ease) both;
+}
+.r-body.swap > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.r-body.swap > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.r-body.swap > :nth-child(n + 4) {
+  animation-delay: 120ms;
+}
+.r-caps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.r-cap {
+  padding: 3px 12px 4px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  background: color-mix(in oklab, var(--c1, var(--accent)) 28%, transparent);
+}
+.r-cap.plain {
+  font-weight: 600;
+  color: var(--ink-2);
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.r-ctx {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.r-q {
+  margin: 4px 0 0;
+  font-family: var(--f-ed);
+  font-weight: 800;
+  font-size: clamp(24px, 6.4vw, 34px);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+.r-q.big {
+  font-size: clamp(26px, 7vw, 38px);
+  line-height: 1.55;
+}
+.r-hint {
+  margin: -6px 0 0;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.r-tag {
+  margin: 0;
+  padding: 4px 13px 5px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+}
+.r-seg button {
+  min-width: 72px;
+}
+.r-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 460px;
+}
+.r-answers {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 320px);
+}
+.r-answers button {
+  min-height: 56px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: color-mix(in oklab, var(--surface) 82%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition:
+    background 0.25s,
+    box-shadow 0.25s;
+}
+.r-answers button[aria-checked='true'] {
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--accent) 50%, var(--line));
+}
+.r-fine {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.r-body .note,
+.r-body .private {
+  width: min(100%, 520px);
+  justify-content: center;
+}
+.r-acts {
+  justify-content: center;
+  width: 100%;
+  padding-top: 10px;
+}
+.r-acts .quiet {
+  min-height: 44px;
+}
+@media (min-width: 700px) {
+  .r-body {
+    justify-items: start;
+    text-align: start;
+  }
+  .r-caps,
+  .r-chips,
+  .r-acts,
+  .r-body .private {
+    justify-content: flex-start;
+  }
+  .r-grid[data-step] .anchor-reflect {
+    width: min(40vw, 460px, 62vh);
+  }
+  .r-grid[data-step='ask'] .anchor-reflect,
+  .r-grid[data-step='note'] .anchor-reflect {
+    width: min(32vw, 360px, 50vh);
+  }
+}
+
 /* who or what was around: quiet chips, a pressed one fills softly */
 .scn dd {
   gap: 6px;

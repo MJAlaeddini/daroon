@@ -4,6 +4,7 @@ import { LEX, cvars } from '../domain/lexicon';
 import { S } from '../state/app';
 import { glyph } from '../ui/glyph';
 import { IC } from '../ui/icons';
+import { progressBar } from './reflect';
 
 export function vExplore() {
   const d = S.draft;
@@ -12,7 +13,7 @@ export function vExplore() {
       on = !!it;
     return `<button class="word" type="button" data-act="word" data-key="${k}" data-angle="${LEX[k].angle}" aria-pressed="${on}" style="--i:${i};${cvars(k, it?.color)}">${glyph(k, it?.color)}<span>${k}</span>${it && it.key !== k ? `<span class="rfn">${esc(labelOf(it.key))}</span>` : ''}</button>`;
   }).join('');
-  return `<div class="flow-head"><button class="back" data-act="back">${IC.back}بازگشت</button><span class="step">${S.editing ? 'ویرایش ردپا' : 'راه اول: کلمه‌ها'}</span></div>
+  return `<div class="flow-head"><button class="back" data-act="back">${IC.back}بازگشت</button>${S.editing ? '<span class="step">ویرایش ردپا</span>' : progressBar(0)}<span class="r-close-pad" aria-hidden="true"></span></div>
   <div class="x-grid">
     <div class="x-intro"><h1 class="ed r" style="--i:0" tabindex="-1" data-autofocus>بین احساس‌ها بگرد</h1><p class="lede r" style="--i:1">تا سه تا. هر کدوم، درونت رو یه جور شکل می‌ده.</p></div>
     <div class="field ${d.items.length >= 3 ? 'full' : ''}" id="field" role="group" aria-label="کلمه‌های احساس">
@@ -56,5 +57,5 @@ export function customHTML() {
 export function xbarHTML() {
   const n = S.draft.items.length;
   return `<div class="ab-in"><button class="quiet" data-act="${S.editing ? 'back' : 'toGuide'}">${S.editing ? 'انصراف' : 'نمی‌دونم؛ کمکم کن'}</button>
-    <button class="primary" data-act="toReflect" ${n ? '' : 'disabled'}>همینه${n ? ` <small class="num">${fa(n)} کلمه</small>` : ''}</button></div>`;
+    <button class="primary" data-act="toReflect" ${n ? '' : 'disabled'}>ادامه${n ? ` <small class="num">${fa(n)} کلمه</small>` : ''}</button></div>`;
 }

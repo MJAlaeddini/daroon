@@ -103,6 +103,18 @@ describe('sync', () => {
     expect((await c.post('/api/sync', { since: 0, changes: [entry({ scenes: ['mars'] })] })).statusCode).toBe(400);
   });
 
+  it('carries how strong it was and the small question, and refuses what is not one of them', async () => {
+    const c = await signInWithEmail(h, 'meaning@example.com');
+    const e = entry({ intensity: 3, meaning: { q: 'heard', a: 'no' } }),
+      bare = entry();
+    const r = (await c.post('/api/sync', { since: 0, changes: [e, bare] })).json();
+    const got = (id: string) => r.changes.find((x: { id: string }) => x.id === id);
+    expect(got(e.id)).toMatchObject({ intensity: 3, meaning: { q: 'heard', a: 'no' } });
+    expect(got(bare.id)).toMatchObject({ intensity: null, meaning: null });
+    for (const bad of [{ intensity: 4 }, { meaning: { q: 'heard', a: 'maybe' } }, { meaning: { q: 'mood', a: 'yes' } }])
+      expect((await c.post('/api/sync', { since: 0, changes: [entry(bad)] })).statusCode).toBe(400);
+  });
+
   it('keeps answers to patterns per person; the later answer wins', async () => {
     const c = await signInWithEmail(h, 'answers@example.com');
     const other = await signInWithEmail(h, 'answers2@example.com');

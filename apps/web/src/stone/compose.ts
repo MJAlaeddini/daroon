@@ -58,6 +58,9 @@ export class StoneMotion {
   private dur = RENDERER.motionTransitionSeconds;
   private touchAt = -10;
   private touchV = 0;
+  /** how strong the feeling is, 1..3 (2 = as designed); the stone eases toward it */
+  strength = 2;
+  private strengthCur = 2;
 
   constructor(initial: Feeling[] = []) {
     this.state = resolveState(initial);
@@ -133,6 +136,7 @@ export class StoneMotion {
       c.turn = a.turn + wrapPi(b.turn - a.turn) * p;
     });
     this.wob.cur = this.wob.from + wrapPi(this.wob.to - this.wob.from) * p;
+    this.strengthCur += (this.strength - this.strengthCur) * (1 - Math.exp(-Math.min(dt, 0.1) * 4));
   }
 
   frame(): Frame {
@@ -156,6 +160,10 @@ export class StoneMotion {
         m.scale += 0.022 * env;
         m.glow += 0.16 * env;
       }
+      /* stronger: a little larger and brighter; fainter: smaller and dimmer */
+      const k = this.strengthCur - 2;
+      m.scale += 0.045 * k;
+      m.glow += 0.14 * k;
       return m;
     };
     return {

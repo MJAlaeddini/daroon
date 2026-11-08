@@ -8,11 +8,12 @@ import {
   pgSequence,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { EmotionItem, EntryContext, SceneId } from '@daroon/shared';
+import type { EmotionItem, EntryContext, Meaning, SceneId } from '@daroon/shared';
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
 
@@ -78,6 +79,8 @@ export const entries = pgTable(
       .$type<SceneId[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
+    intensity: smallint('intensity'),
+    meaning: jsonb('meaning').$type<Meaning | null>(),
     unnamed: boolean('unnamed').notNull(),
     path: text('path').notNull(),
     createdAt: ts('created_at').notNull(),

@@ -1,11 +1,12 @@
 import { WD_S, fa, fmtDay, jOfKey, keyAdd, labelOf, todayKey, weekStart } from '@daroon/shared';
 import { $, esc, lerp } from '../core/util';
+import { smallThing, untilFirstPattern } from '../domain/reflection';
 import { daySpec } from '../domain/specs';
 import { habit, reduced } from '../sculpture/engine';
 import { BLANK, TR, renderTraceNow, traceImg, traceKey } from '../sculpture/traces';
 import { grow, stageEl } from '../stage/stage';
 import { S } from '../state/app';
-import { dayList } from '../state/store';
+import { dayList, visible } from '../state/store';
 import { haptic } from './haptics';
 
 /* completion scene: the sculpture settles in the middle, then a small seed of it flies into today's empty place
@@ -42,6 +43,7 @@ export function showDone(entry, shot: string | null, from?) {
   el.innerHTML = `<div class="done-in"><div class="done-art" id="doneArt"></div><p class="done-k">ثبت شد</p><h2 class="done-t" tabindex="-1">${words}</h2>
     <p class="done-m">${fmtDay(entry.day)} · <span class="num">${fa(entry.time)}</span></p>
     <div class="done-week" aria-label="این هفته">${cells}</div>
+    ${smallHTML(entry)}
     <div class="done-acts"><button class="primary" data-act="doneClose">تمام</button><button class="quiet" data-act="doneArchive">دیدنش در ردپای من</button></div></div>`;
   document.body.appendChild(el);
   S.done = el;
@@ -117,6 +119,15 @@ export function showDone(entry, shot: string | null, from?) {
         seed.remove();
     };
   }, 1250 * k);
+}
+/** «یه چیز کوچیک»: one honest sentence from the check-ins themselves, and how far the first pattern is. */
+function smallHTML(entry): string {
+  const all = visible(),
+    left = untilFirstPattern(all);
+  const bar = left
+    ? `<div class="done-prog"><span class="done-bar" aria-hidden="true"><i style="width:${Math.round(left.share * 100)}%"></i></span><span>${fa(left.left)} ${left.unit === 'entries' ? 'ردپا' : 'روز دیگه'} تا اولین الگو</span></div>`
+    : '';
+  return `<div class="done-small"><p class="done-sk">یه چیز کوچیک</p><p class="done-st">${esc(smallThing(entry, all))}</p>${bar}</div>`;
 }
 /**
  * The one small celebration in the app: as the seed becomes today's mark, today lifts a little and settles with a

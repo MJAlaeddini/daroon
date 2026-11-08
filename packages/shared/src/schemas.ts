@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { DAY_KEY } from './jalali';
 import { MAX_CUSTOM_LEN, MAX_EMOTIONS, isCustomEmotion, isKnownEmotion, CUSTOM_PREFIX } from './lexicon';
 import { MAX_SCENES, SCENE_IDS, isScene } from './insights';
+import { MEANING_AS, MEANING_QS } from './meaning';
 
 export const SWATCH_IDS = ['mist', 'sage', 'apricot', 'gold', 'rose', 'lilac', 'indigo', 'ember', 'graphite'] as const;
 
@@ -39,6 +40,10 @@ export const Scenes = z
   .max(MAX_SCENES)
   .refine((a) => new Set(a).size === a.length, 'repeated scene');
 
+/** One small question about what was going on, and its answer. */
+export const Meaning = z.object({ q: z.enum(MEANING_QS), a: z.enum(MEANING_AS) });
+export type Meaning = z.infer<typeof Meaning>;
+
 /** One saved check-in ("ردپا"). Notes never leave the device, so they are not part of the synced shape. */
 export const SyncedEntry = z.object({
   id: z
@@ -52,6 +57,9 @@ export const SyncedEntry = z.object({
   suggested: z.array(z.string().max(40)).max(8).default([]),
   context: EntryContext.nullable().default(null),
   scenes: Scenes.default([]),
+  /** how strong it was, 1..3 (absent on check-ins made before it was asked) */
+  intensity: z.number().int().min(1).max(3).nullable().default(null),
+  meaning: Meaning.nullable().default(null),
   unnamed: z.boolean(),
   path: z.enum(['explore', 'guide', 'write']).default('explore'),
   createdAt: iso,
@@ -109,6 +117,8 @@ export const StoryEntryInput = SyncedEntry.pick({
   emotions: true,
   context: true,
   scenes: true,
+  intensity: true,
+  meaning: true,
 }).extend({
   note: z.string().max(2000).default(''),
 });

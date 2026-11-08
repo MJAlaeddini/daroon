@@ -1,5 +1,8 @@
 import {
+  ANSWER_LABEL,
+  INTENSITY_LABEL,
   J_MONTHS,
+  MEANING,
   SCENES,
   WD,
   WD_S,
@@ -248,6 +251,14 @@ export function entryDetailHTML(e, back = false) {
     t = fa(e.time),
     j = jOfKey(e.day),
     scenes = (e.scenes || []).filter(isScene).map((s) => SCENES[s]);
+  /* how strong it was, where, and the small question's answer: one row of the same quiet capsules */
+  const tags = [
+    ...(INTENSITY_LABEL[e.intensity] ? [`پررنگی ${INTENSITY_LABEL[e.intensity]}`] : []),
+    ...scenes,
+    ...(e.meaning && MEANING[e.meaning.q]
+      ? [`${MEANING[e.meaning.q].ask.replace('؟', '')}؟ ${ANSWER_LABEL[e.meaning.a]}`]
+      : []),
+  ];
   const feels = e.emotions.length
     ? e.emotions.map((x) => `<span style="--c1:${palFor(x.key, x.color)[1]}">${esc(labelOf(x.key))}</span>`).join('')
     : '<span class="un">حالی بی‌نام</span>';
@@ -261,7 +272,7 @@ export function entryDetailHTML(e, back = false) {
       <div class="ed-info">
         <h2 class="ed-title" tabindex="-1" data-autofocus>${WD[wdIndex(e.day)]}، ${fa(j.jd)} ${J_MONTHS[j.jm - 1]}<span class="ed-time">ساعت <span class="num">${t}</span></span></h2>
         <p class="ent-feels ed-feels">${feels}</p>
-        ${scenes.length ? `<p class="ed-scenes">${scenes.map((s) => `<span>${s}</span>`).join('')}</p>` : ''}
+        ${tags.length ? `<p class="ed-scenes">${tags.map((s) => `<span>${esc(s)}</span>`).join('')}</p>` : ''}
         ${ctxLine(e.context)}
         ${e.note ? `<p class="ed-note">${esc(e.note)}</p>` : ''}
         ${e.demo ? '<p class="ed-demo">این یه ردپای نمونه‌ست.</p>' : ''}

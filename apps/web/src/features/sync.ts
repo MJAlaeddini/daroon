@@ -2,7 +2,7 @@
  * Offline-first sync. Every entry carries `updatedAt`; an entry whose last pushed version (`syncedAt`)
  * differs from it still has to travel. Notes and sample entries never leave the device.
  */
-import { MAX_SCENES, isScene, type InsightFeedback, type SyncedEntry } from '@daroon/shared';
+import { MAX_SCENES, MEANING_AS, MEANING_QS, isScene, type InsightFeedback, type SyncedEntry } from '@daroon/shared';
 import { api, ApiError } from '../net/api';
 import { DB, onPersist, persist, reindex } from '../state/store';
 
@@ -32,6 +32,8 @@ function toWire(e): SyncedEntry {
     suggested: (e.suggested || []).slice(0, 8),
     context: e.context ?? null,
     scenes: (e.scenes || []).filter(isScene).slice(0, MAX_SCENES),
+    intensity: [1, 2, 3].includes(e.intensity) ? e.intensity : null,
+    meaning: e.meaning && MEANING_QS.includes(e.meaning.q) && MEANING_AS.includes(e.meaning.a) ? e.meaning : null,
     unnamed: !!e.unnamed,
     path: e.path === 'guide' ? 'guide' : 'explore',
     createdAt: e.createdAt,

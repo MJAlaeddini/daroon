@@ -18,6 +18,12 @@ export interface Draft {
   note: string;
   focus: number;
   palette: number;
+  /** the step of the check-in after the words (views/reflect.ts) */
+  step: number;
+  /** how strong it was, 1..3 */
+  intensity: number;
+  /** the one small question asked this time, and its answer (null: not answered) */
+  meaning: { q: 'heard' | 'control'; a: 'yes' | 'some' | 'no' } | null;
 }
 export interface AppState {
   view: string;
@@ -51,6 +57,9 @@ export const newDraft = (): Draft => ({
   note: '',
   focus: -1,
   palette: -1,
+  step: 0,
+  intensity: 2,
+  meaning: null,
 });
 export const S: AppState = {
   customOpen: false,
@@ -92,7 +101,12 @@ export function syncEngine() {
       spec = aggregate(list, 'm' + j.jy + j.jm);
     }
   } else if (v === 'patterns') spec = patternData().spec;
-  else spec = { items: S.draft.items.map((i) => ({ key: i.key, color: i.color })), neutral: 0 };
+  else
+    spec = {
+      items: S.draft.items.map((i) => ({ key: i.key, color: i.color })),
+      neutral: 0,
+      intensity: v === 'reflect' ? S.draft.intensity : 2,
+    };
   engine.setSpec(spec);
   engine.neuT = v === 'today' || v === 'login' ? HOME_LABS : NEU_LABS;
   engine.mod =
