@@ -191,6 +191,30 @@ document.addEventListener(
   true,
 );
 
+/* the strength meter follows a finger or the mouse along its track: the nearest stop is chosen as it moves (the
+   track runs right to left, like the text), so it can be felt through, not only tapped */
+let meterDrag: number | null = null;
+const meterPick = (e: PointerEvent) => {
+  const tr = document.querySelector('.r-meter .r-track') as HTMLElement | null;
+  if (!tr) return;
+  const r = tr.getBoundingClientRect();
+  const f = Math.max(0, Math.min(1, (r.right - e.clientX) / r.width));
+  setIntensity(1 + Math.round(f * 2));
+};
+document.addEventListener('pointerdown', (e: PointerEvent) => {
+  const m = (e.target as HTMLElement).closest?.('.r-meter .r-track, .r-meter .r-stops');
+  if (!m || !e.isPrimary) return;
+  meterDrag = e.pointerId;
+  if ((e.target as HTMLElement).closest('.r-track')) meterPick(e);
+});
+document.addEventListener('pointermove', (e: PointerEvent) => {
+  if (meterDrag === e.pointerId && e.buttons) meterPick(e);
+});
+for (const ev of ['pointerup', 'pointercancel'] as const)
+  document.addEventListener(ev, (e: PointerEvent) => {
+    if (meterDrag === e.pointerId) meterDrag = null;
+  });
+
 /* «how strong was it?»: holding the stone raises it through a little, medium, a lot (a small tick at each), and
    letting go keeps where it reached; a short tap does nothing, so scrolling past it never changes the answer */
 let hold: { t0: number; id: number; timer: ReturnType<typeof setInterval> } | null = null;
