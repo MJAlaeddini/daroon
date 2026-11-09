@@ -205,6 +205,24 @@ test('the email sign-in sheet validates the address before asking the server', a
   await expect(page.locator('.auth-err')).toHaveText('این نشونی ایمیل درست به نظر نمی‌رسه.');
 });
 
+test('sign-up checks the username and password before asking the server', async ({ page }) => {
+  await open(page);
+  await page.click('.login-acts [data-act=loginSignup]');
+  await settle(page, 600);
+  await page.fill('#loginUser', 'سارا');
+  await page.fill('#loginPw', '12345678');
+  await page.click('[data-form=loginPassword] .primary');
+  await expect(page.locator('.auth-err')).toContainText('حروف انگلیسی');
+  await page.fill('#loginUser', 'sara');
+  await page.fill('#loginPw', 'short');
+  await page.click('[data-form=loginPassword] .primary');
+  await expect(page.locator('.auth-err')).toHaveText('رمز دست‌کم هشت حرفه.');
+  // switching to "I have an account" keeps the username that was typed
+  await page.click('[data-act=loginMode][data-m=login]');
+  await expect(page.locator('#loginUser')).toHaveValue('sara');
+  await expect(page.locator('#loginName')).toHaveCount(0);
+});
+
 test('works offline after the first visit', async ({ page, context }) => {
   await open(page, '/');
   await page.evaluate(() => navigator.serviceWorker.ready);

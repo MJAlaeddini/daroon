@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { GoogleBody, RequestCodeBody, VerifyCodeBody } from '@daroon/shared';
+import { GoogleBody, PasswordLoginBody, RequestCodeBody, SignupBody, VerifyCodeBody } from '@daroon/shared';
 import { parse } from '../../lib/validate';
 import { AppError, unavailable } from '../../lib/errors';
 import type { Deps } from '../../app';
@@ -10,7 +10,26 @@ export default async function authRoutes(app: FastifyInstance, { deps }: { deps:
   const svc = authService(deps);
   const strict = { config: { rateLimit: { max: deps.config.AUTH_RATE_LIMIT, timeWindow: '15 minutes' } } };
 
-  app.get('/auth/config', async () => ({ google: deps.config.GOOGLE_CLIENT_ID ?? null, email: true }));
+  /* email codes are offered only where they can arrive: with SMTP, or in development where they go to the log */
+  app.get('/auth/config', async () => ({
+    google: deps.config.GOOGLE_CLIENT_ID ?? null,
+    email: !!deps.config.SMTP_URL || !deps.config.isProd,
+    password: true,
+  }));
+
+  app.post('/auth/signup', strict, async (req, reply) => {
+    const { username, password, name } = parse(SignupBody, req.body);
+    const userId = await svc.signup(username, password, name);
+    await app.startSession(reply, req, userId);
+    return { account: await accountOf(deps, userId) };
+  });
+
+  app.post('/auth/login', strict, async (req, reply) => {
+    const { username, password } = parse(PasswordLoginBody, req.body);
+    const userId = await svc.passwordLogin(username, password);
+    await app.startSession(reply, req, userId);
+    return { account: await accountOf(deps, userId) };
+  });
 
   app.post('/auth/email/request', strict, async (req, reply) => {
     const { email } = parse(RequestCodeBody, req.body);

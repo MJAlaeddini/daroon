@@ -31,6 +31,71 @@
   margin-top: 10px;
   width: 100%;
 }
+.auth-seg {
+  display: flex;
+  margin-top: 4px;
+}
+.auth-seg button {
+  flex: 1;
+}
+.auth-hint {
+  margin: -2px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+/* the password field and its show/hide toggle, which sits inside the field on its left (the field is LTR) */
+.pw {
+  position: relative;
+  display: flex;
+}
+.pw .inp {
+  padding-inline-end: 76px;
+}
+.pw-eye {
+  position: absolute;
+  inset-block: 4px;
+  left: 4px;
+  min-width: 64px;
+  padding: 0 10px;
+  border-radius: calc(var(--r-m) - 4px);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.pw-eye:hover,
+.pw-eye[aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+/* other ways in: one quiet line under the main buttons */
+.auth-alt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 14px;
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.auth-alt[hidden],
+.auth-alt [hidden] {
+  display: none;
+}
+.auth-alt .link {
+  min-height: 40px;
+}
+.auth > .auth-alt {
+  margin-top: 18px;
+}
+.auth-main {
+  width: 100%;
+  min-height: 54px;
+}
 .auth-err {
   margin: 4px 0 0;
   font-size: 13px;
@@ -98,4 +163,8 @@
   width: 18px;
   height: 18px;
   vertical-align: -4px;
+}
+.auth-main + .gbtn {
+  border-radius: 999px;
+  box-shadow: none;
 }

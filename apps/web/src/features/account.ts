@@ -44,23 +44,54 @@ export function refreshAvatar() {
   }
 }
 /* ═════════════════════════ sign-in ═════════════════════════
-   Two ways in: a six-digit code by email (works everywhere), or Google when the server has a client id.
-   The login sheet has three steps: choose → email → code. */
-export const authCfg = { google: null as string | null, known: false };
+   The main way in is a username and a password (nothing to wait for, no mail server needed). A six-digit code by
+   email is offered where the server can send one, and Google where it has a client id.
+   Sheet steps: password (sign up / sign in) · email → code · google. */
+export const authCfg = { google: null as string | null, email: true, known: false };
 export async function loadAuthConfig() {
   try {
     const c = await api.authConfig();
     authCfg.google = c.google;
+    authCfg.email = c.email !== false;
   } catch (e) {
     authCfg.google = null;
   }
   authCfg.known = true;
+  showAltWays();
+}
+function showAltWays() {
   $$('[data-act="loginGoogle"]').forEach((b) => {
     b.hidden = !authCfg.google;
   });
+  $$('[data-act="loginEmail"]').forEach((b) => {
+    b.hidden = !authCfg.email;
+  });
+  $$('.auth-alt').forEach((p) => {
+    p.hidden = !authCfg.google && !authCfg.email;
+  });
 }
-const login = { step: 'email', email: '', err: '', busy: false };
-const errText = (e) =>
+/** The way-in buttons, the same on the welcome page and on the account page. */
+export function authButtonsHTML() {
+  return `<button class="primary auth-main" data-act="loginSignup">ساختن حساب</button>
+    <button class="gbtn" data-act="loginPassword">حساب دارم؛ ورود</button>
+    ${altWaysHTML()}`;
+}
+function altWaysHTML() {
+  return `<p class="auth-alt"${authCfg.google || authCfg.email ? '' : ' hidden'}><span>یا با</span>
+    <button class="link" data-act="loginEmail"${authCfg.email ? '' : ' hidden'}>کد ایمیلی</button>
+    <button class="link" data-act="loginGoogle"${authCfg.google ? '' : ' hidden'}>Google</button></p>`;
+}
+const login = {
+  step: 'password',
+  mode: 'signup' as 'signup' | 'login',
+  email: '',
+  user: '',
+  err: '',
+  busy: false,
+  showPw: false,
+};
+const USERNAME = /^[a-z0-9._]{3,24}$/;
+const errText = (e, invalid = 'این نشونی ایمیل درست به نظر نمی‌رسه.') =>
   !(e instanceof ApiError)
     ? 'یه چیزی درست پیش نرفت. دوباره امتحان کن.'
     : e.offline
@@ -70,17 +101,37 @@ const errText = (e) =>
           code_expired: 'این کد دیگه کار نمی‌کنه؛ یه کد تازه بگیر.',
           too_many_codes: 'چند بار پشت هم کد گرفتی. یه کم بعد دوباره امتحان کن.',
           too_many_requests: 'چند بار پشت هم امتحان کردی. یه کم بعد دوباره بیا.',
-          invalid_input: 'این نشونی ایمیل درست به نظر نمی‌رسه.',
+          invalid_input: invalid,
           google_invalid: 'ورود با Google انجام نشد.',
+          username_taken: 'این نام کاربری رو کس دیگه‌ای برداشته؛ یکی دیگه امتحان کن.',
+          login_wrong: 'نام کاربری یا رمز درست نیست.',
         }[e.code] || 'یه چیزی درست پیش نرفت. دوباره امتحان کن.';
 export function loginSheetHTML() {
   const top = (t) =>
     `<div class="sheet-top"><h2 class="ed" style="font-size:24px" tabindex="-1" data-autofocus>${t}</h2><button class="ib" data-act="closeSheet" aria-label="بستن">${IC.close}</button></div>`;
   const err = login.err ? `<p class="auth-err" role="alert">${esc(login.err)}</p>` : '';
+  if (login.step === 'password') {
+    const up = login.mode === 'signup';
+    const seg = (m, t) =>
+      `<button type="button" data-act="loginMode" data-m="${m}" aria-pressed="${login.mode === m}">${t}</button>`;
+    return `${top(up ? 'ساختن حساب' : 'ورود')}<div class="sheet-scroll set auth">
+    <div class="seg auth-seg" role="group" aria-label="حساب">${seg('signup', 'حساب تازه')}${seg('login', 'حساب دارم')}</div>
+    <form class="authform" data-form="loginPassword" novalidate>
+      <label for="loginUser">نام کاربری</label>
+      <input class="inp" id="loginUser" name="username" dir="ltr" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="24" value="${esc(login.user)}" required>
+      ${up ? '<p class="auth-hint">با حروف انگلیسی، عدد، نقطه یا _</p>' : ''}
+      <label for="loginPw">رمز</label>
+      <div class="pw"><input class="inp" id="loginPw" name="password" type="${login.showPw ? 'text' : 'password'}" dir="ltr" autocomplete="${up ? 'new-password' : 'current-password'}" maxlength="128" required>
+        <button type="button" class="pw-eye" data-act="pwToggle" aria-pressed="${login.showPw}">${login.showPw ? 'پنهان' : 'نمایش'}</button></div>
+      ${up ? '<p class="auth-hint">دست‌کم هشت حرف. یادت بمونه؛ بدون ایمیل بازیابی نمی‌شه.</p>' : ''}
+      ${up ? '<label for="loginName">اسمی که صدات کنیم <small>(اختیاری)</small></label><input class="inp" id="loginName" name="name" maxlength="24" autocomplete="given-name">' : ''}
+      ${err}<button class="primary" type="submit" ${login.busy ? 'disabled' : ''}>${login.busy ? 'یه لحظه…' : up ? 'ساختن حساب' : 'ورود'}</button></form>
+    ${altWaysHTML()}</div>`;
+  }
   if (login.step === 'google')
     return `${top('ورود با Google')}<div class="sheet-scroll set auth">
     <p class="fine">حساب Google ات رو انتخاب کن. فقط اسم و نشونی ایمیلت به درون داده می‌شه.</p><div id="gsiBtn" class="gsi"></div>${err}
-    <button class="link" data-act="loginEmail">به جاش با ایمیل وارد شو</button></div>`;
+    <button class="link" data-act="loginPassword">به جاش با نام کاربری و رمز</button></div>`;
   if (login.step === 'code')
     return `${top('کد رو بنویس')}<div class="sheet-scroll set auth">
     <p class="fine">یه کد شش‌رقمی به <bdi dir="ltr">${esc(login.email)}</bdi> فرستادیم.</p>
@@ -94,28 +145,82 @@ export function loginSheetHTML() {
     <form class="authform" data-form="loginEmail" novalidate>
       <label for="loginEmailInput">ایمیل</label><input class="inp" id="loginEmailInput" name="email" type="email" inputmode="email" autocomplete="email" dir="ltr" value="${esc(login.email)}" required>
       ${err}<button class="primary" type="submit" ${login.busy ? 'disabled' : ''}>${login.busy ? 'یه لحظه…' : 'فرستادن کد'}</button></form>
-    ${authCfg.google ? '<button class="link" data-act="loginGoogle">ورود با Google</button>' : ''}</div>`;
+    <button class="link" data-act="loginPassword">با نام کاربری و رمز</button></div>`;
 }
 function refreshLogin() {
   const sh = $('#layer .sheet');
   if (!sh || S.sheet !== 'login') return;
   sh.innerHTML = `<span class="grab" aria-hidden="true"></span>${loginSheetHTML()}`;
   const f =
-    sh.querySelector('#loginCode') || sh.querySelector('#loginEmailInput') || sh.querySelector('[data-autofocus]');
+    sh.querySelector('#loginCode') ||
+    sh.querySelector('#loginEmailInput') ||
+    sh.querySelector('#loginUser') ||
+    sh.querySelector('[data-autofocus]');
   f && f.focus({ preventScroll: true });
   if (login.step === 'google') mountGoogle();
 }
-export function openLogin(step = 'email') {
+export function openLogin(step = 'password', mode?: 'signup' | 'login') {
   login.step = step;
+  if (mode) login.mode = mode;
   login.err = '';
   login.busy = false;
+  login.showPw = false;
   openSheet('login', loginSheetHTML(), 'ورود');
   if (step === 'google') mountGoogle();
 }
-export function loginStep(step) {
+export function loginStep(step, mode?: 'signup' | 'login') {
   login.step = step;
+  if (mode) login.mode = mode;
   login.err = '';
   refreshLogin();
+}
+export function loginMode(mode: 'signup' | 'login') {
+  if (login.mode === mode) return;
+  login.user = ($('#loginUser') as HTMLInputElement | null)?.value ?? login.user;
+  login.mode = mode;
+  login.err = '';
+  refreshLogin();
+}
+/** Show or hide the password without losing what was typed or the caret. */
+export function togglePassword() {
+  login.showPw = !login.showPw;
+  const inp = $('#loginPw') as HTMLInputElement | null,
+    b = $('[data-act="pwToggle"]');
+  if (inp) inp.type = login.showPw ? 'text' : 'password';
+  if (b) {
+    b.textContent = login.showPw ? 'پنهان' : 'نمایش';
+    b.setAttribute('aria-pressed', String(login.showPw));
+  }
+  inp?.focus({ preventScroll: true });
+}
+export async function submitPassword(username: string, password: string, name: string) {
+  const user = (username || '').trim().toLowerCase();
+  login.user = user;
+  const up = login.mode === 'signup';
+  const fail = (m: string) => {
+    login.err = m;
+    refreshLogin();
+  };
+  if (!USERNAME.test(user))
+    return fail(
+      up
+        ? 'نام کاربری فقط حروف انگلیسی، عدد، نقطه یا خط زیره؛ بین سه تا بیست‌وچهار حرف.'
+        : 'نام کاربری یا رمز درست نیست.',
+    );
+  if (up && password.length < 8) return fail('رمز دست‌کم هشت حرفه.');
+  if (!password) return fail('رمز رو بنویس.');
+  login.busy = true;
+  login.err = '';
+  refreshLogin();
+  try {
+    const { account } = up
+      ? await api.signup(user, password, (name || '').trim() || undefined)
+      : await api.login(user, password);
+    await signedIn(account);
+  } catch (e) {
+    login.busy = false;
+    fail(errText(e, up ? 'نام کاربری یا رمز قابل قبول نیست.' : 'نام کاربری یا رمز درست نیست.'));
+  }
 }
 
 export async function submitEmail(email) {
@@ -213,7 +318,7 @@ async function mountGoogle() {
       width: Math.min(320, host.clientWidth || 320),
     });
   } catch (e) {
-    login.err = 'Google در دسترس نیست. می‌تونی با ایمیل وارد شی.';
+    login.err = 'Google در دسترس نیست. می‌تونی با نام کاربری و رمز وارد شی.';
     refreshLogin();
   }
 }

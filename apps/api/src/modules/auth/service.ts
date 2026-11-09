@@ -4,6 +4,7 @@ import { hmac, safeEqual, sixDigits } from '../../lib/crypto';
 import { AppError, tooMany } from '../../lib/errors';
 import type { Deps } from '../../app';
 import type { GoogleProfile } from './google';
+import { dummyHash, hashPassword, verifyPassword } from '../../lib/password';
 
 const CODE_TTL_MS = 10 * 60_000;
 const MAX_ATTEMPTS = 5;
@@ -52,6 +53,28 @@ export function authService(deps: Deps) {
         .insert(users)
         .values({ email, name: (name ?? '').trim().slice(0, 24), provider: 'email' })
         .returning();
+      return u.id;
+    },
+
+    /** Makes an account with a username and password; the name is the username's until they choose one. */
+    async signup(username: string, password: string, name?: string): Promise<string> {
+      const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+      if (taken) throw new AppError(409, 'username_taken');
+      const passwordHash = await hashPassword(password);
+      const rows = await db
+        .insert(users)
+        .values({ username, passwordHash, name: (name ?? '').trim().slice(0, 24), provider: 'password' })
+        .onConflictDoNothing()
+        .returning();
+      if (!rows[0]) throw new AppError(409, 'username_taken');
+      return rows[0].id;
+    },
+
+    /** The same answer, after the same work, whether the username is unknown or the password is wrong. */
+    async passwordLogin(username: string, password: string): Promise<string> {
+      const [u] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+      const ok = await verifyPassword(password, u?.passwordHash ?? (await dummyHash()));
+      if (!u?.passwordHash || !ok) throw new AppError(401, 'login_wrong');
       return u.id;
     },
 

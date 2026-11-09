@@ -39,7 +39,11 @@ async function call<T>(method: string, path: string, body?: unknown, signal?: Ab
 }
 
 export const api = {
-  authConfig: () => call<{ google: string | null; email: boolean }>('GET', '/auth/config'),
+  authConfig: () => call<{ google: string | null; email: boolean; password?: boolean }>('GET', '/auth/config'),
+  signup: (username: string, password: string, name?: string) =>
+    call<{ account: Account }>('POST', '/auth/signup', { username, password, name }),
+  login: (username: string, password: string) =>
+    call<{ account: Account }>('POST', '/auth/login', { username, password }),
   requestCode: (email: string) => call<void>('POST', '/auth/email/request', { email }),
   verifyCode: (email: string, code: string, name?: string) =>
     call<{ account: Account }>('POST', '/auth/email/verify', { email, code, name }),

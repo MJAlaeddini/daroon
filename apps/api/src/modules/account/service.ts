@@ -7,7 +7,14 @@ import type { Deps } from '../../app';
 export async function accountOf(deps: Deps, userId: string): Promise<Account> {
   const [u] = await deps.db.db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!u) throw notFound();
-  return { id: u.id, name: u.name, email: u.email, provider: u.provider, since: keyOf(u.createdAt) };
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    username: u.username,
+    provider: u.provider,
+    since: keyOf(u.createdAt),
+  };
 }
 
 export function accountService(deps: Deps) {
