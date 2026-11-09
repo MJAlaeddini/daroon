@@ -3952,17 +3952,17 @@ body[data-view='login'] .topbar {
 }
 .st-bars {
   position: absolute;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  left: max(14px, env(safe-area-inset-left, 0px));
-  right: max(14px, env(safe-area-inset-right, 0px));
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  left: max(20px, env(safe-area-inset-left, 0px));
+  right: max(20px, env(safe-area-inset-right, 0px));
   display: flex;
-  gap: 4px;
+  gap: 5px;
   z-index: 4;
 }
 .st-bars i {
   position: relative;
   flex: 1;
-  height: 2px;
+  height: 3px;
   border-radius: 2px;
   overflow: hidden;
   background: color-mix(in srgb, var(--sfg) 26%, transparent);
@@ -3990,9 +3990,9 @@ body[data-view='login'] .topbar {
 }
 .st-top {
   position: absolute;
-  top: calc(20px + env(safe-area-inset-top, 0px));
-  left: max(8px, env(safe-area-inset-left, 0px));
-  right: max(14px, env(safe-area-inset-right, 0px));
+  top: calc(26px + env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: max(20px, env(safe-area-inset-right, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4036,47 +4036,42 @@ body[data-view='login'] .topbar {
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 80px max(28px, env(safe-area-inset-right, 0px)) calc(44px + env(safe-area-inset-bottom, 0px))
-    max(28px, env(safe-area-inset-left, 0px));
+  gap: 20px;
+  padding: calc(76px + env(safe-area-inset-top, 0px)) max(32px, calc(env(safe-area-inset-right, 0px) + 20px))
+    calc(40px + env(safe-area-inset-bottom, 0px)) max(32px, calc(env(safe-area-inset-left, 0px) + 20px));
   animation: fade 0.5s both;
 }
-.st-page::before {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 56%;
-  background: linear-gradient(to top, color-mix(in srgb, var(--sbgc) 88%, transparent) 30%, transparent);
-  pointer-events: none;
+/* the sculpture has its own room above the words and gives up height to them, so text never sits on it */
+.st-art-box {
+  flex: 1 1 auto;
+  min-height: 120px;
+  display: grid;
+  place-items: center;
 }
 @keyframes artIn2 {
   from {
     opacity: 0;
-    transform: translate(-50%, -46%) scale(0.9);
+    scale: 0.92;
     filter: blur(6px);
   }
 }
 .st-art {
-  position: absolute;
-  left: 50%;
-  top: 34%;
-  width: min(78%, 360px);
+  width: min(100%, 300px, 38vh);
+  max-height: 100%;
   aspect-ratio: 1;
-  transform: translate(-50%, -50%);
+  object-fit: contain;
   animation: artIn2 1.4s var(--ease) both;
+}
+.title .st-art,
+.loading .st-art {
+  width: min(100%, 360px, 48vh);
 }
 .st-art.breathe {
   animation: breathe 3.2s ease-in-out infinite;
 }
-@keyframes artIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -44%) scale(0.84);
-  }
-}
 @keyframes breathe {
   50% {
-    transform: translate(-50%, -50%) scale(1.07);
+    scale: 1.06;
   }
 }
 .st-frame::after {
@@ -4092,8 +4087,10 @@ body[data-view='login'] .topbar {
 .st-txt {
   position: relative;
   z-index: 3;
+  flex: none;
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  max-width: 420px;
   animation: rise 0.8s 0.25s var(--ease) both;
 }
 .st-k {
@@ -4101,11 +4098,35 @@ body[data-view='login'] .topbar {
   align-items: center;
   gap: 8px;
   justify-self: start;
-  margin: 0 0 4px;
-  font-size: 13px;
+  margin: 0;
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--sfg) 72%, transparent);
+  color: color-mix(in srgb, var(--sfg) 74%, transparent);
+}
+/* the week's words on the cover, each with its own light */
+.st-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
+}
+.st-words span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 6px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--sfg) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sfg) 14%, transparent);
+}
+.st-words i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wc);
+  box-shadow: 0 0 8px var(--wc);
 }
 .st-k i {
   width: 8px;
@@ -4118,9 +4139,8 @@ body[data-view='login'] .topbar {
   margin: 0;
   font-family: var(--f-ed);
   font-weight: 800;
-  font-size: clamp(38px, 11vw, 52px);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-size: clamp(34px, 9.4vw, 46px);
+  line-height: 1.35;
   text-wrap: balance;
 }
 /* the page's words: an editorial face, generous leading, sentences arriving one after another */
@@ -4128,8 +4148,8 @@ body[data-view='login'] .topbar {
   margin: 0;
   font-family: var(--f-ed);
   font-weight: 500;
-  font-size: clamp(23px, 6.4vw, 28px);
-  line-height: 1.9;
+  font-size: clamp(21px, 5.7vw, 25px);
+  line-height: 1.95;
   color: color-mix(in srgb, var(--sfg) 94%, transparent);
   text-wrap: pretty;
 }
@@ -4162,16 +4182,16 @@ body[data-view='login'] .topbar {
 }
 .st-done {
   min-height: 50px;
-  padding: 0 26px;
-  border-radius: 16px;
+  padding: 0 28px;
+  border-radius: 999px;
   background: var(--sfg);
   color: var(--sbgc);
   font-weight: 700;
 }
 .st-again {
   min-height: 50px;
-  padding: 0 16px;
-  border-radius: 16px;
+  padding: 0 20px;
+  border-radius: 999px;
   color: var(--sfg);
   font-weight: 600;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sfg) 40%, transparent);
@@ -4181,10 +4201,30 @@ body[data-view='login'] .topbar {
     align-items: center;
     background: rgba(10, 8, 14, 0.72);
   }
+  .story {
+    backdrop-filter: blur(18px);
+  }
   .st-frame {
-    height: min(92vh, 860px);
-    border-radius: 30px;
+    height: min(90vh, 860px);
+    width: auto;
+    aspect-ratio: 10 / 17;
+    max-width: min(500px, 100%);
+    border-radius: 32px;
     box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
+  }
+  .st-page {
+    padding-inline: 40px;
+    padding-bottom: 44px;
+  }
+  .st-bars {
+    top: 22px;
+    left: 30px;
+    right: 30px;
+  }
+  .st-top {
+    top: 34px;
+    left: 18px;
+    right: 30px;
   }
 }
 

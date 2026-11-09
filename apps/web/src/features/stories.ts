@@ -1,7 +1,7 @@
 import { fa, labelOf, localStory, weekDays, weekRange } from '@daroon/shared';
 import { api } from '../net/api';
 import { isSignedIn } from './sync';
-import { hexToLab, labRot, labToHex } from '../core/color';
+import { hexToLab, labToHex } from '../core/color';
 import { clamp, esc, hashStr, uid } from '../core/util';
 import { NEUTRAL_PAL, palFor } from '../domain/lexicon';
 import { aggregate } from '../domain/specs';
@@ -28,23 +28,37 @@ export function renderArt(spec, dk = 0, size = 360) {
   TR.set(k, url);
   return url;
 }
+/** A colour at a given OKLab lightness and chroma on the hue of `hex`. A dark warm hue (orange to yellow) reads as
+    brown, so as a ground it turns to dusk plum instead, and its own light glows over it like a sunset. */
+function tone(hex: string, L: number, C: number, dark = false): string {
+  const [, a, b] = hexToLab(hex);
+  if (Math.hypot(a, b) < 0.03) C = Math.min(C, 0.02); /* a near-grey has no hue worth saturating */
+  let h = Math.atan2(b, a) * (180 / Math.PI);
+  if (dark && h > 20 && h < 120) h = 335 + (h - 20) * 0.12;
+  const r = (h * Math.PI) / 180;
+  return labToHex([L, C * Math.cos(r), C * Math.sin(r)]);
+}
 /**
- * A story page is a small night gallery: a deep ground tinted by the page's feeling, a soft aura where the
- * sculpture stands, and light text. Dark keeps long lines easy to read and lets the sculpture glow; the colour
- * still comes from the feeling, so every page feels different.
+ * A story page is a poster in the feeling's own night: a deep, saturated ground of its hue (never near-black, never
+ * brown), a light pool where the sculpture stands, a second colour rising from a corner, and light text. Every page
+ * has its own colour, and the palette always holds together because each tone comes from the same hue.
  */
-export function pageLook(key: string | null, weekKeys?: string[]) {
+export function pageLook(key: string | null, weekKeys: string[] = []) {
   const pal = key ? palFor(key) : weekKeys[0] ? palFor(weekKeys[0]) : NEUTRAL_PAL,
     pal2 = !key && weekKeys[1] ? palFor(weekKeys[1]) : pal;
-  const night = '#0f0c15';
+  const hi = tone(pal[1], 0.34, 0.085, true),
+    mid = tone(pal[1], 0.22, 0.065, true),
+    lo = tone(pal[1], 0.14, 0.04, true),
+    pool = tone(pal[0], 0.52, 0.11),
+    rise = tone(pal2[2], 0.4, 0.1, true);
   return {
-    bg: `radial-gradient(70% 42% at 50% 33%, color-mix(in oklab, ${pal[1]} 46%, transparent), transparent 72%),
-      radial-gradient(110% 60% at 85% 105%, color-mix(in oklab, ${pal2[2]} 34%, transparent), transparent 70%),
-      linear-gradient(${night}, color-mix(in oklab, ${pal[2]} 14%, ${night}))`,
-    fg: '#f7f2ee',
-    solid: night,
+    bg: `radial-gradient(62% 36% at 50% 30%, color-mix(in oklab, ${pool} 42%, transparent), transparent 75%),
+      radial-gradient(90% 55% at 0% 100%, color-mix(in oklab, ${rise} 55%, transparent), transparent 72%),
+      linear-gradient(168deg, ${hi}, ${mid} 48%, ${lo})`,
+    fg: '#fbf7f3',
+    solid: lo,
     dk: 1,
-    pc: labToHex(labRot(hexToLab(pal[0]), 0, 0.02, 1.15)),
+    pc: tone(pal[0], 0.88, 0.075),
   };
 }
 /** The story's sentences, each on its own entrance; words in «» take the page's colour. */
@@ -91,7 +105,7 @@ export async function weekStory(ws, regen = false) {
   const lk0 = pageLook(null, wk);
   el.innerHTML = storyShell(
     lk0,
-    `<div class="st-page loading"><img class="st-art breathe" alt="" src="${renderArt(aggregate(list, 'w' + ws), lk0.dk)}">
+    `<div class="st-page loading"><div class="st-art-box"><img class="st-art breathe" alt="" src="${renderArt(aggregate(list, 'w' + ws), lk0.dk)}"></div>
     <div class="st-txt"><p class="st-k">${weekRange(ws)}</p><p class="st-text">دارم هفته‌ات رو مرور می‌کنم…</p><p class="st-note">فقط ردپاها و یادداشت‌های همین هفته خونده می‌شه.</p></div></div>`,
   );
   el.querySelector<HTMLElement>('.st-x').focus();
@@ -162,9 +176,14 @@ export function openStoryView(st, i = 0, el?: HTMLElement) {
         seed: 0.4,
       };
   const last = i === n - 1;
+  const art = `<div class="st-art-box"><img class="st-art" alt="" src="${renderArt(spec, look.dk)}"></div>`;
+  const words = (st.weekKeys || [])
+    .slice(0, 3)
+    .map((k) => `<span style="--wc:${tone(palFor(k)[0], 0.86, 0.09)}"><i></i>${esc(labelOf(k))}</span>`)
+    .join('');
   const body = isTitle
-    ? `<div class="st-page title"><img class="st-art" alt="" src="${renderArt(spec, look.dk)}"><div class="st-txt"><p class="st-k">${weekRange(st.week)}</p><h2 class="st-h">${esc(st.title)}</h2><p class="st-note">برای ورق زدن، لمس کن</p></div></div>`
-    : `<div class="st-page"><img class="st-art" alt="" src="${renderArt(spec, look.dk)}"><div class="st-txt">${key ? `<p class="st-k"><i></i>${esc(labelOf(key))}</p>` : ''}<p class="st-text">${storyLines(pg.text)}</p>
+    ? `<div class="st-page title">${art}<div class="st-txt"><p class="st-k">${weekRange(st.week)}</p><h2 class="st-h">${esc(st.title)}</h2>${words ? `<p class="st-words">${words}</p>` : ''}<p class="st-note">برای ورق زدن، لمس کن</p></div></div>`
+    : `<div class="st-page">${art}<div class="st-txt">${key ? `<p class="st-k"><i></i>${esc(labelOf(key))}</p>` : ''}<p class="st-text">${storyLines(pg.text)}</p>
         ${last ? `<div class="st-end"><button class="st-done" data-act="storyClose">تمام</button><button class="st-again" data-act="storyRegen">نوشتن دوباره</button></div><p class="st-note">در «الگوها» نگه داشته شد.</p>` : ''}</div></div>`;
   el.innerHTML = storyShell(
     look,
