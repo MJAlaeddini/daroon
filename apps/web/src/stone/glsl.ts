@@ -62,7 +62,8 @@ void main() {
   vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / (0.5 * min(uRes.x, uRes.y)) / uZoom;
 
   /* 1. motion */
-  float rho0 = length(p) / outlineMix(atan(p.y, p.x));
+  float R0 = outlineMix(atan(p.y, p.x));
+  float rho0 = length(p) / R0;
   float k = pow(1.0 - min(rho0, 1.0), 2.0);
   float scale = 0.0, swirl = 0.0, rise = 0.0, glow = 0.0, ripple = 0.0;
   float sway = 0.0;
@@ -110,14 +111,16 @@ void main() {
   if (uDark == 1) {
     outColor = vec4(min(light, vec3(1.0)), min(lum, 1.0));
   } else {
+    /* the light ground ("jewel"): the hue of the light at full brightness, never a dark grey, with an alpha from how
+       much light there is; a soft shadow below lifts it off the page */
     vec3 hue = light / max(lum, 1e-4);
-    float white = min(min(hue.r, hue.g), hue.b);
-    /* tinted glass: the art's bright edges become the densest, deepest colour; its faint halo turns to a clear,
-       whitish light (it must never grey the page or the words around the stone) and is gone just past the body */
-    float deep = smoothstep(0.06, 0.6, lum);
-    float a = pow(smoothstep(0.03, 0.8, lum), 0.65) * (1.0 - 0.42 * white) * 0.92;
-    a *= smoothstep(1.4, 1.02, rho);
-    vec3 col = mix(vec3(0.99, 0.985, 1.0), pow(hue, vec3(1.5)) * (0.66 + 0.16 * lum), deep);
-    outColor = vec4(col * a, a);
+    float a = pow(smoothstep(0.03, 0.75, lum), 0.7);
+    a *= smoothstep(1.45, 1.05, rho);
+    vec3 col = pow(hue, vec3(1.25)) * vec3(0.96, 0.92, 0.96);
+    vec2 sp = p - vec2(0.0, -0.075);
+    float rs = length(sp) / R0; /* the outline at p's angle: close enough for a blur this soft */
+    float sh = 0.22 * (1.0 - smoothstep(0.55, 1.3, rs));
+    vec3 shCol = vec3(0.235, 0.157, 0.353);
+    outColor = vec4(col * a + shCol * sh * (1.0 - a), a + sh * (1.0 - a));
   }
 }`;
