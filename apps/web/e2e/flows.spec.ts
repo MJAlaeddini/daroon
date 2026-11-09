@@ -78,6 +78,15 @@ test('a check-in goes step by step: strength, where, one small question, a line;
   await page.click('#xbar .primary');
   await settle(page, 1500);
   expect(await page.getAttribute('.r-grid', 'data-step')).toBe('strength');
+  // dragging along the meter (right to left, like the text) passes through to «a lot»
+  const tr = (await page.locator('.r-meter .r-track').boundingBox())!;
+  await page.mouse.move(tr.x + tr.width - 4, tr.y + tr.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(tr.x + 2, tr.y + tr.height / 2, { steps: 8 });
+  await page.mouse.up();
+  expect(await page.evaluate('__daroon.S.draft.intensity')).toBe(3);
+  await tap(page, '[data-act=rIntensity][data-n="1"]');
+  expect(await page.getAttribute('[data-act=rIntensity][data-n="1"]', 'aria-checked')).toBe('true');
   await tap(page, '[data-act=rIntensity][data-n="3"]');
   await page.click('[data-act=rNext]');
   await settle(page, 700);

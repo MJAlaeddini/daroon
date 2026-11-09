@@ -38,7 +38,7 @@ import { toast } from './ui/toast';
 import { dayDetailHTML, jumpHTML } from './views/archive';
 import { trayHTML } from './views/explore';
 import { monthsPage, shownPatterns } from './views/patterns';
-import { STEPS, reflectBody, reflectProgress, vReflect } from './views/reflect';
+import { LEVEL_SAY, STEPS, reflectBody, reflectProgress, vReflect } from './views/reflect';
 import { haptic } from './ui/haptics';
 
 /** Move to a step of the check-in: only its body is swapped, so the header and the stone stay where they are. */
@@ -75,6 +75,10 @@ export function setIntensity(n: number) {
     b.setAttribute('aria-checked', on);
     b.setAttribute('aria-pressed', on);
   });
+  const meter = $('.r-meter'),
+    say = $('.r-say');
+  if (meter) meter.style.setProperty('--lvl', String((n - 1) / 2));
+  if (say) say.textContent = LEVEL_SAY[n as 1 | 2 | 3];
   haptic(6 + 4 * n);
   syncEngine();
   engine.pulse(0.25 * n);
@@ -345,6 +349,17 @@ export const ACT = {
   /* ── the check-in, step by step (views/reflect.ts) ── */
   rIntensity(el) {
     setIntensity(+el.dataset.n);
+  },
+  /* a sentence starter goes where the note continues, and the caret waits after it */
+  noteStart(el) {
+    const t = $('#noteInput');
+    if (!t) return;
+    const v = t.value.replace(/\s+$/, '');
+    t.value = `${v}${v ? '\n' : ''}${el.dataset.t} `;
+    S.draft.note = t.value;
+    t.focus();
+    t.setSelectionRange(t.value.length, t.value.length);
+    haptic(6);
   },
   rNext() {
     goStep(S.draft.step + 1);

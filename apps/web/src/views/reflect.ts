@@ -54,24 +54,45 @@ function capsules(withStrength: boolean): string {
   return `<div class="r-caps">${words}${strength}</div>`;
 }
 
+/** What each strength feels like, said under the meter as it moves. */
+export const LEVEL_SAY: Record<Intensity, string> = {
+  1: 'یه کم؛ از دور حسش می‌کردم.',
+  2: 'حسش می‌کردم، ولی جا برای چیزای دیگه هم بود.',
+  3: 'خیلی؛ همه‌ی وجودم رو گرفته بود.',
+};
+const NOTE_STARTERS = ['چی باعثش شد', 'الان دلم می‌خواد', 'یه لحظه‌ش که یادم مونده'];
+
+/** «How strong?» as a track coloured by the first word: the fill and the thumb follow the choice, and a finger or
+    the mouse can drag along it (events.ts); the three stops are ordinary radio buttons for keyboards and readers. */
+function meterHTML(n: Intensity): string {
+  const first = S.draft.items[0];
+  return `<div class="r-meter" style="--lvl:${(n - 1) / 2};${first ? cvars(first.key, first.color) : ''}">
+      <span class="r-track" aria-hidden="true"><span class="r-fill"></span><span class="r-thumb"><i></i></span></span>
+      <div class="r-stops" role="radiogroup" aria-label="پررنگی">${([1, 2, 3] as Intensity[])
+        .map(
+          (k) =>
+            `<button role="radio" data-act="rIntensity" data-n="${k}" aria-checked="${n === k}" aria-pressed="${n === k}">${INTENSITY_LABEL[k]}</button>`,
+        )
+        .join('')}</div>
+      <p class="r-say" aria-live="polite">${LEVEL_SAY[n]}</p>
+    </div>`;
+}
+
 function saveHere(): string {
   return `<button class="quiet" data-act="save">${S.editing ? 'ذخیره همین‌جا' : 'ثبت همین‌جا'}</button>`;
 }
 
 function stepBody(step: Step): string {
   const d = S.draft;
-  if (step === 'strength')
+  if (step === 'strength') {
+    const n = (d.intensity as Intensity) || 2;
     return `${capsules(false)}
       ${d.context ? `<p class="r-ctx">${esc(d.context.name)}: ${esc(d.context.value)} · از جواب‌های خودت</p>` : ''}
       <h1 class="r-q" tabindex="-1" data-autofocus>چقدر پررنگ بود؟</h1>
-      <p class="r-hint">انگشتت رو روی شکل نگه دار؛ هرچی بیشتر، پررنگ‌تر</p>
-      <div class="seg r-seg" role="radiogroup" aria-label="پررنگی">${([1, 2, 3] as Intensity[])
-        .map(
-          (n) =>
-            `<button role="radio" data-act="rIntensity" data-n="${n}" aria-checked="${d.intensity === n}" aria-pressed="${d.intensity === n}">${INTENSITY_LABEL[n]}</button>`,
-        )
-        .join('')}</div>
+      ${meterHTML(n)}
+      <p class="r-hint">روی خط بکش، یا شکل رو نگه دار.</p>
       <div class="acts r-acts">${saveHere()}<button class="primary" data-act="rNext">بعدی</button></div>`;
+  }
   if (step === 'where')
     return `${capsules(true)}
       <h1 class="r-q" tabindex="-1" data-autofocus>کجا بودی، با کی؟</h1>
@@ -96,9 +117,13 @@ function stepBody(step: Step): string {
       <div class="acts r-acts">${saveHere()}<button class="quiet" data-act="rSkip">نمی‌خوام بگم</button></div>`;
   }
   return `<h1 class="r-q" tabindex="-1" data-autofocus>یه خط بنویسی؟</h1>
-    <span class="private">${IC.lock}فقط روی همین گوشی می‌مونه.</span>
-    <div class="note"><label class="vh" for="noteInput">یادداشت</label>
-      <textarea id="noteInput" rows="4" placeholder="امروز…">${esc(d.note)}</textarea></div>
+    <p class="r-hint">هرچی اومد تو ذهنت؛ یه کلمه هم کافیه.</p>
+    <div class="note r-note"><label class="vh" for="noteInput">یادداشت</label>
+      <textarea id="noteInput" rows="5" placeholder="امروز…">${esc(d.note)}</textarea>
+      <span class="private">${IC.lock}فقط روی همین دستگاه می‌مونه، جایی فرستاده نمی‌شه.</span></div>
+    <div class="r-starters" role="group" aria-label="شروع جمله">${NOTE_STARTERS.map(
+      (t) => `<button class="chip" data-act="noteStart" data-t="${t}">${t}…</button>`,
+    ).join('')}</div>
     <div class="acts r-acts"><button class="quiet" data-act="save">نه، همین بسه</button><button class="primary" data-act="save">${S.editing ? 'ذخیره‌ی تغییرات' : 'ثبت در ردپای من'}</button></div>`;
 }
 
