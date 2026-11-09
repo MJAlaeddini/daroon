@@ -12,7 +12,7 @@ export interface SessionUser {
   id: string;
   name: string;
   email: string | null;
-  provider: 'email' | 'google';
+  provider: 'email' | 'google' | 'password';
   createdAt: Date;
 }
 

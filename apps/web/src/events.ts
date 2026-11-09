@@ -1,7 +1,7 @@
 import { jOfKey, keyAdd, wdIndex, weekStart } from '@daroon/shared';
 import { ACT, reRenderReflect, setIntensity } from './actions';
 import { $ } from './core/util';
-import { submitCode, submitEmail } from './features/account';
+import { submitCode, submitEmail, submitPassword } from './features/account';
 import { addCustom, swapGuide } from './features/draft';
 import { closeStory } from './features/stories';
 import { isDark, mqDark, mqReduce } from './sculpture/engine';
@@ -63,6 +63,12 @@ document.addEventListener('submit', (e: any) => {
   if (le) {
     e.preventDefault();
     submitEmail(le.email.value);
+    return;
+  }
+  const lp = e.target.closest('[data-form="loginPassword"]');
+  if (lp) {
+    e.preventDefault();
+    submitPassword(lp.username.value, lp.password.value, lp.elements.name?.value || '');
     return;
   }
   const lc = e.target.closest('[data-form="loginCode"]');

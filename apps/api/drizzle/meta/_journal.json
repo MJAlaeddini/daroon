@@ -22,6 +22,13 @@
       "when": 1794170110575,
       "tag": "0002_intensity_meaning",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794199549034,
+      "tag": "0003_username_password",
+      "breakpoints": true
     }
   ]
 }

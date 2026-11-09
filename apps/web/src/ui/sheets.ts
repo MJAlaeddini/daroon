@@ -1,4 +1,4 @@
-import { authCfg } from '../features/account';
+import { authButtonsHTML } from '../features/account';
 import { fa, fmtDay } from '@daroon/shared';
 import { $, esc } from '../core/util';
 import { avatarHTML } from '../features/account';
@@ -205,9 +205,9 @@ export function settingsHTML() {
     return `<div class="sheet-top"><span></span><button class="ib" data-act="closeSheet" aria-label="بستن">${IC.close}</button></div>
   <div class="sheet-scroll set">
     <section class="profile">${avatarHTML(72)}<div><h2 class="ed" style="font-size:24px" tabindex="-1" data-autofocus>${acc ? esc(acc.name) : 'بدون حساب'}</h2>
-      <p class="fine">${acc ? `${acc.provider === 'google' ? 'با Google' : 'با ایمیل'} · از ${fmtDay(acc.since, { weekday: false })}` : 'ردپاها فقط روی همین دستگاه هستن.'}</p></div>
+      <p class="fine">${acc ? `${acc.provider === 'google' ? 'با Google' : acc.provider === 'password' ? `<bdi dir="ltr">@${esc(acc.username || '')}</bdi>` : 'با ایمیل'} · از ${fmtDay(acc.since, { weekday: false })}` : 'ردپاها فقط روی همین دستگاه هستن.'}</p></div>
       <div class="pstats"><div><b class="num">${fa(all.length)}</b><span>ردپا</span></div><div><b class="num">${fa(days)}</b><span>روز</span></div><div><b class="num">${fa(words)}</b><span>کلمه‌ی متفاوت</span></div></div>
-      ${acc ? '' : `<div class="auth-btns"><button class="gbtn" data-act="loginGoogle"${authCfg.google ? '' : ' hidden'}><span class="g" aria-hidden="true">G</span>ادامه با Google</button><button class="gbtn" data-act="loginEmail"><span class="g" aria-hidden="true">@</span>ادامه با ایمیل</button></div>`}</section>
+      ${acc ? '' : `<div class="auth-btns">${authButtonsHTML()}</div>`}</section>
     <section class="set-sec rows">${canInstall() ? row('installApp', 'نصب روی گوشی', 'از صفحه‌ی اصلی، مثل یه برنامه باز می‌شه') : ''}${row('setPage', 'تنظیمات و ظاهر', 'حال‌وهوای بصری، حرکت، داده‌ها')}${row('aboutPage', 'درباره‌ی کلمه‌ها و شکل‌ها', 'پژوهش‌ها و این‌که شکل چه چیزی نیست')}</section>
     ${
       acc

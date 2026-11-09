@@ -21,8 +21,11 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').unique(),
   googleSub: text('google_sub').unique(),
+  username: text('username').unique(),
+  /** scrypt$N$r$p$salt$hash, for accounts made with a username */
+  passwordHash: text('password_hash'),
   name: text('name').notNull().default(''),
-  provider: text('provider', { enum: ['email', 'google'] }).notNull(),
+  provider: text('provider', { enum: ['email', 'google', 'password'] }).notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
 });
 

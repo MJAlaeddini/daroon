@@ -72,6 +72,61 @@ describe('email sign-in', () => {
   });
 });
 
+describe('username and password', () => {
+  it('signs up, signs in again, and keeps the session', async () => {
+    const c = client(h.app);
+    const up = await c.post('/api/auth/signup', { username: ' Sara.K ', password: 'a quiet river', name: 'سارا' });
+    expect(up.statusCode).toBe(200);
+    expect(up.json().account).toMatchObject({ name: 'سارا', username: 'sara.k', email: null, provider: 'password' });
+    expect((await c.get('/api/me')).json().account.username).toBe('sara.k');
+
+    const other = client(h.app);
+    const login = await other.post('/api/auth/login', { username: 'SARA.K', password: 'a quiet river' });
+    expect(login.statusCode).toBe(200);
+    expect(login.json().account.id).toBe(up.json().account.id);
+    expect((await other.get('/api/me')).statusCode).toBe(200);
+  });
+
+  it('keeps usernames unique', async () => {
+    await client(h.app).post('/api/auth/signup', { username: 'taken_one', password: '12345678' });
+    const again = await client(h.app).post('/api/auth/signup', { username: 'Taken_One', password: '87654321' });
+    expect(again.statusCode).toBe(409);
+    expect(again.json().error).toBe('username_taken');
+  });
+
+  it('answers the same for a wrong password and an unknown username', async () => {
+    await client(h.app).post('/api/auth/signup', { username: 'mina', password: 'right password' });
+    const wrong = await client(h.app).post('/api/auth/login', { username: 'mina', password: 'wrong password' });
+    const unknown = await client(h.app).post('/api/auth/login', { username: 'nobody_here', password: 'whatever1' });
+    expect([wrong.statusCode, wrong.json().error]).toEqual([401, 'login_wrong']);
+    expect([unknown.statusCode, unknown.json().error]).toEqual([401, 'login_wrong']);
+  });
+
+  it('rejects short passwords and odd usernames', async () => {
+    const c = client(h.app);
+    expect((await c.post('/api/auth/signup', { username: 'ok_name', password: 'short' })).json().error).toBe(
+      'invalid_input',
+    );
+    expect((await c.post('/api/auth/signup', { username: 'سارا', password: '12345678' })).json().error).toBe(
+      'invalid_input',
+    );
+    expect((await c.post('/api/auth/signup', { username: 'ab', password: '12345678' })).json().error).toBe(
+      'invalid_input',
+    );
+  });
+
+  it('never stores the password itself', async () => {
+    await client(h.app).post('/api/auth/signup', { username: 'hash_check', password: 'plain secret' });
+    const { rows } = await h.db.pool.query("select password_hash from users where username = 'hash_check'");
+    expect(rows[0].password_hash).toMatch(/^scrypt\$16384\$8\$1\$/);
+    expect(rows[0].password_hash).not.toContain('plain secret');
+  });
+
+  it('says which ways in are offered', async () => {
+    expect((await client(h.app).get('/api/auth/config')).json()).toMatchObject({ password: true, email: true });
+  });
+});
+
 describe('google sign-in', () => {
   it('creates an account, and links to an existing email account', async () => {
     h.google.set('tok-new-user-000000000000', {

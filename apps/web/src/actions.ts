@@ -3,7 +3,15 @@ import { MAX_SCENES, fa, jOfKey, keyAdd, keyOfJ, todayKey, weekStart } from '@da
 import { $, $$ } from './core/util';
 import { Q2, ctxFor } from './domain/guide';
 import { lex } from './domain/lexicon';
-import { deleteAccount, loginStep, openLogin, resendCode, signOut } from './features/account';
+import {
+  deleteAccount,
+  loginMode,
+  loginStep,
+  openLogin,
+  resendCode,
+  signOut,
+  togglePassword,
+} from './features/account';
 import { draftFromEntry, exitFlow, itemFor, saveDraft, startGuide, swapGuide, toReflect } from './features/draft';
 import { closeStory, openStoryView, weekStory } from './features/stories';
 import { isDark, reduced } from './sculpture/engine';
@@ -618,6 +626,20 @@ export const ACT = {
   loginEmail() {
     if (S.sheet === 'login') loginStep('email');
     else openLogin('email');
+  },
+  loginSignup() {
+    if (S.sheet === 'login') loginStep('password', 'signup');
+    else openLogin('password', 'signup');
+  },
+  loginPassword() {
+    if (S.sheet === 'login') loginStep('password', 'login');
+    else openLogin('password', 'login');
+  },
+  loginMode(el) {
+    loginMode(el.dataset.m === 'login' ? 'login' : 'signup');
+  },
+  pwToggle() {
+    togglePassword();
   },
   loginResend() {
     resendCode();

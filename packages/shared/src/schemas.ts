@@ -136,6 +136,19 @@ export const VerifyCodeBody = z.object({
   code: z.string().regex(/^\d{6}$/),
   name: z.string().trim().max(24).optional(),
 });
+/** Usernames are Latin, so they type the same on every keyboard: 3–24 of a–z, 0–9, dot and underscore. */
+export const Username = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9._]{3,24}$/);
+export const Password = z.string().min(8).max(128);
+export const SignupBody = z.object({
+  username: Username,
+  password: Password,
+  name: z.string().trim().max(24).optional(),
+});
+export const PasswordLoginBody = z.object({ username: Username, password: z.string().min(1).max(128) });
 export const GoogleBody = z.object({ credential: z.string().min(20).max(4096) });
 export const ProfileBody = z.object({ name: z.string().trim().min(1).max(24) });
 
@@ -143,6 +156,7 @@ export interface Account {
   id: string;
   name: string;
   email: string | null;
-  provider: 'email' | 'google';
+  username: string | null;
+  provider: 'email' | 'google' | 'password';
   since: string;
 }

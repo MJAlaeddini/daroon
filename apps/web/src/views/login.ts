@@ -1,5 +1,5 @@
 import { cvars } from '../domain/lexicon';
-import { authCfg } from '../features/account';
+import { authButtonsHTML } from '../features/account';
 
 export function vLogin() {
   const ws = ['آرامش', 'امید', 'دلتنگی', 'اشتیاق', 'نگرانی', 'صمیمیت', 'غم', 'سردرگمی', 'خوشحالی', 'دلخوری'];
@@ -19,8 +19,7 @@ export function vLogin() {
       <p class="lede r" style="--i:3">کلمه‌ها رو لمس کن، شکل درونت رو ببین، و ردپاش رو نگه دار.</p>
     </div>
     <div class="login-acts r" style="--i:4">
-      <button class="gbtn" data-act="loginGoogle"${authCfg.google ? '' : ' hidden'}><span class="g" aria-hidden="true">G</span>ادامه با Google</button>
-      <button class="gbtn" data-act="loginEmail"><span class="g" aria-hidden="true">@</span>ادامه با ایمیل</button>
+      ${authButtonsHTML()}
       <button class="quiet" data-act="loginSkip">فعلاً بدون حساب</button>
       <p class="fine">با حساب، ردپاهات روی همه‌ی دستگاه‌هات هست. یادداشت‌ها فقط روی همین دستگاه می‌مونن.</p>
     </div></div>`;
