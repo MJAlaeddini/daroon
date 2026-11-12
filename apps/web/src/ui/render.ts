@@ -1,5 +1,5 @@
-import { jOfKey, labelOf, todayKey, weekStart } from '@daroon/shared';
-import { $, $$, esc, lerp } from '../core/util';
+import { jOfKey, todayKey, weekStart } from '@daroon/shared';
+import { $, $$ } from '../core/util';
 import { habit, reduced } from '../sculpture/engine';
 import { Stage, engine, holdTraces, pickAnchor, stageEl } from '../stage/stage';
 import { FLOW, S, isWide, newDraft, syncEngine } from '../state/app';
@@ -7,11 +7,10 @@ import { IC } from './icons';
 import { closeSheet, fillDaySheet } from './sheets';
 import { toast } from './toast';
 import { archTitle, dayDetailHTML, monthHTML, warmArchive, weekHTML } from '../views/archive';
-import { trayHTML, xbarHTML } from '../views/explore';
+import { fineHTML, namesHTML, trayHTML, xbarHTML } from '../views/explore';
 import { VIEWS } from '../views/index';
 
 /* ═════════════════════════ rendering & navigation ═════════════════════════ */
-export let fieldRO = null;
 export const TAB = { today: 0, explore: 0, guide: 0, login: 0, reflect: 0, archive: 1, patterns: 2 };
 export const PAGER_EASE = 'cubic-bezier(.32,.72,0,1)';
 export function renderView({ quiet = false, slide = 0 } = {}) {
@@ -90,13 +89,6 @@ export function renderView({ quiet = false, slide = 0 } = {}) {
   });
 }
 export function after(el, _quiet?: boolean) {
-  if (S.view === 'explore') {
-    const f = $('#field', el);
-    layoutField(f);
-    fieldRO && fieldRO.disconnect();
-    fieldRO = new ResizeObserver(() => layoutField(f));
-    fieldRO.observe(f);
-  }
   if (S.view === 'today') {
     $$('.path', el).forEach((p) => {
       p.addEventListener('pointerenter', () => hintPath(p.dataset.hint));
@@ -148,55 +140,43 @@ export function back() {
   }
   renderView();
 }
-export function layoutField(f) {
-  if (!f) return;
-  const W = f.clientWidth,
-    H = f.clientHeight,
-    cx = W / 2,
-    cy = H / 2,
-    narrow = W < 560;
-  // the words sit on a ring around the sculpture, at their place on the semantic circle
-  const hx = narrow ? W / 2 - 46 : Math.min(W / 2 - 80, H * 0.62),
-    hy = narrow ? H / 2 - 22 : H / 2 - 34,
-    bl = narrow ? 0.18 : 0.12;
-  $$('.word', f).forEach((w) => {
-    // a softened ring: words near the top and bottom are pushed sideways so neighbours there keep apart
-    const a = (+w.dataset.angle * Math.PI) / 180,
-      c0 = Math.cos(a),
-      s = Math.sin(a),
-      c = Math.sign(c0) * Math.abs(c0) ** (narrow ? 0.6 : 0.85);
-    const t = Math.min(hx / Math.max(Math.abs(c), 1e-6), hy / Math.max(Math.abs(s), 1e-6));
-    const x = cx + lerp(hx * c, t * c, bl),
-      y = cy - lerp(hy * s, t * s, bl);
-    w.style.left = x + 'px';
-    w.style.top = y + 'px';
-    w.style.setProperty('--fx', cx - x + 'px');
-    w.style.setProperty('--fy', cy - y + 'px');
-  });
-  const A = $('.anchor-field', f),
-    sz = narrow ? Math.min(W * 0.78, H * 0.62) : Math.min(hx * 1.45, hy * 1.6, 520);
-  A.style.width = A.style.height = sz + 'px';
-  A.style.left = cx - sz / 2 + 'px';
-  A.style.top = cy - sz / 2 + 'px';
-  f.classList.toggle('full', S.draft.items.length >= 3);
-  $$('.word', f).forEach((w) =>
-    w.setAttribute('aria-disabled', String(S.draft.items.length >= 3 && w.getAttribute('aria-pressed') !== 'true')),
-  );
-}
-export function refreshExplore() {
+/**
+ * The feeling picker after a change: each verse word's state, the line of our own word and the buttons at once; what
+ * the stone holds (its names and finer words, and the stone itself) only when `stone` is set, which a breathed word
+ * asks for as it reaches the stone.
+ */
+export function refreshExplore({ stone = true } = {}) {
   const f = $('#field');
   if (!f) return;
+  const full = S.draft.items.length >= 3;
   $$('.word', f).forEach((w) => {
-    const k = w.dataset.key,
-      it = S.draft.items.find((x) => x.key === k || x.parent === k);
-    w.setAttribute('aria-pressed', String(!!it));
-    w.querySelector('.rfn')?.remove();
-    if (it && it.key !== k) w.insertAdjacentHTML('beforeend', `<span class="rfn">${esc(labelOf(it.key))}</span>`);
+    const on = S.draft.items.some((x) => x.key === w.dataset.key || x.parent === w.dataset.key);
+    w.setAttribute('aria-pressed', String(on));
+    w.setAttribute('aria-disabled', String(full && !on));
   });
-  layoutField(f);
-  $('#tray').innerHTML = trayHTML();
+  const tray = $('#tray');
+  if (!(S.customOpen && tray.contains(document.activeElement))) tray.innerHTML = trayHTML();
   $('#xbar').innerHTML = xbarHTML();
+  if (stone) refreshStone();
+}
+/** Names under the stone and the finer words of the one in focus; the stone takes the draft's feelings. */
+export function refreshStone() {
+  const n = $('#xnames'),
+    fi = $('#xfine');
+  if (n) {
+    const nh = namesHTML(),
+      fh = fineHTML();
+    if (n.dataset.h !== nh) swapIn(n, nh);
+    if (fi.dataset.h !== fh) swapIn(fi, fh);
+  }
   syncEngine();
+}
+function swapIn(el: HTMLElement, html: string) {
+  el.innerHTML = html;
+  el.dataset.h = html;
+  el.classList.remove('swap');
+  void el.offsetWidth;
+  el.classList.add('swap');
 }
 export function refreshArchive() {
   if (S.view !== 'archive') return;

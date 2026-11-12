@@ -16,7 +16,7 @@ export function itemFor(key) {
   const L = lex(key);
   return { key, parent: L.parent || null, custom: key.startsWith('custom:') };
 }
-export function addCustom(text) {
+export function addCustom(text, ripple = true) {
   text = text.trim().replace(/\s+/g, ' ');
   if (!text) return false;
   if (S.draft.items.length >= 3) {
@@ -26,8 +26,8 @@ export function addCustom(text) {
   const key = 'custom:' + text;
   if (S.draft.items.some((i) => i.key === key)) return false;
   S.draft.items.push({ key, parent: null, custom: true });
-  S.draft.focus = -1;
-  engine.rippleAt((lex(key).angle * Math.PI) / 180, key);
+  S.draft.focus = S.draft.items.length - 1;
+  if (ripple) engine.rippleAt((lex(key).angle * Math.PI) / 180, key);
   return true;
 }
 export function startGuide(fresh = true) {
