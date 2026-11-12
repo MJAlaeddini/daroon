@@ -38,7 +38,7 @@ export function vExplore() {
   ).join('');
   return `<div class="flow-head"><button class="back" data-act="back">${IC.back}بازگشت</button>${S.editing ? '<span class="step">ویرایش ردپا</span>' : progressBar(0)}<span class="r-close-pad" aria-hidden="true"></span></div>
   <div class="x-grid">
-    <div class="x-intro"><h1 class="ed r" style="--i:0" tabindex="-1" data-autofocus>بین احساس‌ها بگرد</h1><p class="lede r" style="--i:1">تا سه تا. هر کدوم، درونت رو یه جور شکل می‌ده.</p></div>
+    <div class="x-intro"><h1 class="ed r" style="--i:0" tabindex="-1" data-autofocus>بین احساس‌ها بگرد</h1><p class="vh">تا سه تا. هر کدوم، درونت رو یه جور شکل می‌ده.</p></div>
     <div class="x-stage">
       <div class="anchor-explore" data-anchor data-scale=".7"></div>
       <div class="x-names r" style="--i:2" id="xnames">${namesHTML()}</div>

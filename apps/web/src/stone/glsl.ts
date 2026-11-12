@@ -14,7 +14,9 @@ export const STONE_VS = /* glsl */ `#version 300 es
 in vec2 aP;
 void main() { gl_Position = vec4(aP, 0.0, 1.0); }`;
 
+const MIX = Number((globalThis as { __mix?: number }).__mix ?? 0);
 export const STONE_FS = /* glsl */ `#version 300 es
+#define MIX ${MIX}
 precision highp float;
 precision highp int;
 uniform vec2 uRes;
@@ -115,8 +117,55 @@ void main() {
   float crisp = 0.0; // the light before any desaturation: the threads are measured against it
   vec2 uvs[6];
   float gs[6];
+#if MIX == 2
+  /* nested veils: every feeling keeps its own outline and its own art, the heaviest at full size and at the back,
+     the lighter ones smaller, a little off centre, in front of it; each veil lets through what is behind it where it
+     is dark and covers it where it glows, like sheets of coloured glass */
+  vec3 acc = vec3(0.0);
+  for (int r = 0; r < uN; r++) {
+    // the r-th veil from the back: the r-th largest band
+    int i = 0;
+    for (int j = 0; j < uN; j++) {
+      int rank = 0;
+      for (int k2 = 0; k2 < uN; k2++) if (uA[k2].y > uA[j].y || (uA[k2].y == uA[j].y && k2 < j)) rank++;
+      if (rank == r) i = j;
+    }
+    float inner = uN == 1 ? 0.0 : 1.0 - uA[i].y;
+    float sc = 1.0 - 0.46 * inner;
+    vec2 off = 0.16 * inner * vec2(cos(uWobble + 9.0 * uA[i].z), sin(uWobble + 9.0 * uA[i].z));
+    vec2 qi = (q - off) / sc;
+    float phi = atan(qi.y, qi.x) - uA[i].z;
+    float ri = length(qi) / outline(i, phi);
+    vec2 src = uB[i].xy + vec2(cos(phi), sin(phi)) * ri * outline(i, phi);
+    vec2 uv = vec2(src.x * 0.5 + 0.5, 0.5 - src.y * 0.5);
+    vec3 c = art(i, uv) * smoothstep(1.3, 0.95, ri);
+    c = mix(c, vec3(dot(c, vec3(0.3, 0.45, 0.25))), uB[i].z);
+    float cov = smoothstep(0.0, 0.55, peak(c)) * (0.62 + 0.3 * inner);
+    acc = acc * (1.0 - cov) + c;
+    float g = max(peak(c), 1e-4);
+    crisp += g * peak(c);
+    msum += g;
+    uvs[i] = uv;
+    gs[i] = g;
+  }
+  light = acc;
+  crisp /= max(msum, 1e-6);
+  crisp *= msum;
+#else
+  /* the field that decides which feeling shows where: today the depth (envelope to core); marbled, a spiral of
+     ribbons warped like ink in water, so the feelings fold through each other */
+  float v = rb * 1.4 + 0.3 * sin(3.0 * th + 2.4 * rb + uWobble) + 0.16 * sin(5.0 * th - 3.1 * rb - 1.3 * uWobble);
+  v += smoothstep(0.15, 0.6, rb) * (2.0 * th / TAU + 0.4 * sin(2.0 * th - uWobble));
   for (int i = 0; i < uN; i++) {
+#if MIX == 1
+    float mb = 0.5 + 0.5 * cos(TAU * (v - float(i) / float(uN)));
+    // ribbons fold through the outer stone; the core stays the lightest feeling's own
+    float rib = uA[i].x * pow(mb, 2.4);
+    float band = uA[i].x * exp(-pow((rb - uA[i].y) / 0.3, 2.0));
+    float g = uN == 1 ? 1.0 : mix(band, rib, smoothstep(0.12, 0.45, rb)) + 1e-5;
+#else
     float g = uA[i].x * exp(-pow((rb - uA[i].y) / 0.3, 2.0)) + 1e-5 * uA[i].x;
+#endif
     float phi = th - uA[i].z;
     vec2 src = uB[i].xy + vec2(cos(phi), sin(phi)) * rho * outline(i, phi);
     vec2 uv = vec2(src.x * 0.5 + 0.5, 0.5 - src.y * 0.5);
@@ -129,6 +178,7 @@ void main() {
     gs[i] = g;
   }
   light /= max(msum, 1e-6);
+#endif
   light *= 1.0 + glow * pow(1.0 - min(rho, 1.0), 1.5);
 
   /* 5. ground */
