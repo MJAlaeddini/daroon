@@ -338,6 +338,36 @@ test('after the first check-in a sheet offers to keep the traces, once', async (
   expect(await page.evaluate('__daroon.S.sheet')).toBeNull();
 });
 
+test('night is the default, from the first frame, and the browser is told not to darken the page itself', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/?e2e');
+  // theme-boot.js has run before anything else: the very first look is night
+  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+  await expect(page.locator('meta[name=color-scheme]')).toHaveAttribute('content', 'dark light');
+  await settle(page, 900);
+  expect(await page.evaluate('__daroon.DB.settings.direction')).toBe('night');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(17, 14, 24)');
+  // someone who had «like the device» stored from before moves to night once; choosing it again later sticks
+  await page.evaluate(() =>
+    localStorage.setItem('daroon.v1', JSON.stringify({ entries: [], settings: { direction: 'auto' } })),
+  );
+  await page.reload();
+  await settle(page, 900);
+  expect(await page.evaluate('__daroon.DB.settings.direction')).toBe('night');
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'daroon.v1',
+      JSON.stringify({ entries: [], settings: { direction: 'auto' }, nightDefault: true }),
+    ),
+  );
+  await page.reload();
+  await settle(page, 900);
+  expect(await page.evaluate('__daroon.DB.settings.direction')).toBe('auto');
+  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
+});
+
 test('works offline after the first visit', async ({ page, context }) => {
   await open(page, '/');
   await page.evaluate(() => navigator.serviceWorker.ready);

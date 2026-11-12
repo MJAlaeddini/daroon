@@ -14,6 +14,15 @@ for (const size of SIZES) {
 
     test('every screen lays out cleanly and the sculpture never sits under text', async ({ page }) => {
       test.setTimeout(300_000);
+      // night is the default look; the light sizes follow the device instead, so both themes stay covered
+      if (size.scheme === 'light')
+        await page.addInitScript(() => {
+          if (!localStorage.getItem('daroon.v1'))
+            localStorage.setItem(
+              'daroon.v1',
+              JSON.stringify({ entries: [], settings: { direction: 'auto' }, nightDefault: true }),
+            );
+        });
       const errors = await open(page);
       const nav = size.width < 700 ? '.bottomnav' : '.topnav';
       const problems: string[] = [];

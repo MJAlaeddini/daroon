@@ -9,7 +9,9 @@ export let DB: any = {
   loginDone: false,
   /** the «نگهش داریم؟» sheet has been offered once (features/account.ts) */
   keepAsked: false,
-  settings: { direction: 'auto', motion: 'system' },
+  /* night is the default look; `nightDefault` marks that a stored «auto» from before was moved to it once */
+  settings: { direction: 'night', motion: 'system' },
+  nightDefault: true,
   visits: 0,
   sync: { cursor: 0, at: null },
   /** Answers to patterns, by pattern id: { verdict, group, hits, others, elsewhere, at, syncedAt? }. */
@@ -28,7 +30,10 @@ export function load(sample?: () => any[]) {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      if (d && Array.isArray(d.entries)) DB = { ...DB, ...d, settings: { ...DB.settings, ...(d.settings || {}) } };
+      // a stored «like the device» from before night became the default moves to night, once
+      if (d && !d.nightDefault && d.settings?.direction === 'auto') d.settings.direction = 'night';
+      if (d && Array.isArray(d.entries))
+        DB = { ...DB, ...d, settings: { ...DB.settings, ...(d.settings || {}) }, nightDefault: true };
     }
   } catch (e) {
     storageOK = false;
