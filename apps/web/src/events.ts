@@ -4,13 +4,16 @@ import { $ } from './core/util';
 import { pwTyped, submitCode, submitEmail, submitPassword, userTyped } from './features/account';
 import { addCustom, swapGuide } from './features/draft';
 import { closeStory } from './features/stories';
+import { breatheIn } from './features/breath';
+import { engine } from './stage/stage';
 import { isDark, mqDark, mqReduce } from './sculpture/engine';
 import { pickAnchor } from './stage/stage';
 import { FLOW, S, isWide, newDraft, syncEngine } from './state/app';
 import { DB } from './state/store';
 import { selectDay } from './ui/day-select';
 import { IC } from './ui/icons';
-import { TAB, go, refreshArchive, refreshExplore, renderView } from './ui/render';
+import { TAB, go, refreshArchive, refreshExplore, refreshStone, renderView } from './ui/render';
+import { wordColour } from './views/explore';
 import { closeSheet, refreshArchiveSelOnly } from './ui/sheets';
 import { applyTheme, themeChanged } from './ui/theme';
 
@@ -86,11 +89,21 @@ document.addEventListener('submit', (e: any) => {
   if (!f) return;
   e.preventDefault();
   const inp = f.querySelector('input');
-  if (addCustom(inp.value)) {
+  const label = inp.value.trim().replace(/\s+/g, ' ');
+  if (addCustom(inp.value, S.view !== 'explore')) {
     inp.value = '';
     S.customOpen = false;
-    if (S.view === 'explore') refreshExplore();
-    else {
+    if (S.view === 'explore') {
+      // the word of one's own is breathed into the stone from where it was written
+      const key = 'custom:' + label;
+      breatheIn(inp, label, wordColour(key), () => {
+        if (S.view !== 'explore') return;
+        refreshStone();
+        if (S.draft.items.some((x) => x.key === key)) engine.rippleAt(Math.PI / 2, key, true);
+      });
+      refreshExplore({ stone: false });
+      $('#tray button')?.focus({ preventScroll: true });
+    } else {
       syncEngine();
       swapGuide();
     }

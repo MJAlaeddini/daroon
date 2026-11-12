@@ -38,6 +38,54 @@ test('every guided path ends in suggestions, or the "no name yet" screen for uns
   }
 });
 
+test("a word is breathed into the stone and named under it; its finer words and a word of one's own", async ({
+  page,
+}) => {
+  await open(page);
+  await page.click('[data-act=loginSkip]');
+  await settle(page, 900);
+  await page.click('[data-act=startA]');
+  await settle(page, 1300);
+  await expect(page.locator('#xnames')).toHaveText('هنوز بی‌نام');
+  await expect(page.locator('#xbar .primary')).toBeDisabled();
+  await page.click('.word[data-key="دلتنگی"]');
+  // the word's place goes quiet at once; its name arrives under the stone with the word
+  await expect(page.locator('.word[data-key="دلتنگی"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#xnames .nm')).toHaveText(['دلتنگی']);
+  await expect(page.locator('#xfine .rf')).toHaveText(['حسرت', 'دلگیری', 'تنهایی']);
+  await expect(page.locator('.breath')).toHaveCount(0);
+  // a finer word renames it; the verse keeps the general word
+  await page.click('#xfine .rf >> text=حسرت');
+  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت']);
+  expect(await page.evaluate('__daroon.S.draft.items[0].key')).toBe('حسرت');
+  // three at most: the rest of the verse steps back
+  await page.click('.word[data-key="امید"]');
+  await page.click('.word[data-key="آرامش"]');
+  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید', 'آرامش']);
+  await expect(page.locator('.word[data-key="غم"]')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('#tray [data-act=openCustom]')).toHaveCount(0);
+  // a name under the stone brings its own finer words
+  await page.click('#xnames .nm >> text=امید');
+  await expect(page.locator('#xfine .rf')).toHaveText(['خوش‌بینی', 'انتظار', 'انگیزه']);
+  // touching a word inside the stone draws it back out
+  await page.click('.word[data-key="آرامش"]');
+  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید']);
+  await expect(page.locator('#xbar .primary small')).toHaveText('۲ کلمه');
+  // a word of one's own goes in from where it was written, and can be taken out under the stone
+  await page.click('[data-act=openCustom]');
+  await page.fill('#customInput', 'خستگی');
+  await page.click('.addbtn');
+  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید', 'خستگی']);
+  await expect(page.locator('#xfine')).toContainText('کلمه‌ی خودته');
+  await page.click('#xfine [data-act=removeSel]');
+  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید']);
+  // «I don't know» leads to the guide and keeps what was chosen
+  await page.click('#xbar [data-act=toGuide]');
+  await settle(page, 900);
+  expect(await page.evaluate('__daroon.S.view')).toBe('guide');
+  expect(await page.evaluate('__daroon.S.draft.items.length')).toBe(2);
+});
+
 test('a saved entry with a note survives a reload; three words at most', async ({ page }) => {
   await open(page);
   await page.click('[data-act=loginSkip]');

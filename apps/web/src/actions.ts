@@ -1,5 +1,5 @@
 import { isSignedIn } from './features/sync';
-import { MAX_SCENES, fa, jOfKey, keyAdd, keyOfJ, todayKey, weekStart } from '@daroon/shared';
+import { MAX_SCENES, fa, jOfKey, keyAdd, keyOfJ, labelOf, todayKey, weekStart } from '@daroon/shared';
 import { $, $$ } from './core/util';
 import { Q2, ctxFor } from './domain/guide';
 import { lex } from './domain/lexicon';
@@ -22,7 +22,7 @@ import { DB, persist, reindex } from './state/store';
 import { installNow, openInstall } from './features/install';
 import { selectDay } from './ui/day-select';
 import { closeDone } from './ui/done';
-import { back, go, hintPath, refreshArchive, refreshExplore, renderView } from './ui/render';
+import { back, go, hintPath, refreshArchive, refreshExplore, refreshStone, renderView } from './ui/render';
 import {
   backToDay,
   closeSheet,
@@ -37,7 +37,8 @@ import {
 import { applyTheme, themeChanged } from './ui/theme';
 import { toast } from './ui/toast';
 import { dayDetailHTML, jumpHTML } from './views/archive';
-import { trayHTML } from './views/explore';
+import { trayHTML, wordColour } from './views/explore';
+import { breatheIn, breatheOut } from './features/breath';
 import { monthsPage, shownPatterns } from './views/patterns';
 import { LEVEL_SAY, STEPS, reflectBody, reflectProgress, vReflect } from './views/reflect';
 import { haptic } from './ui/haptics';
@@ -104,6 +105,7 @@ export const ACT = {
   back() {
     back();
   },
+  /* a word is breathed into the stone, or drawn back out of it to its place in the verse */
   word(el) {
     const k = el.dataset.key,
       d = S.draft,
@@ -111,21 +113,29 @@ export const ACT = {
     if (idx >= 0) {
       const it = d.items[idx];
       d.items.splice(idx, 1);
-      d.focus = -1;
-      engine.rippleAt(angleToward(el), it.key, false);
-    } else {
-      if (d.items.length >= 3) {
-        toast('سه کلمه انتخاب کردی. برای کلمه‌ی تازه، یکی رو بردار.');
-        el.classList.remove('pulse');
-        void el.offsetWidth;
-        el.classList.add('pulse');
-        return;
-      }
-      d.items.push({ key: k, parent: k });
       d.focus = d.items.length - 1;
-      engine.rippleAt(angleToward(el), k, true);
+      breatheOut(el, labelOf(it.key), wordColour(it.key));
+      engine.rippleAt(angleToward(el), it.key, false);
+      refreshExplore();
+      return;
     }
-    refreshExplore();
+    if (d.items.length >= 3) {
+      toast('سه کلمه انتخاب کردی. برای کلمه‌ی تازه، یکی رو بردار.');
+      el.classList.remove('pulse');
+      void el.offsetWidth;
+      el.classList.add('pulse');
+      return;
+    }
+    const it = { key: k, parent: k };
+    d.items.push(it);
+    d.focus = d.items.length - 1;
+    const colour = wordColour(k);
+    refreshExplore({ stone: false });
+    breatheIn(el, k, colour, () => {
+      if (S.view !== 'explore') return;
+      refreshStone();
+      if (d.items.includes(it)) engine.rippleAt(angleToward(el), k, true);
+    });
   },
   openCustom() {
     S.customOpen = true;
@@ -133,20 +143,23 @@ export const ACT = {
     else swapGuide();
     requestAnimationFrame(() => $('#customInput')?.focus());
   },
+  /* a name under the stone: its finer words take the line below it */
   focusSel(el) {
     const i = +el.dataset.i;
-    S.draft.focus = S.draft.focus === i ? -1 : i;
-    $('#tray').innerHTML = trayHTML();
-    $(`#tray [data-act="focusSel"][data-i="${i}"]`)?.focus();
+    if (S.draft.focus === i) return;
+    S.draft.focus = i;
+    refreshStone();
+    $(`#xnames [data-act="focusSel"][data-i="${i}"]`)?.focus({ preventScroll: true });
   },
   removeSel(el) {
     const i = +el.dataset.i,
       it = S.draft.items[i];
+    if (!it) return;
     S.draft.items.splice(i, 1);
-    S.draft.focus = -1;
+    S.draft.focus = S.draft.items.length - 1;
     engine.rippleAt((lex(it.key).angle * Math.PI) / 180, it.key, false);
     refreshExplore();
-    $('#customInput')?.focus({ preventScroll: true });
+    $('#tray button, #customInput')?.focus({ preventScroll: true });
   },
   refine(el) {
     const i = +el.dataset.i,
@@ -157,18 +170,8 @@ export const ACT = {
     if (it.key === k) return;
     it.key = k;
     engine.rippleAt((lex(k).angle * Math.PI) / 180, k, true);
-    refreshExplore();
-    (
-      $(`#tray [data-act="refine"][data-key="${k}"]`) || $(`#tray [data-act="refine"][data-key="${el.dataset.key}"]`)
-    )?.focus({
-      preventScroll: true,
-    });
-  },
-  clearSel() {
-    S.draft.items = [];
-    S.draft.focus = -1;
-    engine.pulse(-0.3, 300);
-    refreshExplore();
+    refreshStone();
+    $(`#xfine [data-act="refine"][data-key="${el.dataset.key}"]`)?.focus({ preventScroll: true });
   },
   toGuide() {
     const keep = S.draft.items.slice();

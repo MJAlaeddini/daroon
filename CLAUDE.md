@@ -24,7 +24,7 @@ psql -h localhost -p 5433 -U daroon -d postgres -c "create database daroon_test"
 ## Rules of the house
 
 - **The look and motion are the product.** The UI started as a 1:1 port of `docs/prototype/daroon.html` and has since
-  been redesigned screen by screen for the phone (glass cards, day tiles, a day page, a ring of words), so it is no
+  been redesigned screen by screen for the phone (glass cards, day tiles, a day page, a verse of words breathed into one stone), so it is no
   longer compared with the prototype; `e2e/acceptance` guards it (no text over the sculpture, no jumps, the old page leaves before the new one arrives).
   Run them after any change under `apps/web/src`. The owner is very sensitive to choreography, clutter and typography.
   Before touching motion (transitions, presses, entrances, loading, haptics), read `.claude/skills/daroon-motion`.

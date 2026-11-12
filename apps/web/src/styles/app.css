@@ -9,6 +9,7 @@
   --ink: #221b2c;
   --ink-2: #544b60;
   --ink-3: #6c6377;
+  --wmix: 44%;
   --line: rgba(34, 27, 44, 0.08);
   --line-2: rgba(34, 27, 44, 0.17);
   --accent: #6a55a3;
@@ -58,6 +59,7 @@
     --ink: #eee8f4;
     --ink-2: #bdb3cb;
     --ink-3: #a096b0;
+    --wmix: 50%;
     --line: rgba(238, 232, 244, 0.09);
     --line-2: rgba(238, 232, 244, 0.19);
     --accent: #bba8e6;
@@ -91,6 +93,7 @@
   --ink: #eee8f4;
   --ink-2: #bdb3cb;
   --ink-3: #a096b0;
+  --wmix: 50%;
   --line: rgba(238, 232, 244, 0.09);
   --line-2: rgba(238, 232, 244, 0.19);
   --accent: #bba8e6;
@@ -1018,127 +1021,156 @@ body[data-flow='1'] #views {
   font-weight: 500;
 }
 
-/* ───────── EXPLORE ───────── */
+/* ───────── EXPLORE: twelve words set like a short poem, breathed one by one into a single stone ───────── */
 .x-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'intro' 'field' 'tray';
-  gap: 6px;
+  grid-template-areas: 'intro' 'stage' 'words' 'bar';
 }
 .x-intro {
   grid-area: intro;
   display: grid;
-  gap: 6px;
+  gap: 4px;
+  justify-items: center;
+  text-align: center;
 }
-.field {
-  grid-area: field;
-  position: relative;
-  height: clamp(410px, 58vh, 480px);
+.x-stage {
+  grid-area: stage;
+  display: grid;
+  justify-items: center;
   min-width: 0;
 }
-.anchor-field {
-  position: absolute;
+.anchor-explore {
+  width: clamp(150px, calc(100svh - 600px), 250px);
+  aspect-ratio: 1;
+  margin-block: 4px 0;
 }
-.word {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 2;
-  transform: translate(-50%, -50%);
-  display: inline-flex;
+/* under the stone: what is inside it, then the finer words of the one in focus; both keep their height */
+.x-names,
+.x-fine {
+  display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
   min-height: 44px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  white-space: nowrap;
-  font-family: var(--f-ed);
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.4;
-  color: var(--ink-2);
-  transition:
-    color 0.3s,
-    opacity 0.4s;
-  animation: emerge calc(1s * var(--ds)) var(--ease) both;
-  animation-delay: calc(var(--d0, 0ms) + (var(--i) * 45ms + 160ms) * var(--ds));
+  max-width: 100%;
 }
-@keyframes emerge {
+.x-names.swap,
+.x-fine.swap {
+  animation: nameIn 0.36s var(--ease) both;
+}
+@keyframes nameIn {
   from {
     opacity: 0;
-    transform: translate(calc(-50% + var(--fx, 0px) * 0.86), calc(-50% + var(--fy, 0px) * 0.86)) scale(0.6);
+    transform: translateY(4px);
   }
 }
-.word::before {
-  content: '';
-  position: absolute;
-  inset: 0 -4px;
-  border-radius: 999px;
-  z-index: -1;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--c1) 34%, transparent),
-    color-mix(in oklab, var(--c1) 8%, transparent) 70%,
-    transparent
-  );
-  opacity: 0;
-  transform: scale(0.6);
-  transition:
-    opacity 0.45s var(--ease),
-    transform 0.6s var(--ease);
+.x-none {
+  font-size: 15px;
+  color: var(--ink-3);
 }
-.word:hover {
-  color: var(--ink);
-}
-.word:hover::before {
-  opacity: 0.5;
-  transform: scale(0.92);
-}
-.word {
-  gap: 0;
-}
-.word .glyph {
-  width: 0;
-  height: 18px;
-  opacity: 0;
-  transform: scale(0.3);
-  transition:
-    width 0.45s var(--ease),
-    margin 0.45s var(--ease),
-    transform 0.6s var(--ease),
-    opacity 0.3s;
-}
-.word[aria-pressed='true'] {
-  color: var(--ink);
-  font-weight: 700;
-}
-.word[aria-pressed='true']::before {
-  opacity: 1;
-  transform: scale(1.06);
-}
-.word[aria-pressed='true'] .glyph {
-  width: 18px;
-  margin-inline-end: 8px;
-  opacity: 1;
-  filter: drop-shadow(0 0 5px var(--c1));
-  transform: scale(1.3);
-}
-.word[aria-disabled='true'] {
-  opacity: 0.38;
-}
-.word .rfn {
-  position: absolute;
-  top: calc(100% - 8px);
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-family: var(--f-ui);
-  font-size: 12px;
+.nm {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+  font-family: var(--f-ed);
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--ink-2);
-  line-height: 1.4;
+  white-space: nowrap;
+  text-decoration: underline 2px transparent;
+  text-underline-offset: 9px;
+  transition:
+    color 0.3s,
+    text-decoration-color 0.3s;
 }
-.word.pulse .glyph {
+.nm[aria-pressed='true'] {
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration-color: color-mix(in oklab, var(--wc) 75%, var(--ink));
+}
+.x-q {
+  margin-inline-end: 4px;
+  font-size: 13.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.rf {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 7px;
+  font-family: var(--f-ed);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--wc, var(--ink-2)) var(--wmix), var(--ink));
+  transition: color 0.3s;
+}
+.rf[aria-pressed='true'] {
+  font-weight: 800;
+  color: color-mix(in oklab, var(--wc) 70%, var(--ink));
+}
+.rf-out {
+  color: var(--ink-2);
+  text-decoration: underline 1px var(--line-2);
+  text-underline-offset: 6px;
+}
+/* the verse: each word carries a breath of its own colour; inside the stone it wears it fully, but quietly */
+.x-words {
+  grid-area: words;
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+.verse {
+  display: grid;
+  justify-items: center;
+  margin-top: 4px;
+}
+.v-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+.v-dot {
+  flex: none;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  opacity: 0.55;
+}
+.word {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 11px;
+  font-family: var(--f-ed);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--wc) var(--wmix), var(--ink));
+  transition:
+    opacity 0.35s var(--ease),
+    color 0.3s;
+}
+.word:hover,
+.word:focus-visible {
+  color: color-mix(in oklab, var(--wc) 62%, var(--ink));
+}
+.word[aria-pressed='true'] {
+  opacity: 0.46;
+  color: color-mix(in oklab, var(--wc) 70%, var(--ink));
+}
+.word[aria-disabled='true'] {
+  opacity: 0.26;
+}
+/* a word being drawn back out of the stone appears when its flying copy lands on it */
+.word.landing {
+  opacity: 0;
+  transition: none;
+}
+.word.pulse {
   animation: nudge 0.5s var(--ease);
 }
 @keyframes nudge {
@@ -1149,128 +1181,81 @@ body[data-flow='1'] #views {
     transform: translateX(3px);
   }
 }
-.tray {
-  grid-area: tray;
+/* the copy of a word on its way into the stone (features/breath.ts) */
+.breath {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+  font-weight: 700;
+  white-space: nowrap;
+  will-change: transform, opacity, filter;
+}
+.x-own {
   display: grid;
-  gap: 14px;
-  align-content: start;
   justify-items: center;
-  text-align: center;
-  min-width: 0;
-  padding-top: 4px;
-  padding-bottom: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
 }
-.tray .own {
-  display: flex;
-  justify-content: center;
+.x-own .link {
+  font-size: 14.5px;
 }
-.tray .custom {
+.x-own .custom {
   width: min(100%, 360px);
 }
-.tray-head {
+/* the foot: «I don't know» is a glass button, the same height as «go on» */
+.x-bar {
+  grid-area: bar;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 36px;
-}
-.count {
-  font-size: 13px;
-  color: var(--ink-3);
-  font-weight: 500;
-}
-.sel-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-.sel {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding-inline: 14px 2px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--c1) 14%, var(--surface));
-  border: 1px solid color-mix(in oklab, var(--c1) 30%, var(--line));
-  animation: rise 0.5s var(--ease) both;
-}
-.sel-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  font-family: var(--f-ed);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.4;
-  min-width: 0;
-}
-.sel-chip .glyph {
-  width: 22px;
-  height: 22px;
-}
-.sel-chip small {
-  font-family: var(--f-ui);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-3);
-}
-.refine {
-  display: grid;
-  justify-items: center;
   gap: 10px;
-  animation: rise 0.5s var(--ease) both;
+  padding-block: 12px calc(14px + env(safe-area-inset-bottom, 0px));
 }
-.refine-q {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink-3);
-  font-weight: 500;
-}
-.refine-opts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-.rf {
+.x-help {
+  flex: 1.15 1 0;
+  min-width: 0;
+  min-height: 54px;
+  padding: 0 14px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 44px;
-  padding: 4px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  font-family: var(--f-ed);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--ink-2);
-  transition:
-    border-color 0.25s,
-    color 0.25s,
-    background 0.25s;
-}
-.rf .glyph {
-  width: 16px;
-  height: 16px;
-  opacity: 0.7;
-}
-.rf:hover {
-  border-color: var(--line-2);
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-line),
+    inset 0 1px 0 var(--glass-hi),
+    var(--glass-shadow);
+  transition: background 0.3s var(--ease);
 }
-.rf[aria-pressed='true'] {
-  border-color: color-mix(in oklab, var(--c1, var(--accent)) 55%, var(--line));
-  color: var(--ink);
-  background: color-mix(in oklab, var(--c1, var(--accent)) 16%, var(--surface));
-  font-weight: 700;
+.x-help svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
 }
-.rf[aria-pressed='true'] .glyph {
-  opacity: 1;
+.x-help:hover,
+.x-help:focus-visible {
+  background: color-mix(in oklab, var(--surface) 86%, transparent);
+}
+.x-bar .primary {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 18px;
+}
+@media (max-width: 379px) {
+  .x-help {
+    font-size: 14px;
+    padding: 0 10px;
+  }
 }
 .empty-note {
   margin: 0;
@@ -1329,38 +1314,6 @@ body[data-flow='1'] #views {
   opacity: 0.45;
   cursor: not-allowed;
 }
-.actionbar {
-  position: sticky;
-  bottom: 0;
-  z-index: 30;
-  margin-top: 8px;
-  padding-block: 14px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: var(--bg);
-}
-/* no rule above the buttons: the page just fades into them */
-.actionbar::before {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  bottom: 100%;
-  height: 28px;
-  pointer-events: none;
-  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--bg) 0%, transparent));
-}
-.ab-in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.ab-in .primary {
-  flex: 0 1 auto;
-  min-width: 150px;
-}
-body[data-kb='1'] .actionbar {
-  position: static;
-}
-
 /* ───────── GUIDE ───────── */
 .g-grid {
   display: grid;
@@ -4625,14 +4578,12 @@ body[data-flow='1'] .navfade {
     width: 58px;
     height: 58px;
   }
-  .field {
-    height: clamp(500px, 62vh, 620px);
-  }
   .x-grid {
-    gap: 10px;
+    width: min(100%, 560px);
+    margin-inline: auto;
   }
-  .tray {
-    max-width: 620px;
+  .anchor-explore {
+    width: clamp(180px, calc(100svh - 620px), 320px);
   }
   .sugs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4777,41 +4728,53 @@ body[data-flow='1'] .navfade {
   .path .aperture {
     grid-row: span 2;
   }
+  /* the words on the right under the title, the stone on the left with its names under it */
   .x-grid {
-    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
-    grid-template-areas: 'intro field' 'tray field';
-    column-gap: 48px;
-    align-items: start;
-    padding-top: 8px;
+    width: auto;
+    margin-inline: 0;
+    grid-template-columns: minmax(380px, 460px) minmax(0, 1fr);
+    grid-template-areas: 'intro stage' 'words stage' 'bar stage';
+    grid-template-rows: auto auto 1fr;
+    column-gap: 64px;
+    min-height: calc(100vh - 200px);
   }
-  .field {
-    height: clamp(600px, 76vh, 780px);
-  }
-  .word {
-    font-size: 19px;
-  }
-  .actionbar {
-    position: static;
-    background: none;
-    padding: 0;
-    margin-top: 4px;
-  }
-  .actionbar::before {
-    display: none;
-  }
-  .tray,
-  .refine {
+  .x-intro {
     justify-items: start;
     text-align: start;
+    padding-top: 16px;
   }
-  .tray .own,
-  .sel-list,
-  .refine-opts {
+  .x-stage {
+    align-self: center;
+  }
+  .anchor-explore {
+    width: min(34vw, 470px, 56vh);
+  }
+  /* the stone's body fills the middle of its box; its names sit just under the body, not under the box */
+  .x-stage .x-names {
+    margin-top: -36px;
+  }
+  .x-words,
+  .verse {
+    justify-items: start;
+  }
+  .verse {
+    margin-top: 26px;
+    margin-inline-start: -11px;
+  }
+  .v-line {
     justify-content: flex-start;
+    min-height: 56px;
   }
-  .x-grid .actionbar {
-    grid-area: tray;
-    align-self: end;
+  .word {
+    min-height: 56px;
+    font-size: 23px;
+  }
+  .x-own {
+    justify-items: start;
+  }
+  .x-bar {
+    align-self: start;
+    padding-block: 22px 0;
   }
   .g-grid,
   .r-grid {
@@ -4918,12 +4881,6 @@ body[data-flow='1'] .navfade {
   .path:hover .aperture {
     transform: none;
     border-color: var(--line-2);
-    color: var(--ink-2);
-  }
-  .word:not([aria-pressed='true']):hover::before {
-    opacity: 0;
-  }
-  .word:not([aria-pressed='true']):hover {
     color: var(--ink-2);
   }
   .day:not(.is-sel):hover,
