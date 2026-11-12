@@ -50,7 +50,8 @@
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --spring-settle: var(--ease);
   --ds: 1;
-  color-scheme: light;
+  /* «only»: a browser that darkens pages by itself (Samsung Internet, Chrome) must leave the light theme alone */
+  color-scheme: only light;
 }
 @supports (transition-timing-function: linear(0, 1)) {
   :root {
@@ -158,6 +159,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   height: 100%;
+  /* the ground under everything, also where a browser would otherwise paint white (overscroll, a slow first frame) */
+  background: var(--bg);
 }
 body {
   margin: 0;

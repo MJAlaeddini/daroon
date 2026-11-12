@@ -47,7 +47,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'any',
         background_color: '#110e18',
-        theme_color: '#f8f6f4',
+        theme_color: '#110e18',
         categories: ['health', 'lifestyle'],
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

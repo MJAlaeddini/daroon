@@ -7,7 +7,10 @@ import { renderView } from './render';
 import { fillDaySheet, refreshSettings } from './sheets';
 
 /* theme */
-export const hostTheme = document.documentElement.getAttribute('data-theme');
+/* a theme set by the page that hosts the app; the one theme-boot.js puts there before the first paint doesn't count */
+export const hostTheme = document.documentElement.hasAttribute('data-boot')
+  ? null
+  : document.documentElement.getAttribute('data-theme');
 export function applyTheme(animate = true) {
   const root = document.documentElement,
     d = DB.settings.direction;
