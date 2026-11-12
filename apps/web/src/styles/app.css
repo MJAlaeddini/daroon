@@ -47,8 +47,33 @@
   --r-xl: 26px;
   --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
   --ease-in: cubic-bezier(0.55, 0, 0.75, 0.1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --spring-settle: var(--ease);
   --ds: 1;
   color-scheme: light;
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    /* damping 25, stiffness 250: arrives, overshoots 1.7 %, settles (see the daroon-motion recipes) */
+    --spring-settle: linear(
+      0,
+      0.133,
+      0.378,
+      0.614,
+      0.791,
+      0.907,
+      0.972,
+      1.004,
+      1.015,
+      1.016,
+      1.013,
+      1.009,
+      1.005,
+      1.003,
+      1.001,
+      1
+    );
+  }
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
@@ -1096,6 +1121,7 @@ body[data-flow='1'] #views {
 .verse {
   display: grid;
   justify-items: center;
+  gap: 2px;
   margin-top: 4px;
 }
 .v-line {
@@ -1113,9 +1139,12 @@ body[data-flow='1'] #views {
   opacity: 0.55;
 }
 .word {
+  position: relative;
+  isolation: isolate;
   min-width: 48px;
   min-height: 48px;
-  padding: 0 11px;
+  padding: 0 14px;
+  border-radius: 999px;
   font-family: var(--f-ed);
   font-size: 20px;
   font-weight: 500;
@@ -1130,16 +1159,65 @@ body[data-flow='1'] #views {
 .word:focus-visible {
   color: color-mix(in oklab, var(--wc) 62%, var(--ink));
 }
-/* chosen: the word wears its colour fully, a little heavier, with a soft line of it underneath */
+/* chosen: the word wears its colour fully, and a capsule of glass tinted with it grows around it; as it forms, a glint
+   crosses it once. Leaving, the glass shrinks away faster than it came. */
 .word[aria-pressed='true'] {
   font-weight: 800;
   color: color-mix(in oklab, var(--wc) var(--won), var(--ink));
-  text-decoration: underline 2px color-mix(in oklab, var(--wc) 80%, transparent);
-  text-underline-offset: 10px;
-  text-shadow: 0 0 16px color-mix(in oklab, var(--wc) 45%, transparent);
+}
+.word::before,
+.word::after {
+  content: '';
+  position: absolute;
+  inset: 3px 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.word::before {
+  z-index: -1;
+  opacity: 0;
+  scale: 0.72;
+  background: color-mix(in oklab, var(--wc) 20%, var(--glass));
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    inset 0 0 0 1px color-mix(in oklab, var(--wc) 30%, var(--glass-line)),
+    0 12px 24px -16px var(--wc);
+  transition:
+    opacity 220ms var(--ease-in),
+    scale 220ms var(--ease-in);
+}
+.word[aria-pressed='true']::before {
+  opacity: 1;
+  scale: 1;
+  transition:
+    opacity 260ms var(--ease),
+    scale 440ms var(--spring-settle);
+}
+.word::after {
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%) 130% 0 / 260% 100%
+    no-repeat;
+}
+.word.just::after {
+  animation: glint 760ms 140ms var(--ease) both;
+}
+@keyframes glint {
+  0% {
+    opacity: 0;
+    background-position: 130% 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    background-position: -30% 0;
+  }
 }
 .word[aria-disabled='true'] {
-  opacity: 0.26;
+  opacity: 0.5;
 }
 /* a word being drawn back out of the stone appears when its flying copy lands on it */
 .word.landing {
@@ -4877,6 +4955,12 @@ body[data-flow='1'] .navfade {
   animation-duration: 0.01ms !important;
   animation-delay: 0s !important;
   transition-duration: 0.15s !important;
+}
+[data-motion='reduced'] .word::before {
+  scale: 1;
+}
+[data-motion='reduced'] .word.just::after {
+  animation: none;
 }
 [data-motion='reduced'] .filaments path {
   stroke-dashoffset: 0;

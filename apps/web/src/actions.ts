@@ -131,6 +131,9 @@ export const ACT = {
     d.focus = d.items.length - 1;
     const colour = wordColour(k);
     refreshExplore({ stone: false });
+    // the glass forms around the word as it leaves for the stone, and a glint crosses it once
+    el.classList.add('just');
+    setTimeout(() => el.classList.remove('just'), 1000);
     breatheIn(el, k, colour, () => {
       if (S.view !== 'explore') return;
       refreshStone();
