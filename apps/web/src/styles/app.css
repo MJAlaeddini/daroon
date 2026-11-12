@@ -10,6 +10,7 @@
   --ink-2: #544b60;
   --ink-3: #6c6377;
   --wmix: 44%;
+  --won: 52%;
   --line: rgba(34, 27, 44, 0.08);
   --line-2: rgba(34, 27, 44, 0.17);
   --accent: #6a55a3;
@@ -60,6 +61,7 @@
     --ink-2: #bdb3cb;
     --ink-3: #a096b0;
     --wmix: 50%;
+    --won: 78%;
     --line: rgba(238, 232, 244, 0.09);
     --line-2: rgba(238, 232, 244, 0.19);
     --accent: #bba8e6;
@@ -94,6 +96,7 @@
   --ink-2: #bdb3cb;
   --ink-3: #a096b0;
   --wmix: 50%;
+  --won: 78%;
   --line: rgba(238, 232, 244, 0.09);
   --line-2: rgba(238, 232, 244, 0.19);
   --accent: #bba8e6;
@@ -1041,9 +1044,9 @@ body[data-flow='1'] #views {
   min-width: 0;
 }
 .anchor-explore {
-  width: clamp(150px, calc(100svh - 600px), 250px);
+  width: clamp(190px, calc(100svh - 530px), 310px);
   aspect-ratio: 1;
-  margin-block: 4px 0;
+  margin-block: 0 -6px;
 }
 /* under the stone: what is inside it, then the finer words of the one in focus; both keep their height */
 .x-names,
@@ -1107,7 +1110,7 @@ body[data-flow='1'] #views {
 }
 .rf[aria-pressed='true'] {
   font-weight: 800;
-  color: color-mix(in oklab, var(--wc) 70%, var(--ink));
+  color: color-mix(in oklab, var(--wc) var(--won), var(--ink));
 }
 .rf-out {
   color: var(--ink-2);
@@ -1158,9 +1161,13 @@ body[data-flow='1'] #views {
 .word:focus-visible {
   color: color-mix(in oklab, var(--wc) 62%, var(--ink));
 }
+/* chosen: the word wears its colour fully, a little heavier, with a soft line of it underneath */
 .word[aria-pressed='true'] {
-  opacity: 0.46;
-  color: color-mix(in oklab, var(--wc) 70%, var(--ink));
+  font-weight: 800;
+  color: color-mix(in oklab, var(--wc) var(--won), var(--ink));
+  text-decoration: underline 2px color-mix(in oklab, var(--wc) 80%, transparent);
+  text-underline-offset: 10px;
+  text-shadow: 0 0 16px color-mix(in oklab, var(--wc) 45%, transparent);
 }
 .word[aria-disabled='true'] {
   opacity: 0.26;
@@ -4583,7 +4590,7 @@ body[data-flow='1'] .navfade {
     margin-inline: auto;
   }
   .anchor-explore {
-    width: clamp(180px, calc(100svh - 620px), 320px);
+    width: clamp(220px, calc(100svh - 560px), 380px);
   }
   .sugs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4747,7 +4754,7 @@ body[data-flow='1'] .navfade {
     align-self: center;
   }
   .anchor-explore {
-    width: min(34vw, 470px, 56vh);
+    width: min(38vw, 540px, 62vh);
   }
   /* the stone's body fills the middle of its box; its names sit just under the body, not under the box */
   .x-stage .x-names {
