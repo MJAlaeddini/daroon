@@ -5,8 +5,7 @@
  */
 import { DB } from '../state/store';
 
-const TICK =
-  '.word, .nm, .chip, .rf, .stone, .sug, .seg button, .wk-day, [data-act=verdict], [data-act=save], [data-go]';
+const TICK = '.word, .chip, .rf, .stone, .sug, .seg button, .wk-day, [data-act=verdict], [data-act=save], [data-go]';
 
 export function haptic(ms = 8) {
   if (DB.settings.motion === 'calm') return;

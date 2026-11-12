@@ -143,14 +143,6 @@ export const ACT = {
     else swapGuide();
     requestAnimationFrame(() => $('#customInput')?.focus());
   },
-  /* a name under the stone: its finer words take the line below it */
-  focusSel(el) {
-    const i = +el.dataset.i;
-    if (S.draft.focus === i) return;
-    S.draft.focus = i;
-    refreshStone();
-    $(`#xnames [data-act="focusSel"][data-i="${i}"]`)?.focus({ preventScroll: true });
-  },
   removeSel(el) {
     const i = +el.dataset.i,
       it = S.draft.items[i];
@@ -159,7 +151,7 @@ export const ACT = {
     S.draft.focus = S.draft.items.length - 1;
     engine.rippleAt((lex(it.key).angle * Math.PI) / 180, it.key, false);
     refreshExplore();
-    $('#tray button, #customInput')?.focus({ preventScroll: true });
+    $('#tray .link, #tray button, #customInput')?.focus({ preventScroll: true });
   },
   refine(el) {
     const i = +el.dataset.i,
@@ -170,7 +162,7 @@ export const ACT = {
     if (it.key === k) return;
     it.key = k;
     engine.rippleAt((lex(k).angle * Math.PI) / 180, k, true);
-    refreshStone();
+    refreshExplore();
     $(`#xfine [data-act="refine"][data-key="${el.dataset.key}"]`)?.focus({ preventScroll: true });
   },
   toGuide() {
