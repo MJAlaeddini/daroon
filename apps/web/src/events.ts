@@ -1,7 +1,7 @@
 import { jOfKey, keyAdd, wdIndex, weekStart } from '@daroon/shared';
 import { ACT, reRenderReflect, setIntensity } from './actions';
 import { $ } from './core/util';
-import { submitCode, submitEmail, submitPassword } from './features/account';
+import { pwTyped, submitCode, submitEmail, submitPassword, userTyped } from './features/account';
 import { addCustom, swapGuide } from './features/draft';
 import { closeStory } from './features/stories';
 import { isDark, mqDark, mqReduce } from './sculpture/engine';
@@ -57,6 +57,11 @@ document.addEventListener('click', (e: any) => {
       go('archive', { push: false });
     } else if (S.view === 'archive') selectDay(k, true);
   }
+});
+document.addEventListener('input', (e) => {
+  const t = e.target as HTMLInputElement;
+  if (t.id === 'loginUser') userTyped(t.value);
+  else if (t.id === 'loginPw') pwTyped(t.value);
 });
 document.addEventListener('submit', (e: any) => {
   const le = e.target.closest('[data-form="loginEmail"]');

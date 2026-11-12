@@ -7,7 +7,8 @@
  *  3. each stone's art is sampled at the same relative depth ρ = |p|/R(θ) inside its own outline, so every stone
  *     is fitted into the shared outline (a single stone maps exactly onto its own art);
  *  4. layers: each stone owns a soft band of depth (envelope to core), with gently wavy boundaries;
- *  5. colour: on a dark ground the light is added as is; on a light ground it becomes tinted glass. */
+ *  5. colour: on a dark ground the light is added as is; on a light ground it is the same glass in daylight
+ *     (vivid colour that never goes dark, white threads where the light peaks, a pale halo of its own colour). */
 
 export const STONE_VS = /* glsl */ `#version 300 es
 in vec2 aP;
@@ -46,6 +47,16 @@ vec3 art(int i, vec2 uv) {
   if (i == 4) return texture(uT4, uv).rgb;
   return texture(uT5, uv).rgb;
 }
+/* a blurred copy of a stone's art, from its mip chain (level l: a blur about 2^l texels wide) */
+vec3 artLod(int i, vec2 uv, float l) {
+  if (i == 0) return textureLod(uT0, uv, l).rgb;
+  if (i == 1) return textureLod(uT1, uv, l).rgb;
+  if (i == 2) return textureLod(uT2, uv, l).rgb;
+  if (i == 3) return textureLod(uT3, uv, l).rgb;
+  if (i == 4) return textureLod(uT4, uv, l).rgb;
+  return textureLod(uT5, uv, l).rgb;
+}
+float peak(vec3 c) { return max(max(c.r, c.g), c.b); }
 float outline(int i, float a) {
   return texture(uOutline, vec2(a / TAU, (uA[i].w + 0.5) / uRows)).r;
 }
@@ -56,6 +67,13 @@ float outlineMix(float th) {
     s += uA[i].x * r * r * r;
   }
   return pow(max(s, 1e-6), 1.0 / 3.0);
+}
+
+/* a hue at full brightness -> a little more saturated, and never darker than a floor lightness */
+vec3 dayColour(vec3 hue) {
+  vec3 c = pow(hue, vec3(1.4));
+  float L = pow(dot(pow(c, vec3(2.2)), vec3(0.2126, 0.7152, 0.0722)), 1.0 / 3.0);
+  return mix(c, vec3(1.0), clamp((0.7 - L) / max(1.0 - L, 1e-4), 0.0, 1.0));
 }
 
 void main() {
@@ -94,14 +112,21 @@ void main() {
   float rb = rho + 0.06 * sin(2.0 * th + uWobble) + 0.04 * sin(3.0 * th - 1.7 * uWobble);
   vec3 light = vec3(0.0);
   float msum = 0.0;
+  float crisp = 0.0; // the light before any desaturation: the threads are measured against it
+  vec2 uvs[6];
+  float gs[6];
   for (int i = 0; i < uN; i++) {
     float g = uA[i].x * exp(-pow((rb - uA[i].y) / 0.3, 2.0)) + 1e-5 * uA[i].x;
     float phi = th - uA[i].z;
     vec2 src = uB[i].xy + vec2(cos(phi), sin(phi)) * rho * outline(i, phi);
-    vec3 c = art(i, vec2(src.x * 0.5 + 0.5, 0.5 - src.y * 0.5));
+    vec2 uv = vec2(src.x * 0.5 + 0.5, 0.5 - src.y * 0.5);
+    vec3 c = art(i, uv);
+    crisp += g * peak(c);
     c = mix(c, vec3(dot(c, vec3(0.3, 0.45, 0.25))), uB[i].z);
     light += g * c;
     msum += g;
+    uvs[i] = uv;
+    gs[i] = g;
   }
   light /= max(msum, 1e-6);
   light *= 1.0 + glow * pow(1.0 - min(rho, 1.0), 1.5);
@@ -111,16 +136,26 @@ void main() {
   if (uDark == 1) {
     outColor = vec4(min(light, vec3(1.0)), min(lum, 1.0));
   } else {
-    /* the light ground ("jewel"): the hue of the light at full brightness, never a dark grey, with an alpha from how
-       much light there is; a soft shadow below lifts it off the page */
-    vec3 hue = light / max(lum, 1e-4);
-    float a = pow(smoothstep(0.03, 0.75, lum), 0.7);
-    a *= smoothstep(1.45, 1.05, rho);
-    vec3 col = pow(hue, vec3(1.25)) * vec3(0.96, 0.92, 0.96);
-    vec2 sp = p - vec2(0.0, -0.075);
-    float rs = length(sp) / R0; /* the outline at p's angle: close enough for a blur this soft */
-    float sh = 0.22 * (1.0 - smoothstep(0.55, 1.3, rs));
-    vec3 shCol = vec3(0.235, 0.157, 0.353);
-    outColor = vec4(col * a + shCol * sh * (1.0 - a), a + sh * (1.0 - a));
+    /* the light ground: the same glass in daylight. Its colour is the hue of the light at full brightness, lifted
+       wherever it would fall below a floor lightness (a deep blue would read as a dark fringe on a pale page);
+       where the light peaks above its surroundings a thread stays white, like a highlight on glass; and a pale
+       halo of its own colour, the light blurred wide, stands in for the glow it has on a dark ground. */
+    vec3 haze = vec3(0.0); // the light blurred wide: the halo
+    float soft = 0.0;      // the light blurred a little: what a thread stands out from
+    for (int i = 0; i < uN; i++) {
+      soft += gs[i] * peak(artLod(i, uvs[i], 3.6));
+      vec3 h = artLod(i, uvs[i], 5.4);
+      haze += gs[i] * mix(h, vec3(dot(h, vec3(0.3, 0.45, 0.25))), uB[i].z);
+    }
+    haze /= max(msum, 1e-6);
+    float thread = (crisp - soft) / max(msum, 1e-6);
+    vec3 col = dayColour(light / max(lum, 1e-4));
+    float fil = smoothstep(0.03, 0.12, thread) * smoothstep(0.2, 0.55, lum);
+    col = mix(col, vec3(1.0), 0.85 * fil);
+    float a = pow(smoothstep(0.02, 0.42, lum), 0.8) * smoothstep(1.45, 1.05, rho);
+    float hl = peak(haze);
+    float ha = 0.42 * smoothstep(0.015, 0.3, hl) * smoothstep(1.9, 1.2, rho);
+    vec3 hcol = dayColour(haze / max(hl, 1e-4));
+    outColor = vec4(col * a + hcol * ha * (1.0 - a), a + ha * (1.0 - a));
   }
 }`;

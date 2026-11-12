@@ -30,8 +30,11 @@ stone.ts     Stone (canvas loop, pauses when hidden or off screen, adapts its re
 - **Motion** is designed per feeling in `choreo.ts`. Examples: the flames of longing sway upward every 3.2 s; anger
   beats every 2.6 s; hurt draws in, holds and lets go; fear recoils now and then. A mix blends the motions by weight.
   Reduced motion holds the stone still but keeps the morph.
-- **Ground:** on a dark ground the light is added as it is. On a light ground it becomes tinted glass: the bright
-  edges turn into the deepest colour and the pale core stays clear.
+- **Ground:** on a dark ground the light is added as it is. On a light ground it is the same glass in daylight:
+  the hue of the light at full brightness, lifted wherever it would fall below a floor lightness (so no dark fringe
+  can appear on a pale page); threads where the light peaks above its surroundings stay white, like highlights on
+  glass; and a pale halo of the stone's own colour stands in for its glow. The threads and the halo come from
+  blurred copies of the art in its mip chain (levels 3.6 and 5.4), fetched only on a light ground.
 
 ## Using it
 

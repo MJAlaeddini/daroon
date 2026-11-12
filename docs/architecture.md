@@ -68,6 +68,7 @@ Each module has a `routes.ts` (HTTP input and validation) and a `service.ts` (lo
 
 ## Security
 
+- Nobody needs an account to start: the welcome page goes straight into the app, and after the first check-in a sheet offers to keep the traces (once, and only when the server answers). An account is a display name (any script), a Latin username and a password (scrypt); `GET /auth/username?u=` says whether a username is free and offers free ones close to it.
 - Six-digit login code, ten-minute lifetime, five attempts, at most five codes per hour per address, and per-IP rate limits.
 - The database stores only an HMAC of each code and the SHA-256 of each session token.
 - Cookie is `httpOnly`, `SameSite=Lax`, `Secure` in production and scoped to `/api`; state-changing requests must come from the app's own origin and carry JSON.

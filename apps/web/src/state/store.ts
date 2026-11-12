@@ -7,6 +7,8 @@ export let DB: any = {
   stories: [],
   account: null,
   loginDone: false,
+  /** the «نگهش داریم؟» sheet has been offered once (features/account.ts) */
+  keepAsked: false,
   settings: { direction: 'auto', motion: 'system' },
   visits: 0,
   sync: { cursor: 0, at: null },
