@@ -28,48 +28,123 @@
   font-variant-numeric: tabular-nums;
 }
 .authform .primary {
-  margin-top: 10px;
+  margin-top: 12px;
   width: 100%;
+  min-height: 56px;
 }
-.auth-seg {
-  display: flex;
-  margin-top: 4px;
+.auth-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-2);
 }
-.auth-seg button {
-  flex: 1;
+/* Persian first: every field and its hint reads from the right. What is typed into a Latin field (username,
+   password) runs left to right so a dot or an underscore keeps its place, but stays against the right edge. */
+.authform .inp {
+  min-height: 56px;
+  border-radius: 18px;
+  font-family: var(--f-ui);
+  font-weight: 600;
+  direction: rtl;
+  text-align: right;
 }
-.auth-hint {
+.authform .inp::placeholder {
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.authform .inp.latin:not(:placeholder-shown) {
+  direction: ltr;
+}
+.authform .inp[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+/* what a field has to say: free or taken, how strong, what is missing */
+.auth-msg {
   margin: -2px 0 0;
   font-size: 13px;
   line-height: 1.7;
   color: var(--ink-3);
 }
-/* the password field and its show/hide toggle, which sits inside the field on its left (the field is LTR) */
+.auth-msg:empty {
+  display: none;
+}
+.auth-msg.ok {
+  color: var(--ok, #256b4d);
+}
+.auth-msg.bad {
+  color: var(--danger);
+}
+.auth-sug {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.auth-sug[hidden] {
+  display: none;
+}
+.auth-sug .chip {
+  min-height: 40px;
+  font-family: var(--f-ui);
+  font-weight: 600;
+  animation: rise 0.3s var(--ease) both;
+}
+/* the password field: the eye sits at the field's end, which is its left in a right-to-left line */
 .pw {
   position: relative;
   display: flex;
 }
 .pw .inp {
-  padding-inline-end: 76px;
+  padding-left: 56px;
 }
 .pw-eye {
   position: absolute;
-  inset-block: 4px;
-  left: 4px;
-  min-width: 64px;
-  padding: 0 10px;
-  border-radius: calc(var(--r-m) - 4px);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
+  left: 6px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--ink-3);
   transition:
     background-color 0.2s,
     color 0.2s;
+}
+.pw-eye .ic {
+  width: 22px;
+  height: 22px;
 }
 .pw-eye:hover,
 .pw-eye[aria-pressed='true'] {
   background: var(--surface-2);
   color: var(--ink);
+}
+.pw-bars {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+.pw-bars i {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ink) 12%, transparent);
+  transition: background-color 0.3s var(--ease);
+}
+.pw-bars i.on {
+  background: var(--accent);
+}
+.auth-more {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  margin-top: 6px;
+}
+.auth-more .quiet {
+  font-size: 15px;
+  font-weight: 600;
 }
 /* other ways in: one quiet line under the main buttons */
 .auth-alt {

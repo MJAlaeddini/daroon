@@ -207,29 +207,87 @@ test('a check-in opens in its own sheet, steps through its day, and leads to edi
 
 test('the email sign-in sheet validates the address before asking the server', async ({ page }) => {
   await open(page);
-  await page.click('.login-acts [data-act=loginEmail]');
+  await page.click('.login-acts [data-act=loginPassword]');
   await settle(page, 600);
+  await page.click('.auth-alt [data-act=loginEmail]');
+  await settle(page, 300);
   await page.fill('#loginEmailInput', 'نه-ایمیل');
   await page.click('[data-form=loginEmail] .primary');
   await expect(page.locator('.auth-err')).toHaveText('این نشونی ایمیل درست به نظر نمی‌رسه.');
 });
 
-test('sign-up checks the username and password before asking the server', async ({ page }) => {
+test('the account fields answer while they are typed, and nothing typed is lost', async ({ page }) => {
   await open(page);
-  await page.click('.login-acts [data-act=loginSignup]');
+  await page.click('.login-acts [data-act=loginPassword]');
   await settle(page, 600);
-  await page.fill('#loginUser', 'سارا');
-  await page.fill('#loginPw', '12345678');
-  await page.click('[data-form=loginPassword] .primary');
-  await expect(page.locator('.auth-err')).toContainText('حروف انگلیسی');
-  await page.fill('#loginUser', 'sara');
-  await page.fill('#loginPw', 'short');
-  await page.click('[data-form=loginPassword] .primary');
-  await expect(page.locator('.auth-err')).toHaveText('رمز دست‌کم هشت حرفه.');
-  // switching to "I have an account" keeps the username that was typed
-  await page.click('[data-act=loginMode][data-m=login]');
-  await expect(page.locator('#loginUser')).toHaveValue('sara');
+  // signing in: two fields, a Persian hint that reads from the right
   await expect(page.locator('#loginName')).toHaveCount(0);
+  expect(await page.locator('#loginUser').evaluate((el) => getComputedStyle(el).direction)).toBe('rtl');
+  await page.click('.auth-more [data-act=loginSignup]');
+  await settle(page, 300);
+  // a Persian keyboard in the username is noticed at once
+  await page.fill('#loginName', 'یحیی');
+  await page.locator('#loginUser').pressSequentially('یحیی');
+  await expect(page.locator('#userMsg')).toContainText('حروف انگلیسی');
+  // Latin runs left to right, still against the right edge
+  await page.fill('#loginUser', '');
+  await page.locator('#loginUser').pressSequentially('yahya_n');
+  await expect(page.locator('#userMsg')).toHaveText('');
+  const box = await page
+    .locator('#loginUser')
+    .evaluate((el) => [getComputedStyle(el).direction, getComputedStyle(el).textAlign]);
+  expect(box).toEqual(['ltr', 'right']);
+  // a short password says how much is missing, under its own field, and the form is not drawn again
+  await page.locator('#loginPw').pressSequentially('short');
+  await expect(page.locator('#pwMsg')).toContainText('۳ تا دیگه');
+  await page.click('[data-form=loginPassword] .primary');
+  await expect(page.locator('#pwMsg')).toContainText('رمز دست‌کم ۸ حرفه');
+  await expect(page.locator('#loginPw')).toHaveValue('short');
+  await expect(page.locator('#loginName')).toHaveValue('یحیی');
+  // the eye shows and hides the password
+  await page.click('[data-act=pwToggle]');
+  expect(await page.getAttribute('#loginPw', 'type')).toBe('text');
+  // back to signing in keeps the username that was typed
+  await page.click('.auth-more [data-act=loginPassword]');
+  await expect(page.locator('#loginUser')).toHaveValue('yahya_n');
+});
+
+test('after the first check-in a sheet offers to keep the traces, once', async ({ page }) => {
+  await page.route('**/api/auth/config', (r) => r.fulfill({ json: { google: null, email: false, password: true } }));
+  await page.route('**/api/auth/username**', (r) =>
+    r.fulfill({
+      json: r.request().url().endsWith('u=yahya')
+        ? { available: false, suggestions: ['yahya78', 'yahya_41'] }
+        : { available: true, suggestions: [] },
+    }),
+  );
+  await open(page);
+  // the welcome page asks for nothing: one touch and the app is open
+  await page.click('[data-act=loginSkip]');
+  await settle(page, 900);
+  expect(await page.evaluate('__daroon.S.sheet')).toBeNull();
+  await page.click('[data-act=startA]');
+  await settle(page, 1300);
+  await tap(page, '.word[data-key="دلتنگی"]');
+  await page.click('#xbar .primary');
+  await settle(page, 1500);
+  await page.click('.r-acts [data-act=save]');
+  await settle(page, 2800);
+  await page.click('[data-act=doneClose]');
+  await settle(page, 2200);
+  expect(await page.evaluate('__daroon.S.sheet')).toBe('login');
+  await expect(page.locator('.sheet h2')).toHaveText('نگهش داریم؟');
+  // a taken username comes with free ones; one touch takes one
+  await page.locator('#loginUser').pressSequentially('yahya');
+  await expect(page.locator('#userSug .chip')).toHaveCount(2);
+  await page.click('#userSug .chip >> nth=0');
+  await expect(page.locator('#loginUser')).toHaveValue('yahya78');
+  await expect(page.locator('#userMsg')).toHaveText('این نام کاربری آزاده.');
+  // «بعداً» closes it, and it does not come back on its own
+  await page.click('.auth-more [data-act=closeSheet]');
+  await settle(page, 600);
+  expect(await page.evaluate('__daroon.DB.keepAsked')).toBe(true);
+  expect(await page.evaluate('__daroon.S.sheet')).toBeNull();
 });
 
 test('works offline after the first visit', async ({ page, context }) => {

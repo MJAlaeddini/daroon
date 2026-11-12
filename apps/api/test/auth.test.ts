@@ -115,6 +115,20 @@ describe('username and password', () => {
     );
   });
 
+  it('tells whether a username is free, and offers free ones when it is not', async () => {
+    const c = client(h.app);
+    expect((await c.get('/api/auth/username?u=Yahya')).json()).toEqual({ available: true, suggestions: [] });
+    await c.post('/api/auth/signup', { username: 'yahya', password: '12345678', name: 'یحیی' });
+    const taken = (await client(h.app).get('/api/auth/username?u=yahya')).json();
+    expect(taken.available).toBe(false);
+    expect(taken.suggestions.length).toBeGreaterThan(0);
+    for (const s of taken.suggestions) {
+      expect(s).toMatch(/^yahya[._]?\d{2}$/);
+      expect((await client(h.app).get(`/api/auth/username?u=${s}`)).json().available).toBe(true);
+    }
+    expect((await c.get(`/api/auth/username?u=${encodeURIComponent('یحیی')}`)).json().error).toBe('invalid_input');
+  });
+
   it('never stores the password itself', async () => {
     await client(h.app).post('/api/auth/signup', { username: 'hash_check', password: 'plain secret' });
     const { rows } = await h.db.pool.query("select password_hash from users where username = 'hash_check'");

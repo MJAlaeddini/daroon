@@ -1,5 +1,12 @@
 import type { FastifyInstance } from 'fastify';
-import { GoogleBody, PasswordLoginBody, RequestCodeBody, SignupBody, VerifyCodeBody } from '@daroon/shared';
+import {
+  GoogleBody,
+  PasswordLoginBody,
+  RequestCodeBody,
+  SignupBody,
+  UsernameQuery,
+  VerifyCodeBody,
+} from '@daroon/shared';
 import { parse } from '../../lib/validate';
 import { AppError, unavailable } from '../../lib/errors';
 import type { Deps } from '../../app';
@@ -16,6 +23,13 @@ export default async function authRoutes(app: FastifyInstance, { deps }: { deps:
     email: !!deps.config.SMTP_URL || !deps.config.isProd,
     password: true,
   }));
+
+  /* asked while someone types a username, so it has a looser limit of its own (signing up tells the same anyway) */
+  const typing = { config: { rateLimit: { max: deps.config.AUTH_RATE_LIMIT * 10, timeWindow: '15 minutes' } } };
+  app.get('/auth/username', typing, async (req) => {
+    const { u } = parse(UsernameQuery, req.query);
+    return svc.usernameStatus(u);
+  });
 
   app.post('/auth/signup', strict, async (req, reply) => {
     const { username, password, name } = parse(SignupBody, req.body);

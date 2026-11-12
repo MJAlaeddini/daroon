@@ -1,8 +1,10 @@
-import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { authCodes, users } from '../../db/schema';
+import { randomInt } from 'node:crypto';
 import { hmac, safeEqual, sixDigits } from '../../lib/crypto';
 import { AppError, tooMany } from '../../lib/errors';
 import type { Deps } from '../../app';
+import type { UsernameStatus } from '@daroon/shared';
 import type { GoogleProfile } from './google';
 import { dummyHash, hashPassword, verifyPassword } from '../../lib/password';
 
@@ -54,6 +56,20 @@ export function authService(deps: Deps) {
         .values({ email, name: (name ?? '').trim().slice(0, 24), provider: 'email' })
         .returning();
       return u.id;
+    },
+
+    /** Is this username free? When it is not, up to three free ones built from it (digits, a dot, an underscore). */
+    async usernameStatus(username: string): Promise<UsernameStatus> {
+      const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+      if (!taken) return { available: true, suggestions: [] };
+      const base = username.replace(/[._]?\d+$/, '').slice(0, 20) || username.slice(0, 20);
+      const n = () => 10 + randomInt(0, 90);
+      const tries = [
+        ...new Set([`${base}${n()}`, `${base}_${n()}`, `${base}.${n()}`, `${base}${n()}`, `${base}_${n()}`]),
+      ];
+      const used = await db.select({ u: users.username }).from(users).where(inArray(users.username, tries));
+      const gone = new Set(used.map((r) => r.u));
+      return { available: false, suggestions: tries.filter((t) => !gone.has(t)).slice(0, 3) };
     },
 
     /** Makes an account with a username and password; the name is the username's until they choose one. */

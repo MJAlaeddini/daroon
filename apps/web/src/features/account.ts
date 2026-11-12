@@ -1,3 +1,4 @@
+import { fa } from '@daroon/shared';
 import { $, $$, esc } from '../core/util';
 import { ApiError, api } from '../net/api';
 import { isDark } from '../sculpture/engine';
@@ -44,15 +45,18 @@ export function refreshAvatar() {
   }
 }
 /* ═════════════════════════ sign-in ═════════════════════════
-   The main way in is a username and a password (nothing to wait for, no mail server needed). A six-digit code by
+   Nobody has to make an account to start: the welcome page goes straight into the app, and after the first
+   check-in a sheet offers to keep the traces («نگهش داریم؟»). An account is a name to be called by (Persian), a
+   username to sign in with (Latin) and a password; nothing to wait for, no mail server needed. A six-digit code by
    email is offered where the server can send one, and Google where it has a client id.
    Sheet steps: password (sign up / sign in) · email → code · google. */
-export const authCfg = { google: null as string | null, email: true, known: false };
+export const authCfg = { google: null as string | null, email: true, known: false, online: false };
 export async function loadAuthConfig() {
   try {
     const c = await api.authConfig();
     authCfg.google = c.google;
     authCfg.email = c.email !== false;
+    authCfg.online = true;
   } catch (e) {
     authCfg.google = null;
   }
@@ -84,11 +88,13 @@ function altWaysHTML() {
 const login = {
   step: 'password',
   mode: 'signup' as 'signup' | 'login',
+  /** opened on its own after a check-in: «نگهش داریم؟» with «بعداً», instead of «ساختن حساب» */
+  keep: false,
   email: '',
+  name: '',
   user: '',
   err: '',
   busy: false,
-  showPw: false,
 };
 const USERNAME = /^[a-z0-9._]{3,24}$/;
 const errText = (e, invalid = 'این نشونی ایمیل درست به نظر نمی‌رسه.') =>
@@ -112,20 +118,24 @@ export function loginSheetHTML() {
   const err = login.err ? `<p class="auth-err" role="alert">${esc(login.err)}</p>` : '';
   if (login.step === 'password') {
     const up = login.mode === 'signup';
-    const seg = (m, t) =>
-      `<button type="button" data-act="loginMode" data-m="${m}" aria-pressed="${login.mode === m}">${t}</button>`;
-    return `${top(up ? 'ساختن حساب' : 'ورود')}<div class="sheet-scroll set auth">
-    <div class="seg auth-seg" role="group" aria-label="حساب">${seg('signup', 'حساب تازه')}${seg('login', 'حساب دارم')}</div>
+    /* labels sit above their fields on the right; hints are Persian and read from the right; what is typed in the
+       Latin fields runs left to right but stays against the right edge (auth.css) */
+    return `${top(up ? (login.keep ? 'نگهش داریم؟' : 'ساختن حساب') : 'خوش برگشتی')}<div class="sheet-scroll set auth">
+    <p class="auth-lead">${up ? 'با یه حساب، ردپاهات گم نمی‌شن.' : 'ردپاهات منتظرتن.'}</p>
     <form class="authform" data-form="loginPassword" novalidate>
+      ${up ? `<label for="loginName">اسمت</label><input class="inp" id="loginName" name="name" maxlength="24" autocomplete="given-name" placeholder="مثلاً یحیی" value="${esc(login.name)}">` : ''}
       <label for="loginUser">نام کاربری</label>
-      <input class="inp" id="loginUser" name="username" dir="ltr" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="24" value="${esc(login.user)}" required>
-      ${up ? '<p class="auth-hint">با حروف انگلیسی، عدد، نقطه یا _</p>' : ''}
+      <input class="inp latin" id="loginUser" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="24" placeholder="${up ? 'با حروف انگلیسی، مثلاً yahya' : 'با حروف انگلیسی'}" value="${esc(login.user)}" required>
+      <p class="auth-msg" id="userMsg" aria-live="polite"></p>
+      <div class="auth-sug" id="userSug" hidden></div>
       <label for="loginPw">رمز</label>
-      <div class="pw"><input class="inp" id="loginPw" name="password" type="${login.showPw ? 'text' : 'password'}" dir="ltr" autocomplete="${up ? 'new-password' : 'current-password'}" maxlength="128" required>
-        <button type="button" class="pw-eye" data-act="pwToggle" aria-pressed="${login.showPw}">${login.showPw ? 'پنهان' : 'نمایش'}</button></div>
-      ${up ? '<p class="auth-hint">دست‌کم هشت حرف. یادت بمونه؛ بدون ایمیل بازیابی نمی‌شه.</p>' : ''}
-      ${up ? '<label for="loginName">اسمی که صدات کنیم <small>(اختیاری)</small></label><input class="inp" id="loginName" name="name" maxlength="24" autocomplete="given-name">' : ''}
-      ${err}<button class="primary" type="submit" ${login.busy ? 'disabled' : ''}>${login.busy ? 'یه لحظه…' : up ? 'ساختن حساب' : 'ورود'}</button></form>
+      <div class="pw"><input class="inp latin" id="loginPw" name="password" type="password" autocomplete="${up ? 'new-password' : 'current-password'}" maxlength="128" placeholder="${up ? 'دست‌کم ۸ حرف' : 'رمزت'}" required>
+        <button type="button" class="pw-eye" data-act="pwToggle" aria-label="نمایش رمز" aria-pressed="false">${IC.eye}</button></div>
+      ${up ? '<div class="pw-bars" id="pwBars" aria-hidden="true"><i></i><i></i><i></i></div>' : ''}
+      <p class="auth-msg" id="pwMsg" aria-live="polite"></p>
+      <p class="auth-err" id="authErr" role="alert" hidden></p>
+      <button class="primary" type="submit">${up ? (login.keep ? 'نگه دار' : 'ساختن حساب') : 'ورود'}</button></form>
+    <div class="auth-more">${up && login.keep ? '<button class="quiet" data-act="closeSheet">بعداً</button>' : ''}<button class="quiet" data-act="${up ? 'loginPassword' : 'loginSignup'}">${up ? 'حساب دارم' : 'حساب ندارم؛ یکی بسازم'}</button></div>
     ${altWaysHTML()}</div>`;
   }
   if (login.step === 'google')
@@ -158,68 +168,176 @@ function refreshLogin() {
     sh.querySelector('[data-autofocus]');
   f && f.focus({ preventScroll: true });
   if (login.step === 'google') mountGoogle();
+  if (login.step === 'password' && login.user) userTyped(login.user);
 }
-export function openLogin(step = 'password', mode?: 'signup' | 'login') {
+/** What has been typed so far, kept while the sheet changes between making an account and signing in. */
+function keepTyped() {
+  login.name = ($('#loginName') as HTMLInputElement | null)?.value ?? login.name;
+  login.user = ($('#loginUser') as HTMLInputElement | null)?.value ?? login.user;
+}
+export function openLogin(step = 'password', mode?: 'signup' | 'login', keep = false) {
   login.step = step;
   if (mode) login.mode = mode;
+  login.keep = keep;
   login.err = '';
   login.busy = false;
-  login.showPw = false;
-  openSheet('login', loginSheetHTML(), 'ورود');
+  openSheet('login', loginSheetHTML(), keep ? 'نگه داشتن ردپاها' : 'ورود');
   if (step === 'google') mountGoogle();
 }
 export function loginStep(step, mode?: 'signup' | 'login') {
+  keepTyped();
   login.step = step;
   if (mode) login.mode = mode;
   login.err = '';
   refreshLogin();
 }
-export function loginMode(mode: 'signup' | 'login') {
-  if (login.mode === mode) return;
-  login.user = ($('#loginUser') as HTMLInputElement | null)?.value ?? login.user;
-  login.mode = mode;
-  login.err = '';
-  refreshLogin();
+/** After a check-in, once: offer to keep the traces with an account. Only where the server can be reached, and
+    never again on its own; the account page keeps the same offer for later. */
+export function offerKeep(): boolean {
+  if (DB.account || DB.keepAsked || !authCfg.online || S.sheet || !visible().some((e) => !e.demo)) return false;
+  DB.keepAsked = true;
+  persist({ quiet: true });
+  openLogin('password', 'signup', true);
+  return true;
+}
+
+/* ── the username and password fields answer while they are typed ── */
+const say = (id: string, text = '', kind: '' | 'ok' | 'bad' = '') => {
+  const p = $(id);
+  if (!p) return;
+  p.textContent = text;
+  p.className = `auth-msg${kind ? ' ' + kind : ''}`;
+};
+function suggest(list: string[]) {
+  const box = $('#userSug');
+  if (!box) return;
+  box.hidden = !list.length;
+  box.innerHTML = list
+    .map(
+      (u) => `<button type="button" class="chip" dir="ltr" data-act="userPick" data-u="${esc(u)}">${esc(u)}</button>`,
+    )
+    .join('');
+}
+let userTimer: ReturnType<typeof setTimeout> | undefined,
+  userCtl: AbortController | null = null;
+export function userTyped(raw: string) {
+  clearTimeout(userTimer);
+  userCtl?.abort();
+  const v = (raw || '').trim(),
+    inp = $('#loginUser');
+  const bad = (m: string) => {
+    say('#userMsg', m, 'bad');
+    inp?.setAttribute('aria-invalid', 'true');
+  };
+  inp?.removeAttribute('aria-invalid');
+  suggest([]);
+  if (/[^ -~]/.test(v)) return bad('نام کاربری با حروف انگلیسیه. صفحه‌کلیدت رو انگلیسی کن.');
+  if (/[^A-Za-z0-9._]/.test(v)) return bad('فقط حروف انگلیسی، عدد، نقطه و _ ؛ بدون فاصله.');
+  say('#userMsg');
+  const u = v.toLowerCase();
+  if (login.mode !== 'signup' || !USERNAME.test(u)) return;
+  /* a moment after the typing stops, ask whether the name is free; with no answer (offline) say nothing */
+  userTimer = setTimeout(async () => {
+    const ctl = (userCtl = new AbortController());
+    try {
+      const r = await api.usernameStatus(u, ctl.signal);
+      if (ctl.signal.aborted || ($('#loginUser') as HTMLInputElement | null)?.value.trim().toLowerCase() !== u) return;
+      if (r.available) return say('#userMsg', 'این نام کاربری آزاده.', 'ok');
+      bad(
+        r.suggestions.length
+          ? 'این نام کاربری رو کس دیگه‌ای برداشته. این‌ها آزادن:'
+          : 'این نام کاربری رو کس دیگه‌ای برداشته.',
+      );
+      suggest(r.suggestions);
+    } catch (e) {
+      /* unknown: signing up will tell */
+    }
+  }, 450);
+}
+export function pickUsername(u: string) {
+  const inp = $('#loginUser') as HTMLInputElement | null;
+  if (!inp) return;
+  inp.value = u;
+  login.user = u;
+  suggest([]);
+  inp.removeAttribute('aria-invalid');
+  say('#userMsg', 'این نام کاربری آزاده.', 'ok');
+  ($('#loginPw') as HTMLInputElement | null)?.focus({ preventScroll: true });
+}
+/** How strong a new password looks (0..3 bars), with what is still missing said plainly. */
+export function pwTyped(pw: string) {
+  $('#loginPw')?.removeAttribute('aria-invalid');
+  if (login.mode !== 'signup') return say('#pwMsg');
+  const kinds = [/[a-z\u0600-\u06FF]/, /[A-Z]/, /\d/, /[^A-Za-z0-9\u0600-\u06FF]/].filter((r) => r.test(pw)).length;
+  const score =
+    pw.length < 8 ? 0 : pw.length >= 14 || (pw.length >= 11 && kinds >= 3) ? 3 : pw.length >= 10 || kinds >= 2 ? 2 : 1;
+  $$('#pwBars i').forEach((b, i) => b.classList.toggle('on', i < score));
+  if (!pw) return say('#pwMsg');
+  if (pw.length < 8) return say('#pwMsg', `دست‌کم ۸ حرف؛ ${fa(8 - pw.length)} تا دیگه بنویس.`);
+  const persian = /[\u0600-\u06FF]/.test(pw) ? ' با صفحه‌کلید فارسی نوشتی؛ موقع ورود هم با همین بنویس.' : '';
+  say(
+    '#pwMsg',
+    `${score >= 3 ? 'رمز خیلی خوبیه.' : 'رمز خوبیه.'} یادت بمونه؛ بدون ایمیل بازیابی نمی‌شه.${persian}`,
+    'ok',
+  );
 }
 /** Show or hide the password without losing what was typed or the caret. */
 export function togglePassword() {
-  login.showPw = !login.showPw;
   const inp = $('#loginPw') as HTMLInputElement | null,
     b = $('[data-act="pwToggle"]');
-  if (inp) inp.type = login.showPw ? 'text' : 'password';
-  if (b) {
-    b.textContent = login.showPw ? 'پنهان' : 'نمایش';
-    b.setAttribute('aria-pressed', String(login.showPw));
-  }
-  inp?.focus({ preventScroll: true });
+  if (!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  b?.setAttribute('aria-pressed', String(show));
+  b?.setAttribute('aria-label', show ? 'پنهان کردن رمز' : 'نمایش رمز');
+  inp.focus({ preventScroll: true });
 }
+/* Errors are said under the field they belong to and the sheet is never drawn again, so nothing typed is lost. */
 export async function submitPassword(username: string, password: string, name: string) {
   const user = (username || '').trim().toLowerCase();
   login.user = user;
+  login.name = (name || '').trim();
   const up = login.mode === 'signup';
-  const fail = (m: string) => {
-    login.err = m;
-    refreshLogin();
+  const err = $('#authErr'),
+    btn = $('[data-form="loginPassword"] .primary') as HTMLButtonElement | null;
+  const fail = (m: string, at?: string) => {
+    if (at) {
+      say(at, m, 'bad');
+      $(at === '#userMsg' ? '#loginUser' : '#loginPw')?.setAttribute('aria-invalid', 'true');
+    } else if (err) {
+      err.textContent = m;
+      err.hidden = false;
+    }
+    (at ? $(at === '#userMsg' ? '#loginUser' : '#loginPw') : null)?.focus({ preventScroll: true });
   };
+  if (err) err.hidden = true;
+  if (/[^ -~]/.test(user)) return fail('نام کاربری با حروف انگلیسیه. صفحه‌کلیدت رو انگلیسی کن.', '#userMsg');
   if (!USERNAME.test(user))
-    return fail(
-      up
-        ? 'نام کاربری فقط حروف انگلیسی، عدد، نقطه یا خط زیره؛ بین سه تا بیست‌وچهار حرف.'
-        : 'نام کاربری یا رمز درست نیست.',
-    );
-  if (up && password.length < 8) return fail('رمز دست‌کم هشت حرفه.');
-  if (!password) return fail('رمز رو بنویس.');
-  login.busy = true;
-  login.err = '';
-  refreshLogin();
+    return up
+      ? fail('نام کاربری سه تا بیست‌وچهار حرفه: حروف انگلیسی، عدد، نقطه یا _', '#userMsg')
+      : fail('نام کاربری یا رمز درست نیست.');
+  if (up && password.length < 8) return fail(`رمز دست‌کم ۸ حرفه؛ ${fa(8 - password.length)} تا دیگه بنویس.`, '#pwMsg');
+  if (!password) return fail('رمز رو بنویس.', '#pwMsg');
+  const label = btn?.textContent ?? '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'یه لحظه…';
+  }
   try {
     const { account } = up
-      ? await api.signup(user, password, (name || '').trim() || undefined)
+      ? await api.signup(user, password, login.name || undefined)
       : await api.login(user, password);
+    login.name = login.user = '';
     await signedIn(account);
   } catch (e) {
-    login.busy = false;
-    fail(errText(e, up ? 'نام کاربری یا رمز قابل قبول نیست.' : 'نام کاربری یا رمز درست نیست.'));
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+    if (e instanceof ApiError && e.code === 'username_taken') {
+      fail('این نام کاربری رو کس دیگه‌ای برداشته.', '#userMsg');
+      userTyped(user);
+    } else fail(errText(e, up ? 'نام کاربری یا رمز قابل قبول نیست.' : 'نام کاربری یا رمز درست نیست.'));
   }
 }
 

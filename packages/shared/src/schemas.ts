@@ -143,6 +143,12 @@ export const Username = z
   .toLowerCase()
   .regex(/^[a-z0-9._]{3,24}$/);
 export const Password = z.string().min(8).max(128);
+export const UsernameQuery = z.object({ u: Username });
+/** Whether a username can still be taken, and a few free ones close to it when it cannot. */
+export interface UsernameStatus {
+  available: boolean;
+  suggestions: string[];
+}
 export const SignupBody = z.object({
   username: Username,
   password: Password,

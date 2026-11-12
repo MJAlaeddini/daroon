@@ -5,9 +5,10 @@ import { Q2, ctxFor } from './domain/guide';
 import { lex } from './domain/lexicon';
 import {
   deleteAccount,
-  loginMode,
   loginStep,
+  offerKeep,
   openLogin,
+  pickUsername,
   resendCode,
   signOut,
   togglePassword,
@@ -614,6 +615,8 @@ export const ACT = {
     closeDone(() => {
       window.scrollTo(0, 0);
       requestAnimationFrame(pickAnchor);
+      /* once the stone has come home, and only the first time: «نگهش داریم؟» */
+      setTimeout(() => S.view === 'today' && !S.sheet && offerKeep(), 900);
     });
   },
   doneArchive() {
@@ -650,8 +653,8 @@ export const ACT = {
     if (S.sheet === 'login') loginStep('password', 'login');
     else openLogin('password', 'login');
   },
-  loginMode(el) {
-    loginMode(el.dataset.m === 'login' ? 'login' : 'signup');
+  userPick(el) {
+    pickUsername(el.dataset.u);
   },
   pwToggle() {
     togglePassword();
