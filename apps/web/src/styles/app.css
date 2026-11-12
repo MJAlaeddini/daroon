@@ -1048,8 +1048,7 @@ body[data-flow='1'] #views {
   aspect-ratio: 1;
   margin-block: 0 -6px;
 }
-/* under the stone: what is inside it, then the finer words of the one in focus; both keep their height */
-.x-names,
+/* under the stone: the finer words of the feeling touched last; the line keeps its height */
 .x-fine {
   display: flex;
   align-items: center;
@@ -1057,7 +1056,6 @@ body[data-flow='1'] #views {
   min-height: 44px;
   max-width: 100%;
 }
-.x-names.swap,
 .x-fine.swap {
   animation: nameIn 0.36s var(--ease) both;
 }
@@ -1066,30 +1064,6 @@ body[data-flow='1'] #views {
     opacity: 0;
     transform: translateY(4px);
   }
-}
-.x-none {
-  font-size: 15px;
-  color: var(--ink-3);
-}
-.nm {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 6px;
-  font-family: var(--f-ed);
-  font-size: 15.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-  white-space: nowrap;
-  text-decoration: underline 2px transparent;
-  text-underline-offset: 9px;
-  transition:
-    color 0.3s,
-    text-decoration-color 0.3s;
-}
-.nm[aria-pressed='true'] {
-  color: var(--ink);
-  font-weight: 800;
-  text-decoration-color: color-mix(in oklab, var(--wc) 75%, var(--ink));
 }
 .x-q {
   margin-inline-end: 4px;
@@ -1111,11 +1085,6 @@ body[data-flow='1'] #views {
 .rf[aria-pressed='true'] {
   font-weight: 800;
   color: color-mix(in oklab, var(--wc) var(--won), var(--ink));
-}
-.rf-out {
-  color: var(--ink-2);
-  text-decoration: underline 1px var(--line-2);
-  text-underline-offset: 6px;
 }
 /* the verse: each word carries a breath of its own colour; inside the stone it wears it fully, but quietly */
 .x-words {
@@ -1207,7 +1176,13 @@ body[data-flow='1'] #views {
   min-height: 48px;
 }
 .x-own .link {
+  min-height: 48px;
+  padding-inline: 11px;
   font-size: 14.5px;
+}
+.x-own .v-line {
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 .x-own .custom {
   width: min(100%, 360px);
@@ -4757,7 +4732,7 @@ body[data-flow='1'] .navfade {
     width: min(38vw, 540px, 62vh);
   }
   /* the stone's body fills the middle of its box; its names sit just under the body, not under the box */
-  .x-stage .x-names {
+  .x-stage .x-fine {
     margin-top: -36px;
   }
   .x-words,

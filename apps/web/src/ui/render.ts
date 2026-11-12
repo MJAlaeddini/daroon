@@ -7,7 +7,7 @@ import { IC } from './icons';
 import { closeSheet, fillDaySheet } from './sheets';
 import { toast } from './toast';
 import { archTitle, dayDetailHTML, monthHTML, warmArchive, weekHTML } from '../views/archive';
-import { fineHTML, namesHTML, trayHTML, xbarHTML } from '../views/explore';
+import { fineHTML, trayHTML, wordLabel, xbarHTML } from '../views/explore';
 import { VIEWS } from '../views/index';
 
 /* ═════════════════════════ rendering & navigation ═════════════════════════ */
@@ -153,20 +153,19 @@ export function refreshExplore({ stone = true } = {}) {
     const on = S.draft.items.some((x) => x.key === w.dataset.key || x.parent === w.dataset.key);
     w.setAttribute('aria-pressed', String(on));
     w.setAttribute('aria-disabled', String(full && !on));
+    const label = wordLabel(w.dataset.key);
+    if (w.textContent !== label) w.textContent = label;
   });
   const tray = $('#tray');
   if (!(S.customOpen && tray.contains(document.activeElement))) tray.innerHTML = trayHTML();
   $('#xbar').innerHTML = xbarHTML();
   if (stone) refreshStone();
 }
-/** Names under the stone and the finer words of the one in focus; the stone takes the draft's feelings. */
+/** The finer words of the feeling in focus, under the stone; the stone takes the draft's feelings. */
 export function refreshStone() {
-  const n = $('#xnames'),
-    fi = $('#xfine');
-  if (n) {
-    const nh = namesHTML(),
-      fh = fineHTML();
-    if (n.dataset.h !== nh) swapIn(n, nh);
+  const fi = $('#xfine');
+  if (fi) {
+    const fh = fineHTML();
     if (fi.dataset.h !== fh) swapIn(fi, fh);
   }
   syncEngine();

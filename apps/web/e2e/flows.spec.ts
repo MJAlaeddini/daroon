@@ -38,7 +38,7 @@ test('every guided path ends in suggestions, or the "no name yet" screen for uns
   }
 });
 
-test("a word is breathed into the stone and named under it; its finer words and a word of one's own", async ({
+test("a word is breathed into the stone and shows it in the verse; its finer words and a word of one's own", async ({
   page,
 }) => {
   await open(page);
@@ -46,39 +46,39 @@ test("a word is breathed into the stone and named under it; its finer words and 
   await settle(page, 900);
   await page.click('[data-act=startA]');
   await settle(page, 1300);
-  await expect(page.locator('#xnames')).toHaveText('هنوز بی‌نام');
   await expect(page.locator('#xbar .primary')).toBeDisabled();
   await page.click('.word[data-key="دلتنگی"]');
-  // the word's place goes quiet at once; its name arrives under the stone with the word
+  // the word itself shows it is chosen; its name is not repeated anywhere else
   await expect(page.locator('.word[data-key="دلتنگی"]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#xnames .nm')).toHaveText(['دلتنگی']);
   await expect(page.locator('#xfine .rf')).toHaveText(['حسرت', 'دلگیری', 'تنهایی']);
+  await expect(page.locator('#views .view:not(.leaving)').getByText('دلتنگی', { exact: true })).toHaveCount(1);
   await expect(page.locator('.breath')).toHaveCount(0);
-  // a finer word renames it; the verse keeps the general word
+  // a finer word takes the word's place in the verse
   await page.click('#xfine .rf >> text=حسرت');
-  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت']);
+  await expect(page.locator('.word[data-key="دلتنگی"]')).toHaveText('حسرت');
   expect(await page.evaluate('__daroon.S.draft.items[0].key')).toBe('حسرت');
-  // three at most: the rest of the verse steps back
+  // three at most: the rest of the verse steps back, and the finer words follow the word touched last
   await page.click('.word[data-key="امید"]');
+  await expect(page.locator('#xfine .rf')).toHaveText(['خوش‌بینی', 'انتظار', 'انگیزه']);
   await page.click('.word[data-key="آرامش"]');
-  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید', 'آرامش']);
   await expect(page.locator('.word[data-key="غم"]')).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator('#tray [data-act=openCustom]')).toHaveCount(0);
-  // a name under the stone brings its own finer words
-  await page.click('#xnames .nm >> text=امید');
-  await expect(page.locator('#xfine .rf')).toHaveText(['خوش‌بینی', 'انتظار', 'انگیزه']);
-  // touching a word inside the stone draws it back out
+  // touching a chosen word draws it back out, and its finer word goes with it
   await page.click('.word[data-key="آرامش"]');
-  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید']);
+  await expect(page.locator('.word[data-key="آرامش"]')).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#xbar .primary small')).toHaveText('۲ کلمه');
-  // a word of one's own goes in from where it was written, and can be taken out under the stone
+  await page.click('.word[data-key="دلتنگی"]');
+  await expect(page.locator('.word[data-key="دلتنگی"]')).toHaveText('دلتنگی');
+  await page.click('.word[data-key="دلتنگی"]');
+  // a word of one's own goes in from where it was written and is worn on the line under the verse
   await page.click('[data-act=openCustom]');
   await page.fill('#customInput', 'خستگی');
   await page.click('.addbtn');
-  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید', 'خستگی']);
-  await expect(page.locator('#xfine')).toContainText('کلمه‌ی خودته');
-  await page.click('#xfine [data-act=removeSel]');
-  await expect(page.locator('#xnames .nm')).toHaveText(['حسرت', 'امید']);
+  await expect(page.locator('#tray .word')).toHaveText(['خستگی']);
+  await expect(page.locator('#tray .word')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate('__daroon.S.draft.items.length')).toBe(3);
+  await page.click('#tray .word');
+  await expect(page.locator('#tray .word')).toHaveCount(0);
   // «I don't know» leads to the guide and keeps what was chosen
   await page.click('#xbar [data-act=toGuide]');
   await settle(page, 900);
